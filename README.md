@@ -5,8 +5,8 @@ Yet another TypeScript OpenAPI SDK generator
 ## Why?
 
 + Concise API with (very) strong typing guarantees
-+ Dependency-free single-file generated SDK (less than 3kB uncompressed)
-+ Pluggable `fetch` implementation without patching the global object
++ Dependency-free single-file generated SDK (less than 2kB)
++ Pluggable `fetch` implementation, without patching the global object
 
 ## Typing guarantees overview
 
