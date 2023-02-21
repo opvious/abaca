@@ -1,8 +1,8 @@
 {
   "name": "@opvious/yasdk-packages",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
-  "repository": "github:opvious/stl.ts",
+  "repository": "github:mtth/yasdk",
   "author": "Matthieu Monsch <mtth@apache.org>",
   "license": "MIT",
   "scripts": {

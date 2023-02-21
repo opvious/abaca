@@ -139,6 +139,16 @@ describe('pets', () => {
         throw unexpected(res);
     }
   });
+
+  test('empty response content type', async () => {
+    const res = await sdk.getPetAge({parameters: {petId: 'hi'}});
+    switch (res.code) {
+      case 404:
+        break;
+      default:
+        throw unexpected(res);
+    }
+  });
 });
 
 function newRouter(): Router {
@@ -186,5 +196,13 @@ function newRouter(): Router {
       }
       Object.assign(pet, ctx.request.body);
       ctx.body = pet;
-    });
+    })
+    .get('/pets/:petId/age', (ctx) => {
+      const pet = pets.get(ctx.params.petId!);
+      if (pet) {
+        ctx.body = 10;
+      } else {
+        ctx.status = 404;
+      }
+    })
 }
