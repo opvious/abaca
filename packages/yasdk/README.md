@@ -53,9 +53,10 @@ const res = await sdk.updatePet({
   },
   parameters: {/* ... */}, // 3
   body: {/* ... */}, // 4
+  options: {/* ... */}, // 5
 });
-if (res.code === 200) { // 5
-  return res.data; // 6
+if (res.code === 200) { // 6
+  return res.data; // 7
 }
 ```
 
@@ -70,9 +71,11 @@ if (res.code === 200) { // 5
 4. The request's `body` can only be specified if the operation expects one and
    must be present if required. Its type must be valid for the operation and
    chosen `content-type`.
-5. Expected response codes are statically determined from the spec, supporting
+5. [Request options are type checked against the SDK's local `fetch`
+   implementation.](#custom-fetch-implementation)
+6. Expected response codes are statically determined from the spec, supporting
    both status numbers and ranges (`2XX`, ...).
-6. The response's type is automatically narrowed to both the `accept` header and
+7. The response's type is automatically narrowed to both the `accept` header and
    response code.
 
 ### Examples
