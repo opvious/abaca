@@ -43,8 +43,6 @@ if (res.code === 200) { // 5
 6. The response's type is automatically narrowed to both the `accept` header and
    response code.
 
-All this with a single function per operation and standard object inputs!
-
 ## Developing
 
 ```sh
