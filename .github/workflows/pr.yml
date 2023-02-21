@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           cache: pnpm
-          registry-url: https://registry.npmjs.org
+          registry-url: https://npm.pkg.github.com
       - name: Install
         run: pnpm i
       - name: Lint

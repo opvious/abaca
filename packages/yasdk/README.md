@@ -1,11 +1,32 @@
-# OpenAPI utilities
+# YASDK
+
+Yet another TypeScript SDK generator
+
+## Quickstart
+
+1. Add this package as `devDependency`:
 
 ```sh
-$ pnpm i @opvious/stl-openapi
+npm i -D yasdk
 ```
 
-This package is meant to be used as `devDependency`.
+2. Run it on your OpenAPI definition file, typically via a NPM script:
 
-+ TODO: Support multiple accept headers.
-+ TODO: Pass in information about operation from OpenAPI spec in decoder and
-  encoder contexts. This would allow validation for example.
+```js
+# package.json
+{
+  // ...
+  "scripts": {
+    "prepare": "yasdk -i resources/openapi.yaml -o src/sdk.gen.ts",
+    // ...
+  }
+}
+```
+
+3. Instantiate the SDK:
+
+```typescript
+import {createSdk} from './sdk.gen';
+
+const sdk = createSdk(API_URL);
+```
