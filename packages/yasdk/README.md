@@ -48,8 +48,8 @@ const sdk = createSdk(API_URL);
 
 const res = await sdk.updatePet({
   headers: {
-    accept: 'application/json', // 1
-    'content-type': 'application/json', // 2
+    'content-type': 'application/json', // 1
+    accept: 'application/json', // 2
   },
   parameters: {/* ... */}, // 3
   body: {/* ... */}, // 4
@@ -59,12 +59,12 @@ if (res.code === 200) { // 5
 }
 ```
 
-1. The `accept` header (or, if omitted, the SDK's default) must match one of the
-   operation's response mime types. __The type of the response automatically
-   reflects this value.__
-2. The `content-type` header (or, if omitted, the SDK's default) must match one
-   of the operation's request body mime types. __The type of the request's body
-   automatically reflects this value.__
+1. The `content-type` header (or, if omitted, the SDK's default) must match one
+   of the operation's request body mime types. [The type of the request's body
+   automatically reflects this value.](#request-body-type-inference)
+2. The `accept` header (or, if omitted, the SDK's default) must match one of the
+   operation's response mime types. [The type of the response automatically
+   reflects this value.](#response-type-inference)
 3. Each of the `parameters` (query, path, and headers) must have the expected
    type and be present if required.
 4. The request's `body` can only be specified if the operation expects one and
@@ -88,7 +88,7 @@ defined as follows:
       - $ref: '#/components/parameters/TableId'
     responses:
       '200':
-        description: A matching table was found
+        description: Table found
         content:
           application/json:
             schema:
@@ -118,16 +118,16 @@ defined as follows:
         description: Table updated
 ```
 
-#### Request type inference
+#### Request body type inference
 
 `yasdk` automatically type checks each request's body against its
 `'content-type'` header. In the common case where the header is omitted, the
 SDK's default is used (`application/json`, unless overridden at creation time):
 
 ```typescript
-await sdk.setTable({
+await sdk.uploadTable({
   parameters: {id: 'my-id'},
-  body: {rows: [/* ... */]}, // Expected type: `Table`
+  body: {/* ... */}, // Expected type: `Table`
 });
 ```
 
@@ -135,7 +135,7 @@ Specifying a `'content-type'` will automatically change the body's expected
 type:
 
 ```typescript
-await sdk.setTable({
+await sdk.uploadTable({
   parameters: {id: 'my-id'},
   headers: {'content-type': 'text/csv'},
   body: '...', // Expected type: `string`
@@ -147,7 +147,7 @@ the defined body types. It also can be auto-completed if your editor supports
 auto-completion.
 
 ```typescript
-await sdk.setTable({
+await sdk.uploadTable({
   parameters: {id: 'my-id'},
   headers: {'content-type': 'application/xml'}, // Type error
 });
@@ -160,7 +160,7 @@ await sdk.setTable({
 SDK's default (similar to request typing above):
 
 ```typescript
-const res = await sdk.getTable({parameters: {id: 'my-id'}});
+const res = await sdk.downloadTable({parameters: {id: 'my-id'}});
 switch (res.code) {
   case 200:
     res.data; // Narrowed type: `Table`
@@ -174,7 +174,7 @@ switch (res.code) {
 Setting a specific content-type has the expected effect:
 
 ```typescript
-const res = await sdk.getTable({
+const res = await sdk.downloadTable({
   parameters: {id: 'my-id'},
   headers: {accept: 'text/csv'},
 });
@@ -191,7 +191,7 @@ switch (res.code) {
 Wildcards are also supported:
 
 ```typescript
-const res = await sdk.getTable({
+const res = await sdk.downloadTable({
   parameters: {id: 'my-id'},
   headers: {accept: '*/*'},
 });
@@ -203,7 +203,7 @@ if (res.code === 200) {
 Finally, the `accept` header itself is type-checked (and auto-completable):
 
 ```typescript
-const res = await sdk.getTable({
+const res = await sdk.downloadTable({
   parameters: {id: 'my-id'},
   headers: {
     // Valid examples:
