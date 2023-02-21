@@ -10,3 +10,6 @@ export async function startApp(app: Koa): Promise<http.Server> {
   await events.once(server, 'listening');
   return server;
 }
+
+// Compile-time type assertion.
+export function touch<V>(_val: V): void {}

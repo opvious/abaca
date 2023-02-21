@@ -6,7 +6,7 @@ import koaBody from 'koa-body';
 import fetch from 'node-fetch';
 import {Writable} from 'ts-essentials';
 
-import {startApp} from './helpers';
+import {startApp, touch} from './helpers';
 import {createSdk, RequestBody, ResponseData, Sdk, types} from './pets-sdk.gen';
 
 describe('pets', () => {
@@ -160,10 +160,10 @@ describe('pets', () => {
     const res = await sdk.getPetAge({parameters: {petId: 'hi'}});
     switch (res.code) {
       case 200:
-        const _t1: number = res.data;
+        touch<number>(res.data);
         throw unexpected(res);
       case 400:
-        const _t2: undefined = res.data;
+        touch<undefined>(res.data);
         throw unexpected(res);
       case 404:
         break;
@@ -181,13 +181,13 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
-        const _t1: number = res.data;
+        touch<number>(res.data);
         throw unexpected(res);
       case 400:
-        const _t2: undefined = res.data;
+        touch<undefined>(res.data);
         throw unexpected(res);
       case 404:
-        const _t3: undefined = res.data;
+        touch<undefined>(res.data);
         break;
       case 'default':
         throw unexpected(res);
@@ -203,13 +203,13 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
-        const _t1: undefined = res.data;
+        touch<undefined>(res.data);
         throw unexpected(res);
       case 400:
-        const _t2: string = res.data;
+        touch<string>(res.data);
         throw unexpected(res);
       case 404:
-        const _t3: undefined = res.data;
+        touch<undefined>(res.data);
         break;
       case 'default':
         throw unexpected(res);

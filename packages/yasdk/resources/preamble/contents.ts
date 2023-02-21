@@ -67,8 +67,8 @@ type MimeTypePrefixes<M> = M extends `${infer P}/${infer _S}`
   ? `${P}/*`
   : never;
 
-type ValuesMatchingMimeType<O, G, D = never> = Values<{
-  [M in keyof O]: G extends WithGlobs<M> ? O[M] : D;
+type ValuesMatchingMimeType<O, G> = Values<{
+  [M in keyof O]: G extends WithGlobs<M> ? O[M] : never;
 }>;
 
 const JSON_MIME_TYPE = 'application/json';
@@ -359,7 +359,7 @@ type MaybeAcceptInput<
   R extends ResponsesType,
   F,
   M extends MimeType
-> = {} extends R ? {} : DefaultAcceptInput<R, F, M> | CustomAcceptInput<R, F>;
+> = Values<R> extends never ? {} : DefaultAcceptInput<R, F, M> | CustomAcceptInput<R, F>;
 
 type DefaultAcceptInput<
   R extends ResponsesType,
@@ -419,17 +419,16 @@ type DataOutput<M extends MimeType, R extends ResponsesType> =
 
 type ExpectedDataOutput<M extends MimeType, R extends ResponsesType> = Values<{
   [C in keyof R]: R[C] extends never
-    ? WithCode<C, undefined>
-    : WithCode<C, ValuesMatchingMimeType<R[C]['content'], M, undefined>>;
+    ? CodedData<C, undefined>
+    : WithCode<C, ValuesMatchingMimeType<R[C]['content'], M>>;
 }>;
 
-type WithCode<C, D> = D extends never ? never : CodedData<C, D>;
+type WithCode<C, D> = CodedData<C, D extends never ? undefined : D>;
 
 interface CodedData<C, D = unknown> {
   readonly code: C;
   readonly data: D;
 }
-
 
 type MaybeUnknownOutput<
   R extends ResponsesType
