@@ -41,12 +41,12 @@ const sdk = createSdk(API_URL);
 
 ### Overview
 
-Each request is statically checked against the corresponding OpenAPI operation:
+`yasdk` extensively checks request types and narrows response types:
 
 ```typescript
 const sdk = createSdk(API_URL);
 
-const res = await sdk.updatePet({
+const res = await sdk.doSomething({
   headers: {
     'content-type': 'application/json', // 1
     accept: 'application/json', // 2
@@ -242,7 +242,7 @@ await nodeFetchSdk.uploadTable({
 });
 
 const fetchSdk = createSdk(API_URL);
-await nodeFetchSdk.uploadTable({
+await fetchSdk.uploadTable({
   options: {
     compress: true, // Type error: default `fetch` does not support `compress`
   },
