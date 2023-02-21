@@ -8,7 +8,10 @@ import {loadOpenapiDocument, OpenapiDocuments} from 'yasdk-openapi';
 
 const COMMAND_NAME = 'yasdk';
 
-const preambleUrl = new URL('../resources/preamble.ts', import.meta.url);
+const preambleUrl = new URL(
+  '../resources/preamble/contents.ts',
+  import.meta.url
+);
 
 export function mainCommand(): Command {
   return new Command()
@@ -76,13 +79,7 @@ async function generateValues(
       for (const [code, refOrRes] of Object.entries(op.responses)) {
         const res =
           '$ref' in refOrRes ? await resolve(refOrRes.$ref) : refOrRes;
-        if (!res.content) {
-          appendValue('', code, codes);
-          continue;
-        }
-        for (const mtype of Object.keys(res.content)) {
-          appendValue(mtype, code, codes);
-        }
+        codes[code] = Object.keys(res.content ?? {});
       }
       const parameters: Record<string, string> = {};
       for (const refOrParam of op.parameters ?? []) {
@@ -96,15 +93,6 @@ async function generateValues(
   let out = `const allOperations = ${JSON.stringify(ops, null, 2)} as const;`;
   out += SUFFIX;
   return out;
-}
-
-function appendValue<K extends string, V>(k: K, v: V, o: Record<K, V[]>): void {
-  let vs = o[k];
-  if (!vs) {
-    vs = [];
-    o[k] = vs;
-  }
-  vs.push(v);
 }
 
 const SUFFIX = `

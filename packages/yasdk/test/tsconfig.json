@@ -3,6 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "noImplicitAny": false,
+    "noErrorTruncation": true,
     "outDir": "../out/test",
     "useUnknownInCatchVariables": false
   },

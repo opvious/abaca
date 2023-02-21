@@ -141,6 +141,12 @@ paths:
             application/json:
               schema:
                 type: number
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
         '404':
           description: Not found
 components:
