@@ -27,7 +27,6 @@
     "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
     "prepare": "pnpm run build",
-    "test": "jest",
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
