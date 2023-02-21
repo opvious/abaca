@@ -204,5 +204,5 @@ function newRouter(): Router {
       } else {
         ctx.status = 404;
       }
-    })
+    });
 }

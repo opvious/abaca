@@ -1,5 +1,3 @@
-// This file was auto-generated
-
 type Has<N extends number | string | symbol, V> = {
   readonly [K in N]: V;
 };
