@@ -120,8 +120,9 @@ defined as follows:
 
 #### Request type inference
 
-Omitting the `'content-type'` header will fall back to the SDK's default
-(`application/json`, unless overridden at creation time):
+`yasdk` automatically type checks each request's body against its
+`'content-type'` header. In the common case where the header is omitted, the
+SDK's default is used (`application/json`, unless overridden at creation time):
 
 ```typescript
 await sdk.setTable({
@@ -149,5 +150,72 @@ auto-completion.
 await sdk.setTable({
   parameters: {id: 'my-id'},
   headers: {'content-type': 'application/xml'}, // Type error
+});
+```
+
+#### Response type inference
+
+`yasdk` automatically narrows the types of responses according to the request's
+`'accept'` header and response code. When the header is omitted, it uses the
+SDK's default (similar to request typing above):
+
+```typescript
+const res = await sdk.getTable({parameters: {id: 'my-id'}});
+switch (res.code) {
+  case 200:
+    res.data; // Narrowed type: `Table`
+    break;
+  case 404:
+    res.data; // Narrowed type: `undefined`
+    break;
+}
+```
+
+Setting a specific content-type has the expected effect:
+
+```typescript
+const res = await sdk.getTable({
+  parameters: {id: 'my-id'},
+  headers: {accept: 'text/csv'},
+});
+switch (res.code) {
+  case 200:
+    res.data; // Narrowed type: `string`
+    break;
+  case 404:
+    res.data; // Narrowed type: `undefined`
+    break;
+}
+```
+
+Wildcards are also supported:
+
+```typescript
+const res = await sdk.getTable({
+  parameters: {id: 'my-id'},
+  headers: {accept: '*/*'},
+});
+if (res.code === 200) {
+  res.data; // Narrowed type: `Table | string`
+}
+```
+
+Finally, the `accept` header itself is type-checked (and auto-completable):
+
+```typescript
+const res = await sdk.getTable({
+  parameters: {id: 'my-id'},
+  headers: {
+    // Valid examples:
+    accept: 'application/json',
+    accept: 'application/*',
+    accept: 'text/csv',
+    accept: 'text/*',
+    accept: '*/*',
+    // Invalid examples:
+    accept: 'application/xml',
+    accept: 'text/plain',
+    accept: 'image/*',
+  },
 });
 ```
