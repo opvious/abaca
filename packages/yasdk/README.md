@@ -219,3 +219,29 @@ const res = await sdk.downloadTable({
   },
 });
 ```
+
+#### Custom `fetch` implementation
+
+The `fetch` SDK creation option allows swapping the underlying `fetch`
+implementation. SDK method typings will automatically be updated to accept any
+additional arguments it supports. For example to use
+[`node-fetch`](https://www.npmjs.com/package/node-fetch):
+
+```typescript
+import fetch from 'node-fetch'
+
+const nodeFetchSdk = createSdk(API_URL, {fetch});
+await nodeFetchSdk.uploadTable({
+  options: {
+    compress: true, // OK: `node-fetch` argument
+  },
+  // ...
+});
+
+const fetchSdk = createSdk(API_URL);
+await nodeFetchSdk.uploadTable({
+  options: {
+    compress: true, // Type error: default `fetch` does not support `compress`
+  },
+})
+```
