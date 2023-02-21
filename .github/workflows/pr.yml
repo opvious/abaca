@@ -1,0 +1,35 @@
+name: PR
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+jobs:
+  test:
+    name: Test
+    timeout-minutes: 2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install
+        run: pnpm i
+      - name: Lint
+        run: pnpm run lint
+      - name: Test
+        run: pnpm t
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: out/coverage
