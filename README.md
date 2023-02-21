@@ -7,11 +7,11 @@ Yet another TypeScript OpenAPI SDK generator
 + Concise API with (very) strong typing guarantees
 + Dependency-free single-file generated SDK (less than 2kB)
 + Pluggable `fetch` implementation, without patching the global object
++ Customizable codecs, including wildcard support
 
 ## Typings overview
 
-`yasdk`-generated SDKs check request types and narrow response types
-extensively:
+`yasdk` checks request types and narrows response types extensively:
 
 ```typescript
 const res = await sdk.doSomething({
@@ -90,7 +90,7 @@ follows:
           description: Table updated
 ```
 
-#### Request body type inference
+### Request body type inference
 
 `yasdk` automatically type checks each request's body against its
 `'content-type'` header. In the common case where the header is omitted, the
@@ -125,7 +125,7 @@ await sdk.uploadTable({
 });
 ```
 
-#### Response type inference
+### Response type inference
 
 `yasdk` automatically narrows the types of responses according to the request's
 `'accept'` header and response code. When the header is omitted, it uses the
@@ -192,7 +192,7 @@ const res = await sdk.downloadTable({
 });
 ```
 
-#### Custom `fetch` implementation
+### Custom `fetch` implementation
 
 The `fetch` SDK creation option allows swapping the underlying `fetch`
 implementation. SDK method typings will automatically be updated to accept any
