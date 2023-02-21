@@ -108,6 +108,7 @@ function appendValue<K extends string, V>(k: K, v: V, o: Record<K, V[]>): void {
 }
 
 const SUFFIX = `
+
 export type {operations};
 
 export type types = components['schemas'];

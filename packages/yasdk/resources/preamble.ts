@@ -61,14 +61,14 @@ class ByMimeType<V> {
   }
 }
 
-type MimeTypeGlobs<M> = M | MimeTypePrefixes<M> | '*/*';
+type WithGlobs<M> = M | MimeTypePrefixes<M> | '*/*';
 
 type MimeTypePrefixes<M> = M extends `${infer P}/${infer _S}`
   ? `${P}/*`
   : never;
 
 type ValuesMatchingMimeType<O, G> = Values<{
-  [M in keyof O]: G extends MimeTypeGlobs<M> ? O[M] : never;
+  [M in keyof O]: G extends WithGlobs<M> ? O[M] : never;
 }>;
 
 const JSON_MIME_TYPE = 'application/json';
@@ -173,7 +173,7 @@ interface OperationDefinition {
 type ParameterLocation = 'header' | 'path' | 'query';
 
 type Encoders<O extends OperationTypes, F> = {
-  readonly [G in MimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
+  readonly [G in WithGlobs<AllBodyMimeTypes<O>>]?: Encoder<
     BodiesMatchingMimeType<O, G>,
     F
   >;
@@ -202,7 +202,7 @@ type BodiesMatchingMimeType<O extends OperationTypes, G> = Values<{
 }>;
 
 type Decoders<O extends OperationTypes, F> = {
-  readonly [G in MimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
+  readonly [G in WithGlobs<AllResponseMimeTypes<O>>]?: Decoder<
     AllResponsesMatchingMimeType<O, G>,
     F
   >;
@@ -303,8 +303,8 @@ type DefaultAcceptInput<
   : never;
 
 type CustomAcceptInput<R extends ResponsesType, F> = Values<{
-  [M in ResponseMimeTypes<R> & string]: {
-    readonly headers: {readonly accept: ResponseMimeTypes<R>};
+  [M in WithGlobs<ResponseMimeTypes<R>> & string]: {
+    readonly headers: {readonly accept: M};
     readonly decoder?: AcceptDecoder<R, F, M>;
   };
 }>;
@@ -349,8 +349,8 @@ type DataOutput<M extends MimeType, R extends ResponsesType> =
 
 type ExpectedDataOutput<M extends MimeType, R extends ResponsesType> = Values<{
   [C in keyof R]: R[C] extends never
-    ? undefined
-    : WithCode<C, Get<R[C]['content'], M>>;
+    ? WithCode<C, undefined>
+    : WithCode<C, ValuesMatchingMimeType<R[C]['content'], M>>;
 }>;
 
 type WithCode<C, D> = D extends never ? never : CodedData<C, D>;
@@ -386,6 +386,8 @@ type SdkFunction<O, I, F, M extends MimeType> = {} extends I
     ) => Output<O, Exact<I, A> extends never ? A : {}, F, M>
   : <A extends I>(args: A) => Output<O, A, F, M>;
 
+const defaultEmptyTypes = ['text/plain'];
+
 // eslint-disable-next-line unused-imports/no-unused-vars
 function createSdkFor<
   O extends OperationTypes<keyof O & string>,
@@ -401,6 +403,7 @@ function createSdkFor<
   const root = url.toString().replace(/\/+$/, '');
   const base: any = opts?.options ?? {};
   const baseHeaders = opts?.headers;
+  const emptyTypes = new Set(opts?.emptyContentTypes ?? defaultEmptyTypes);
 
   const encoders = ByMimeType.create(fallbackEncoder);
   encoders.add(JSON_MIME_TYPE, jsonEncoder);
@@ -457,14 +460,20 @@ function createSdkFor<
         body,
       });
 
+      let responseType = extractResponseType(res);
+      let code = codeMatcher.getBest(responseType, res.status);
+      if (code === 'default' && emptyTypes.has(responseType)) {
+        code = codeMatcher.getBest('', res.status);
+        if (code !== 'default') {
+          responseType = '';
+        }
+      }
       let data;
-      const responseType = extractResponseType(res);
       if (responseType) {
         const decode = decoder ?? decoders.getBest(responseType);
         data = await decode(res, {contentType: responseType});
       }
 
-      const code = codeMatcher.getBest(responseType, res.status);
       return {code, data, raw: res};
     };
   }
@@ -511,6 +520,12 @@ interface CreateSdkOptionsFor<
    * `accept` header in requests).
    */
   readonly defaultContentType?: M;
+
+  /**
+   * Content types which are allowed for responses with no content. Defaults to
+   * `text/plain`.
+   */
+  readonly emptyContentTypes?: ReadonlyArray<string>;
 }
 
 // eslint-disable-next-line unused-imports/no-unused-vars

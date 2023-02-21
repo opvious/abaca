@@ -126,6 +126,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pet"
+  /pets/{petId}/age:
+    get:
+      operationId: getPetAge
+      description: Get pet age
+      parameters:
+        - name: petId
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: number
+        '404':
+          description: Not found
 components:
   schemas:
     Pet:
