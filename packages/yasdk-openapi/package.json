@@ -1,0 +1,68 @@
+{
+  "name": "yasdk-openapi",
+  "version": "0.1.0",
+  "repository": "github:mtth/yasdk",
+  "description": "YASDK OpenAPI utilities",
+  "keywords": [
+    "openapi",
+    "yasdk"
+  ],
+  "author": "Matthieu Monsch <mtth@apache.org>",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "lib/"
+  ],
+  "exports": "./lib/index.js",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./lib/*",
+        "./lib/*/index.js"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
+    "fix": "prettier --write",
+    "prepare": "pnpm run build",
+    "test": "jest",
+    "watch": "tsc -b -w src test"
+  },
+  "dependencies": {
+    "@opvious/stl-errors": "^0.15.8",
+    "@opvious/stl-utils": "^0.15.8",
+    "@stoplight/json-ref-resolver": "^3.1.5",
+    "openapi-schema-validator": "^12.1.0",
+    "openapi-types": "^12.1.0",
+    "openapi-typescript": "^6.1.0",
+    "yaml": "^2.2.1"
+  },
+  "jest": {
+    "coverageDirectory": "../../out/coverage/yasdk-openapi",
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/node_modules/",
+      "<rootDir>/test/"
+    ],
+    "setupFilesAfterEnv": [
+      "jest-extended/all"
+    ],
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      ".d.ts",
+      ".js"
+    ],
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "babelConfig": {
+            "compact": false
+          },
+          "tsconfig": "test/tsconfig.json"
+        }
+      ]
+    }
+  }
+}
