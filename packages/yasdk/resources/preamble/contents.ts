@@ -329,7 +329,7 @@ interface CommonInput<F> {
 
 type RequestHeaders = Record<string, string>;
 
-type RequestOptions<F> = Omit<RequestInitFor<F>, 'body' | 'headers' | 'method'>;
+export type RequestOptions<F> = Omit<RequestInitFor<F>, 'body' | 'headers' | 'method'>;
 
 type MaybeBodyInput<B, F, M> = undefined extends B
   ? {}
