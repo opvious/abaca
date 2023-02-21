@@ -423,7 +423,7 @@ function createSdkFor<
       let body;
       if (rawBody !== undefined) {
         const encode = encoder ?? encoders.getBest(requestType);
-        body = await encode(body, {contentType: requestType, input});
+        body = await encode(rawBody, {contentType: requestType, input});
       }
 
       const url = new URL(root + formatPath(op.path, params));

@@ -7,7 +7,7 @@ import fetch from 'node-fetch';
 import {Writable} from 'ts-essentials';
 
 import {startApp} from './helpers';
-import {createSdk, RequestBody, ResponseData, Sdk, Types} from './pets-sdk.gen';
+import {createSdk, RequestBody, ResponseData, Sdk, types} from './pets-sdk.gen';
 
 describe('pets', () => {
   let sdk: Sdk<typeof fetch>;
@@ -34,7 +34,7 @@ describe('pets', () => {
     const res = await sdk.listPets({});
     switch (res.code) {
       case 200:
-        expect<ReadonlyArray<Types['Pet']>>(res.data).toEqual([]);
+        expect<ReadonlyArray<types['Pet']>>(res.data).toEqual([]);
         break;
       default:
         throw unexpected(res);
@@ -71,7 +71,7 @@ describe('pets', () => {
     const res = await sdk.listPets();
     switch (res.code) {
       case 200:
-        expect<ReadonlyArray<Types['Pet']>>(res.data).toEqual([]);
+        expect<ReadonlyArray<types['Pet']>>(res.data).toEqual([]);
         break;
       default:
         throw unexpected(res);
@@ -117,7 +117,7 @@ describe('pets', () => {
     const res = await sdk.updatePetTag({body, parameters: {petId: id}});
     switch (res.code) {
       case 200:
-        expect<Types['Pet']>(res.data).toEqual({id, name: 'a', tag: 't'});
+        expect<types['Pet']>(res.data).toEqual({id, name: 'a', tag: 't'});
         break;
       default:
         throw unexpected(res);
@@ -142,7 +142,7 @@ describe('pets', () => {
 });
 
 function newRouter(): Router {
-  const pets = new Map<string, Writable<Types['Pet']>>();
+  const pets = new Map<string, Writable<types['Pet']>>();
   return new Router()
     .use(koaBody())
     .get('/pets', (ctx) => {
