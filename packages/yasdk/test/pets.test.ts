@@ -1,5 +1,5 @@
 import Router from '@koa/router';
-import {assert, unexpected, unreachable} from '@opvious/stl-errors';
+import {absurd, assert, unexpected, unreachable} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import koaBody from 'koa-body';
@@ -47,13 +47,14 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
+      case '2XX':
         throw unexpected(res);
       default:
         expect<number>(res.data.code).toEqual(400);
     }
   });
 
-  test('unexpected code with missing default', async () => {
+  test('unexpected code no matching accept', async () => {
     const res = await sdk.listPets({
       headers: {accept: 'text/plain'},
     });
@@ -63,7 +64,22 @@ describe('pets', () => {
       default:
         expect(res.code).toEqual('default');
         expect(res.raw.status).toEqual(406);
-        expect<unknown>(res.data).toEqual('json only');
+        expect<undefined>(res.data).toBeUndefined();
+    }
+  });
+
+  test('unexpected code', async () => {
+    const res = await sdk.listPets({
+      headers: {accept: '*/*'},
+    });
+    switch (res.code) {
+      case 200:
+      case '2XX':
+        throw unexpected(res);
+      default:
+        expect(res.code).toEqual('default');
+        expect(res.raw.status).toEqual(406);
+        expect<types['Error']>(res.data).toBeUndefined();
     }
   });
 
@@ -143,10 +159,62 @@ describe('pets', () => {
   test('empty response content type', async () => {
     const res = await sdk.getPetAge({parameters: {petId: 'hi'}});
     switch (res.code) {
+      case 200:
+        const _t1: number = res.data;
+        throw unexpected(res);
+      case 400:
+        const _t2: undefined = res.data;
+        throw unexpected(res);
       case 404:
         break;
-      default:
+      case 'default':
         throw unexpected(res);
+      default:
+        throw absurd(res);
+    }
+  });
+
+  test('empty response content type with accept one header', async () => {
+    const res = await sdk.getPetAge({
+      parameters: {petId: 'hi'},
+      headers: {accept: 'application/*'},
+    });
+    switch (res.code) {
+      case 200:
+        const _t1: number = res.data;
+        throw unexpected(res);
+      case 400:
+        const _t2: undefined = res.data;
+        throw unexpected(res);
+      case 404:
+        const _t3: undefined = res.data;
+        break;
+      case 'default':
+        throw unexpected(res);
+      default:
+        throw absurd(res);
+    }
+  });
+
+  test('empty response content type with accept all header', async () => {
+    const res = await sdk.getPetAge({
+      parameters: {petId: 'hi'},
+      headers: {accept: 'text/*'},
+    });
+    switch (res.code) {
+      case 200:
+        const _t1: undefined = res.data;
+        throw unexpected(res);
+      case 400:
+        const _t2: string = res.data;
+        throw unexpected(res);
+      case 404:
+        const _t3: undefined = res.data;
+        break;
+      case 'default':
+        throw unexpected(res);
+      default:
+        throw absurd(res);
     }
   });
 });

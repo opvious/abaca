@@ -67,8 +67,8 @@ type MimeTypePrefixes<M> = M extends `${infer P}/${infer _S}`
   ? `${P}/*`
   : never;
 
-type ValuesMatchingMimeType<O, G> = Values<{
-  [M in keyof O]: G extends WithGlobs<M> ? O[M] : never;
+type ValuesMatchingMimeType<O, G, D = never> = Values<{
+  [M in keyof O]: G extends WithGlobs<M> ? O[M] : D;
 }>;
 
 const JSON_MIME_TYPE = 'application/json';
@@ -128,35 +128,105 @@ type ContentType = unknown;
 
 export type ResponseCode = number | ResponseCodeRange | 'default' | string;
 
+export type Coercer<F = typeof fetch> = (
+  res: ResponseFor<F>,
+  ctx: CoercerContext
+) => MimeType | undefined;
+
+export interface CoercerContext {
+  readonly contentType: MimeType | undefined;
+  readonly accepted: ReadonlySet<MimeType>;
+  readonly declared: ReadonlySet<MimeType>;
+}
+
+const PLAIN_MIME_TYPE = 'text/plain';
+
+const defaultCoercer: Coercer = (_res, ctx) => {
+  if (
+    ctx.contentType === PLAIN_MIME_TYPE &&
+    !ctx.declared.has(PLAIN_MIME_TYPE)
+  ) {
+    return undefined;
+  }
+  throw new Error('Unexpected response content type');
+};
+
 type ResponseCodeRange = '2XX' | '3XX' | '4XX' | '5XX';
 
-class ResponseCodeMatcher {
+class ResponseClauseMatcher {
   private constructor(
-    readonly data: ReadonlyMap<MimeType | '', ReadonlySet<ResponseCode>>
+    private readonly data: ReadonlyMap<ResponseCode, ReadonlySet<MimeType>>,
+    private readonly coercer: Coercer
   ) {}
 
-  static create(codes: OperationDefinition['codes']): ResponseCodeMatcher {
-    const data = new Map<MimeType, Set<ResponseCode>>();
-    for (const [mtype, mcodes] of Object.entries(codes)) {
-      data.set(mtype, new Set(mcodes));
+  static create(
+    codes: OperationDefinition['codes'],
+    coercer: Coercer
+  ): ResponseClauseMatcher {
+    const data = new Map<ResponseCode, Set<MimeType>>();
+    for (const [code, mtypes] of Object.entries(codes)) {
+      const ncode = +code;
+      data.set(isNaN(ncode) ? code : ncode, new Set(mtypes));
     }
-    return new ResponseCodeMatcher(data);
+    return new ResponseClauseMatcher(data, coercer);
   }
 
-  getBest(mtype: MimeType | '', status: number): ResponseCode {
-    const mcodes = this.data.get(mtype);
-    if (!mcodes) {
-      return 'default';
+  getBest(res: ResponseFor<typeof fetch>, accept: MimeType): ResponseClause {
+    const code = this.getBestCode(res.status);
+    const raw = res.headers.get('content-type');
+    const received = raw?.split(';')?.[0];
+    const declared = this.data.get(code);
+    if (
+      received &&
+      declared?.has(received) &&
+      contentTypeMatches(received, accept)
+    ) {
+      return {code, contentType: received};
     }
-    if (mcodes.has('' + status)) {
+    const accepted = new Set<MimeType>();
+    if (declared) {
+      for (const mtype of declared) {
+        if (contentTypeMatches(mtype, accept)) {
+          accepted.add(mtype);
+        }
+      }
+    }
+    if (!accepted.size && !received) {
+      return {code};
+    }
+    const coerced = this.coercer(res, {
+      contentType: received ?? undefined,
+      accepted,
+      declared: declared ?? new Set(),
+    });
+    return {code, contentType: coerced};
+  }
+
+  private getBestCode(status: number): ResponseCode {
+    const {data} = this;
+    if (data.has(status)) {
       return status;
     }
     const partial = ((status / 100) | 0) + 'XX';
-    if (mcodes.has(partial)) {
+    if (data.has(partial)) {
       return partial;
     }
     return 'default';
   }
+}
+
+function contentTypeMatches(exact: MimeType, glob: MimeType): boolean {
+  if (exact === glob || glob === FALLBACK_MIME_TYPE) {
+    return true;
+  }
+  const got = exact.split('/');
+  const want = glob.split('/');
+  return got[0] === want[0] && (got[1] === want[1] || want[1] === '*');
+}
+
+interface ResponseClause {
+  readonly code: ResponseCode;
+  readonly contentType?: MimeType;
 }
 
 type OperationDefinitions<O> = {
@@ -167,7 +237,7 @@ interface OperationDefinition {
   readonly path: string;
   readonly method: string;
   readonly parameters: Record<string, ParameterLocation>;
-  readonly codes: Record<MimeType | '', ReadonlyArray<ResponseCode>>;
+  readonly codes: Record<ResponseCode, ReadonlyArray<MimeType>>;
 }
 
 type ParameterLocation = 'header' | 'path' | 'query';
@@ -222,7 +292,7 @@ type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> = Values<{
 }>;
 
 type ResponseMimeTypes<R extends ResponsesType> = KeysOfValues<{
-  [C in keyof R]: R[C]['content'];
+  [C in keyof R as R[C] extends never ? never : C]: R[C]['content'];
 }>;
 
 type AllResponsesMatchingMimeType<O extends OperationTypes, G> = Values<{
@@ -345,12 +415,12 @@ interface CommonOutput<F> {
 
 type DataOutput<M extends MimeType, R extends ResponsesType> =
   | ExpectedDataOutput<M, R>
-  | MaybeUnknownOutput<M, R>;
+  | MaybeUnknownOutput<R>;
 
 type ExpectedDataOutput<M extends MimeType, R extends ResponsesType> = Values<{
   [C in keyof R]: R[C] extends never
     ? WithCode<C, undefined>
-    : WithCode<C, ValuesMatchingMimeType<R[C]['content'], M>>;
+    : WithCode<C, ValuesMatchingMimeType<R[C]['content'], M, undefined>>;
 }>;
 
 type WithCode<C, D> = D extends never ? never : CodedData<C, D>;
@@ -360,14 +430,10 @@ interface CodedData<C, D = unknown> {
   readonly data: D;
 }
 
+
 type MaybeUnknownOutput<
-  M extends MimeType,
   R extends ResponsesType
-> = 'default' extends keyof R
-  ? M extends keyof R['default']['content']
-    ? never
-    : CodedData<'default'>
-  : CodedData<'default'>;
+> = 'default' extends keyof R ? never : CodedData<'default'>;
 
 type SdkFor<
   O extends OperationTypes<keyof O & string>,
@@ -403,7 +469,7 @@ function createSdkFor<
   const root = url.toString().replace(/\/+$/, '');
   const base: any = opts?.options ?? {};
   const baseHeaders = opts?.headers;
-  const emptyTypes = new Set(opts?.emptyContentTypes ?? defaultEmptyTypes);
+  const coercer: Coercer<any> = opts?.coercer ?? defaultCoercer;
 
   const encoders = ByMimeType.create(fallbackEncoder);
   encoders.add(JSON_MIME_TYPE, jsonEncoder);
@@ -417,7 +483,7 @@ function createSdkFor<
 
   const fetchers: any = {};
   for (const [id, op] of Object.entries<OperationDefinition>(operations)) {
-    const codeMatcher = ResponseCodeMatcher.create(op.codes);
+    const clauseMatcher = ResponseClauseMatcher.create(op.codes, coercer);
     fetchers[id] = async (init: any): Promise<any> => {
       const {body: rawBody, encoder, decoder, ...input} = init ?? {};
       const params = input?.parameters ?? {};
@@ -442,12 +508,13 @@ function createSdkFor<
         }
       }
 
+      const accept = init?.headers?.['accept'] ?? defaultContentType;
       const headers = {
         ...baseHeaders,
         ...init?.headers,
         ...paramHeaders,
         'content-type': requestType,
-        accept: init?.headers?.['accept'] ?? defaultContentType,
+        accept,
       };
       if (body === undefined) {
         delete headers['content-type'];
@@ -460,21 +527,13 @@ function createSdkFor<
         body,
       });
 
-      let responseType = extractResponseType(res);
-      let code = codeMatcher.getBest(responseType, res.status);
-      if (code === 'default' && emptyTypes.has(responseType)) {
-        code = codeMatcher.getBest('', res.status);
-        if (code !== 'default') {
-          responseType = '';
-        }
-      }
+      const clause = clauseMatcher.getBest(res, accept);
       let data;
-      if (responseType) {
-        const decode = decoder ?? decoders.getBest(responseType);
-        data = await decode(res, {contentType: responseType});
+      if (clause.contentType) {
+        const decode = decoder ?? decoders.getBest(clause.contentType);
+        data = await decode(res, {contentType: clause.contentType});
       }
-
-      return {code, data, raw: res};
+      return {code: clause.code, data, raw: res};
     };
   }
   return fetchers;
@@ -522,10 +581,11 @@ interface CreateSdkOptionsFor<
   readonly defaultContentType?: M;
 
   /**
-   * Content types which are allowed for responses with no content. Defaults to
-   * `text/plain`.
+   * Unexpected response coercion. The default will coerce undeclared
+   * `text/plain` responses to empty contents when none of the accepted headers
+   * are declared and throw an error otherwise.
    */
-  readonly emptyContentTypes?: ReadonlyArray<string>;
+  readonly coercer?: Coercer<F>;
 }
 
 // eslint-disable-next-line unused-imports/no-unused-vars
