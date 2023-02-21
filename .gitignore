@@ -1,1 +1,6 @@
-_/
+lib/
+node_modules/
+out/
+*.gen.*
+*.local
+tsconfig.tsbuildinfo
