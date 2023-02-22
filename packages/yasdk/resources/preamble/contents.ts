@@ -128,7 +128,7 @@ type ContentType = unknown;
 
 export type ResponseCode = number | ResponseCodeRange | 'default' | string;
 
-export type Coercer<F = typeof fetch> = (
+export type Coercer<F> = (
   res: ResponseFor<F>,
   ctx: CoercerContext
 ) => MimeType | undefined;
@@ -141,14 +141,14 @@ export interface CoercerContext {
 
 const PLAIN_MIME_TYPE = 'text/plain';
 
-const defaultCoercer: Coercer = (_res, ctx) => {
-  if (
-    ctx.contentType === PLAIN_MIME_TYPE &&
-    !ctx.declared.has(PLAIN_MIME_TYPE)
-  ) {
+const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
+  const mtype = ctx.contentType;
+  if (mtype === PLAIN_MIME_TYPE &&!ctx.accepted.has(PLAIN_MIME_TYPE)) {
     return undefined;
   }
-  throw new Error('Unexpected response content type');
+  throw new Error(
+    `Unexpected response content type ${mtype} for status ${res.status}`
+  );
 };
 
 type ResponseCodeRange = '2XX' | '3XX' | '4XX' | '5XX';
@@ -156,12 +156,12 @@ type ResponseCodeRange = '2XX' | '3XX' | '4XX' | '5XX';
 class ResponseClauseMatcher {
   private constructor(
     private readonly data: ReadonlyMap<ResponseCode, ReadonlySet<MimeType>>,
-    private readonly coercer: Coercer
+    private readonly coercer: Coercer<BaseFetch>
   ) {}
 
   static create(
     codes: OperationDefinition['codes'],
-    coercer: Coercer
+    coercer: Coercer<BaseFetch>
   ): ResponseClauseMatcher {
     const data = new Map<ResponseCode, Set<MimeType>>();
     for (const [code, mtypes] of Object.entries(codes)) {
@@ -171,7 +171,7 @@ class ResponseClauseMatcher {
     return new ResponseClauseMatcher(data, coercer);
   }
 
-  getBest(res: ResponseFor<typeof fetch>, accept: MimeType): ResponseClause {
+  getBest(res: BaseResponse, accept: MimeType): ResponseClause {
     const code = this.getBestCode(res.status);
     const raw = res.headers.get('content-type');
     const received = raw?.split(';')?.[0];
@@ -242,14 +242,14 @@ interface OperationDefinition {
 
 type ParameterLocation = 'header' | 'path' | 'query';
 
-type Encoders<O extends OperationTypes, F> = {
+type Encoders<O extends OperationTypes, F extends BaseFetch> = {
   readonly [G in WithGlobs<AllBodyMimeTypes<O>>]?: Encoder<
     BodiesMatchingMimeType<O, G>,
     F
   >;
 };
 
-export type Encoder<B, F = typeof fetch> = (
+export type Encoder<B, F extends BaseFetch = typeof fetch> = (
   body: B,
   ctx: EncoderContext<F>
 ) => AsyncOrSync<BodyInitFor<F>>;
@@ -271,14 +271,14 @@ type BodiesMatchingMimeType<O extends OperationTypes, G> = Values<{
   >;
 }>;
 
-type Decoders<O extends OperationTypes, F> = {
+type Decoders<O extends OperationTypes, F extends BaseFetch> = {
   readonly [G in WithGlobs<AllResponseMimeTypes<O>>]?: Decoder<
     AllResponsesMatchingMimeType<O, G>,
     F
   >;
 };
 
-export type Decoder<R, F = typeof fetch> = (
+export type Decoder<R, F extends BaseFetch = typeof fetch> = (
   res: ResponseFor<F>,
   ctx: DecoderContext
 ) => AsyncOrSync<R>;
@@ -315,7 +315,11 @@ type ResponseFor<F> = F extends (url: any, init?: any) => Promise<infer R>
   ? R
   : never;
 
-type Input<O, F, M extends MimeType> = O extends OperationType<infer R, infer P>
+type Input<
+  O,
+  F extends BaseFetch,
+  M extends MimeType
+> = O extends OperationType<infer R, infer P>
   ? CommonInput<F> &
       MaybeBodyInput<Lookup<Lookup<O, 'requestBody'>, 'content'>, F, M> &
       MaybeAcceptInput<R, F, M> &
@@ -324,22 +328,27 @@ type Input<O, F, M extends MimeType> = O extends OperationType<infer R, infer P>
 
 interface CommonInput<F> {
   readonly headers?: RequestHeaders;
-  readonly options?: RequestOptions<F>;
+  readonly options?: RequestOptionsFor<F>;
 }
 
 type RequestHeaders = Record<string, string>;
 
-export type RequestOptions<F> = Omit<RequestInitFor<F>, 'body' | 'headers' | 'method'>;
+export type RequestOptionsFor<F> = Omit<
+  RequestInitFor<F>,
+  'body' | 'headers' | 'method'
+>;
 
-type MaybeBodyInput<B, F, M> = undefined extends B
+type MaybeBodyInput<B, F extends BaseFetch, M> = undefined extends B
   ? {}
   : B extends undefined
   ? BodyInput<Exclude<B, undefined>, F, M> | {}
   : BodyInput<B, F, M>;
 
-type BodyInput<B, F, M> = DefaultBodyInput<B, F, M> | CustomBodyInput<B, F>;
+type BodyInput<B, F extends BaseFetch, M> =
+  | DefaultBodyInput<B, F, M>
+  | CustomBodyInput<B, F>;
 
-type DefaultBodyInput<B, F, M> = M extends keyof B
+type DefaultBodyInput<B, F extends BaseFetch, M> = M extends keyof B
   ? {
       readonly headers?: {'content-type'?: M};
       readonly body: B[M];
@@ -347,7 +356,7 @@ type DefaultBodyInput<B, F, M> = M extends keyof B
     }
   : never;
 
-type CustomBodyInput<B, F> = Values<{
+type CustomBodyInput<B, F extends BaseFetch> = Values<{
   [K in keyof B]: {
     readonly headers: {'content-type': K};
     readonly body: B[K];
@@ -357,13 +366,15 @@ type CustomBodyInput<B, F> = Values<{
 
 type MaybeAcceptInput<
   R extends ResponsesType,
-  F,
+  F extends BaseFetch,
   M extends MimeType
-> = Values<R> extends never ? {} : DefaultAcceptInput<R, F, M> | CustomAcceptInput<R, F>;
+> = Values<R> extends never
+  ? {}
+  : DefaultAcceptInput<R, F, M> | CustomAcceptInput<R, F>;
 
 type DefaultAcceptInput<
   R extends ResponsesType,
-  F,
+  F extends BaseFetch,
   M extends MimeType
 > = M extends ResponseMimeTypes<R>
   ? {
@@ -372,17 +383,18 @@ type DefaultAcceptInput<
     }
   : never;
 
-type CustomAcceptInput<R extends ResponsesType, F> = Values<{
+type CustomAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
   [M in WithGlobs<ResponseMimeTypes<R>> & string]: {
     readonly headers: {readonly accept: M};
     readonly decoder?: AcceptDecoder<R, F, M>;
   };
 }>;
 
-type AcceptDecoder<R extends ResponsesType, F, M extends MimeType> = Decoder<
-  ResponsesMatchingMimeType<R, M>,
-  F
->;
+type AcceptDecoder<
+  R extends ResponsesType,
+  F extends BaseFetch,
+  M extends MimeType
+> = Decoder<ResponsesMatchingMimeType<R, M>, F>;
 
 type MaybeParamInput<P extends ParametersType> = MaybeParam<
   Lookup<P, 'path', {}> & Lookup<P, 'query', {}> & Lookup<P, 'headers', {}>
@@ -430,13 +442,13 @@ interface CodedData<C, D = unknown> {
   readonly data: D;
 }
 
-type MaybeUnknownOutput<
-  R extends ResponsesType
-> = 'default' extends keyof R ? never : CodedData<'default'>;
+type MaybeUnknownOutput<R extends ResponsesType> = 'default' extends keyof R
+  ? never
+  : CodedData<'default'>;
 
 type SdkFor<
   O extends OperationTypes<keyof O & string>,
-  F = typeof fetch,
+  F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE
 > = {
   readonly [K in keyof O]: SdkFunction<O[K], Input<O[K], F, M>, F, M>;
@@ -453,17 +465,32 @@ type SdkFunction<O, I, F, M extends MimeType> = {} extends I
 
 const defaultEmptyTypes = ['text/plain'];
 
+type BaseFetch = (url: URL, init: BaseInit) => Promise<BaseResponse>;
+
+interface BaseInit<B = any> {
+  readonly body?: B;
+  readonly headers: RequestHeaders;
+  readonly method: string;
+}
+
+interface BaseResponse {
+  readonly status: number;
+  readonly headers: {
+    get(name: string): string | null | undefined;
+  };
+}
+
 // eslint-disable-next-line unused-imports/no-unused-vars
 function createSdkFor<
   O extends OperationTypes<keyof O & string>,
-  F = typeof fetch,
+  F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE
 >(
   operations: OperationDefinitions<O>,
   url: string | URL,
   opts?: CreateSdkOptionsFor<O, F, M>
 ): SdkFor<O, F, M> {
-  const realFetch: typeof fetch = (opts?.fetch as any) ?? fetch;
+  const realFetch: BaseFetch = (opts?.fetch as any) ?? fetch;
   const defaultContentType = opts?.defaultContentType ?? JSON_MIME_TYPE;
   const root = url.toString().replace(/\/+$/, '');
   const base: any = opts?.options ?? {};
@@ -552,7 +579,7 @@ function formatPath(p: string, o: Record<string, unknown>): string {
 
 interface CreateSdkOptionsFor<
   O extends OperationTypes<keyof O & string>,
-  F = typeof fetch,
+  F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE
 > {
   /** Global request headers, overridable in individual requests. */
@@ -562,7 +589,7 @@ interface CreateSdkOptionsFor<
    * Other global request options. These can similarly be overriden in
    * individual fetch calls.
    */
-  readonly options?: RequestOptions<F>;
+  readonly options?: RequestOptionsFor<F>;
 
   /** Global request body encoders. */
   readonly encoders?: Encoders<O, F>;
@@ -571,7 +598,10 @@ interface CreateSdkOptionsFor<
   readonly decoders?: Decoders<O, F>;
 
   /** Underlying fetch method. */
-  readonly fetch?: F;
+  readonly fetch?: (
+    url: URL,
+    init: BaseInit<BodyInitFor<F>> & RequestOptionsFor<F>
+  ) => Promise<ResponseFor<F>>;
 
   /**
    * Default content-type used for request bodies and responses (sent as
