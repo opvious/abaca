@@ -58,3 +58,4 @@ SDK creation supports the following options:
   `'accept'` headers when omitted
 + `encoders`, request body encoders
 + `decoders`, response decoders
++ `coercer`, unexpected response content-type handler
