@@ -2,13 +2,12 @@
 
 Yet another TypeScript OpenAPI SDK generator
 
-+ [Motivation](https://github.com/mtth/yasdk#why)
-+ [Examples](https://github.com/mtth/yasdk#examples)
+
 
 ```typescript
 const sdk = createSdk(API_URL);
 
-const res = await sdk.runQuery({
+const res = await sdk.runSomeOperation({
   parameters: {/* ... */}, // Checked
   body: {/* ... */}, // Checked
   headers: {
@@ -19,10 +18,14 @@ const res = await sdk.runQuery({
 
 switch (res.code) {
   case 200:
-    res.data; // Narrowed based on code and `accept` header.
+    res.data; // Narrowed (based on code and `accept` header)
   // ...
 }
 ```
+
++ [Motivation](https://github.com/mtth/yasdk#why)
++ [Typings overview](https://github.com/mtth/yasdk#typings-overview)
++ [Examples](https://github.com/mtth/yasdk#examples)
 
 ## Quickstart
 
