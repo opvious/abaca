@@ -465,7 +465,7 @@ type SdkFunction<O, I, F, M extends MimeType> = {} extends I
 
 const defaultEmptyTypes = ['text/plain'];
 
-type BaseFetch = (url: URL, init: BaseInit) => Promise<BaseResponse>;
+export type BaseFetch = (url: URL, init: BaseInit) => Promise<BaseResponse>;
 
 interface BaseInit<B = any> {
   readonly body?: B;

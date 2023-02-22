@@ -2,8 +2,6 @@
 
 Yet another TypeScript OpenAPI SDK generator
 
-
-
 ```typescript
 const sdk = createSdk(API_URL);
 
@@ -49,7 +47,7 @@ import {createSdk} from './sdk.gen';
 
 ## Options
 
-SDK creation supports the following options:
+SDKs support the following options at creation time:
 
 + `headers`, headers sent with all requests
 + `options`, options set on all requests
