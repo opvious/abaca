@@ -256,8 +256,8 @@ export type Encoder<B, F extends BaseFetch = typeof fetch> = (
 
 export interface EncoderContext<F> {
   readonly contentType: string;
-  readonly input: CommonInput<F>;
-  // TODO: Pass in information about operation from OpenAPI spec.
+  readonly headers: RequestHeaders;
+  readonly options?: RequestOptionsFor<F>;
 }
 
 type AllBodyMimeTypes<O extends OperationTypes> = Values<{
@@ -280,11 +280,13 @@ type Decoders<O extends OperationTypes, F extends BaseFetch> = {
 
 export type Decoder<R, F extends BaseFetch = typeof fetch> = (
   res: ResponseFor<F>,
-  ctx: DecoderContext
+  ctx: DecoderContext<F>
 ) => AsyncOrSync<R>;
 
-export interface DecoderContext {
+export interface DecoderContext<F> {
   readonly contentType: string;
+  readonly headers: RequestHeaders;
+  readonly options?: RequestOptionsFor<F>;
 }
 
 type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> = Values<{
@@ -514,13 +516,6 @@ function createSdkFor<
       const {body: rawBody, encoder, decoder, ...input} = init ?? {};
       const params = input?.parameters ?? {};
 
-      const requestType = init?.headers?.['content-type'] ?? defaultContentType;
-      let body;
-      if (rawBody !== undefined) {
-        const encode = encoder ?? encoders.getBest(requestType);
-        body = await encode(rawBody, {contentType: requestType, input});
-      }
-
       const url = new URL(root + formatPath(op.path, params));
       const paramHeaders: any = {};
       for (const [name, val] of Object.entries(params)) {
@@ -535,6 +530,7 @@ function createSdkFor<
       }
 
       const accept = init?.headers?.['accept'] ?? defaultContentType;
+      const requestType = init?.headers?.['content-type'] ?? defaultContentType;
       const headers = {
         ...baseHeaders,
         ...init?.headers,
@@ -542,9 +538,20 @@ function createSdkFor<
         'content-type': requestType,
         accept,
       };
+
+      let body;
+      if (rawBody !== undefined) {
+        const encode = encoder ?? encoders.getBest(requestType);
+        body = await encode(rawBody, {
+          contentType: requestType,
+          headers,
+          options: init?.options,
+        });
+      }
       if (body === undefined) {
         delete headers['content-type'];
       }
+
       const res = await realFetch(url, {
         ...base,
         ...input.options,
@@ -557,7 +564,11 @@ function createSdkFor<
       let data;
       if (clause.contentType) {
         const decode = decoder ?? decoders.getBest(clause.contentType);
-        data = await decode(res, {contentType: clause.contentType});
+        data = await decode(res, {
+          contentType: clause.contentType,
+          headers,
+          options: init?.options,
+        });
       }
       return {code: clause.code, data, raw: res};
     };
