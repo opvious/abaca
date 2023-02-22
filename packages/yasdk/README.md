@@ -2,7 +2,29 @@
 
 Yet another TypeScript OpenAPI SDK generator
 
+
+
+```typescript
+const sdk = createSdk(API_URL);
+
+const res = await sdk.runSomeOperation({
+  parameters: {/* ... */}, // Checked
+  body: {/* ... */}, // Checked
+  headers: {
+    accept: 'application/json', // Checked (and optional)
+    'content-type': 'application/json', // Checked (and optional)
+  },
+});
+
+switch (res.code) {
+  case 200:
+    res.data; // Narrowed (based on code and `accept` header)
+  // ...
+}
+```
+
 + [Motivation](https://github.com/mtth/yasdk#why)
++ [Typings overview](https://github.com/mtth/yasdk#typings-overview)
 + [Examples](https://github.com/mtth/yasdk#examples)
 
 ## Quickstart
@@ -36,3 +58,4 @@ SDK creation supports the following options:
   `'accept'` headers when omitted
 + `encoders`, request body encoders
 + `decoders`, response decoders
++ `coercer`, unexpected response content-type handler

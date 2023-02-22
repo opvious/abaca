@@ -117,17 +117,17 @@ export type ResponseData<
 > = ResponseDataFor<operations[K], C, M>;
 
 export type CreateSdkOptions<
-  F = typeof fetch,
+  F extends BaseFetch = typeof fetch,
   M extends string = typeof JSON_MIME_TYPE
 > = CreateSdkOptionsFor<operations, F, M>;
 
 export type Sdk<
-  F = typeof fetch,
+  F extends BaseFetch = typeof fetch,
   M extends string = typeof JSON_MIME_TYPE
 > = SdkFor<operations, F, M>;
 
 export function createSdk<
-  F = typeof fetch,
+  F extends BaseFetch = typeof fetch,
   M extends string = typeof JSON_MIME_TYPE
 >(
   url: string | URL,

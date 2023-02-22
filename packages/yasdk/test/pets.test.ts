@@ -12,6 +12,7 @@ import {createSdk, RequestBody, ResponseData, Sdk, types} from './pets-sdk.gen';
 describe('pets', () => {
   let sdk: Sdk<typeof fetch>;
   let app: Koa<any, any>;
+  let root: string;
   let server: http.Server;
 
   beforeAll(async () => {
@@ -20,10 +21,8 @@ describe('pets', () => {
     server = await startApp(app);
     const addr = server.address();
     assert(addr, 'Missing server address');
-    sdk = createSdk(
-      typeof addr == 'string' ? addr : `http://localhost:${addr.port}`,
-      {fetch}
-    );
+    root = typeof addr == 'string' ? addr : `http://localhost:${addr.port}`;
+    sdk = createSdk(root, {fetch});
   });
 
   afterAll(() => {
@@ -217,6 +216,20 @@ describe('pets', () => {
         throw absurd(res);
     }
   });
+
+  test('custom fetch', async () => {
+    const sdk = createSdk<typeof fetch>(root, {
+      fetch: (url, init) => {
+        init.headers.boom = '1';
+        return fetch(url, init);
+      },
+    });
+    const res = await sdk.createPet({body: {name: ''}});
+    expect(res).toMatchObject({
+      code: 'default',
+      raw: {status: 599},
+    });
+  });
 });
 
 function newRouter(): Router {
@@ -239,6 +252,10 @@ function newRouter(): Router {
       ctx.body = [...pets.values()];
     })
     .post('/pets', (ctx) => {
+      if (ctx.get('boom')) {
+        ctx.status = 599;
+        return;
+      }
       const id = '' + (pets.size + 1);
       pets.set(id, {...ctx.request.body, id});
       ctx.status = 201;
