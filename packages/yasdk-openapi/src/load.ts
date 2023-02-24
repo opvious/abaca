@@ -1,4 +1,4 @@
-import { errorFactories, unexpected} from '@opvious/stl-errors';
+import {errorFactories, unexpected} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {readFile} from 'fs/promises';
 import {

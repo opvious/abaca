@@ -1,10 +1,12 @@
-import {assert} from '@opvious/stl-errors';
-import {Resolver} from '@stoplight/json-ref-resolver';
 import {Command} from 'commander';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import generateTypes from 'openapi-typescript';
 import path from 'path';
-import {loadOpenapiDocument, OpenapiDocuments} from 'yasdk-openapi';
+import {
+  loadOpenapiDocument,
+  OpenapiDocuments,
+  RefResolver,
+} from 'yasdk-openapi';
 
 const COMMAND_NAME = 'yasdk';
 
@@ -58,13 +60,7 @@ const methods = [
 async function generateValues(
   doc: OpenapiDocuments['3.0' | '3.1']
 ): Promise<string> {
-  const resolver = new Resolver();
-
-  async function resolve(ref: any): Promise<any> {
-    const resolved = await resolver.resolve(doc, {jsonPointer: ref});
-    assert(!resolved.errors.length, 'Unable to resolve path');
-    return resolved.result;
-  }
+  const resolver = RefResolver.create(doc);
 
   const ops: any = {};
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
@@ -76,13 +72,17 @@ async function generateValues(
       const codes: Record<string, string[]> = {};
       for (const [code, refOrRes] of Object.entries(op.responses)) {
         const res =
-          '$ref' in refOrRes ? await resolve(refOrRes.$ref) : refOrRes;
+          '$ref' in refOrRes
+            ? await resolver.resolve<any>(refOrRes.$ref)
+            : refOrRes;
         codes[code] = Object.keys(res.content ?? {});
       }
       const parameters: Record<string, string> = {};
       for (const refOrParam of op.parameters ?? []) {
         const param =
-          '$ref' in refOrParam ? await resolve(refOrParam.$ref) : refOrParam;
+          '$ref' in refOrParam
+            ? await resolver.resolve<any>(refOrParam.$ref)
+            : refOrParam;
         parameters[param.name] = param.in;
       }
       ops[op?.operationId] = {path, method, codes, parameters};
