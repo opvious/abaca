@@ -1,0 +1,9 @@
+{
+  "extends": "@opvious/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "module": "node16",
+    "outDir": "../lib",
+    "tsBuildInfoFile": "../out/.tsbuildinfo"
+  }
+}

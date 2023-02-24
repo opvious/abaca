@@ -7,7 +7,11 @@ paths:
     get:
       operationId: getTable
       parameters:
-        - $ref: "#/components/parameters/TableId"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: A matching table was found
@@ -25,7 +29,11 @@ paths:
       tags:
         - pets
       parameters:
-        - $ref: "#/components/parameters/TableId"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -41,13 +49,6 @@ paths:
         '204':
           description: Table updated
 components:
-  parameters:
-    TableId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
   schemas:
     Table:
       type: object

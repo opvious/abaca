@@ -20,11 +20,11 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
-    "gen-test-pets": "[ -e test/pets-sdk.gen.ts ] || ./bin/yasdk.js -i test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
-    "gen-test-tables": "[ -e test/tables-sdk.gen.ts ] || ./bin/yasdk.js -i test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
-    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
+    "gen-test-pets": "./bin/yasdk.js -i test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
+    "gen-test-tables": "./bin/yasdk.js -i test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-test": "([ -e test/pets-sdk.gen.ts ] || pnpm run gen-test-pets) && ([ -e test/tables-sdk.gen.ts ] || pnpm run gen-test-tables)",
     "prepare": "pnpm run build",
-    "test": "pnpm run gen-test && jest",
+    "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
   },
   "dependencies": {

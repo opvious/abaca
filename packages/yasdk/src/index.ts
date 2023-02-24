@@ -24,9 +24,7 @@ export function mainCommand(): Command {
         versions: ['3.0', '3.1'],
       });
       const [typesStr, preambleStr, valuesStr] = await Promise.all([
-        // `YAML.parse` produces immutable nodes, this is a hack to produce a
-        // mutable clone.
-        generateTypes(JSON.parse(JSON.stringify(doc)), {
+        generateTypes(doc, {
           commentHeader: '',
           immutableTypes: true,
         }),
@@ -34,7 +32,7 @@ export function mainCommand(): Command {
         generateValues(doc),
       ]);
       const out = [
-        '// This file was auto-generated\n',
+        '// No not edit, this file was auto-generated\n',
         preambleStr,
         typesStr
           .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')

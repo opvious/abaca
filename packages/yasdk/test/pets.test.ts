@@ -5,6 +5,7 @@ import Koa from 'koa';
 import koaBody from 'koa-body';
 import fetch from 'node-fetch';
 import {Writable} from 'ts-essentials';
+import {afterAll, beforeAll, describe, expect, test} from 'vitest';
 
 import {startApp, touch} from './helpers';
 import {createSdk, RequestBody, ResponseData, Sdk, types} from './pets-sdk.gen';

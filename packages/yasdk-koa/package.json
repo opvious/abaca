@@ -1,9 +1,10 @@
 {
-  "name": "yasdk-openapi",
+  "name": "yasdk-koa",
   "version": "0.1.6",
   "repository": "github:mtth/yasdk",
   "description": "YASDK OpenAPI utilities",
   "keywords": [
+    "koa",
     "openapi",
     "yasdk"
   ],
@@ -27,15 +28,13 @@
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
     "prepare": "pnpm run build",
-    "test": "vitest",
     "watch": "tsc -b -w src"
   },
   "dependencies": {
     "@opvious/stl-errors": "^0.15.8",
     "@opvious/stl-utils": "^0.15.8",
-    "@stoplight/json-ref-resolver": "^3.1.5",
-    "openapi-schema-validator": "^12.1.0",
     "openapi-types": "^12.1.0",
-    "yaml": "^2.2.1"
+    "yaml": "^2.2.1",
+    "yasdk-openapi": "workspace:*"
   }
 }

@@ -1,31 +1,52 @@
-import {assert, unexpected} from '@opvious/stl-errors';
+import { errorFactories, unexpected} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {Resolver} from '@stoplight/json-ref-resolver';
 import {readFile} from 'fs/promises';
-import {default as validation} from 'openapi-schema-validator';
+import {
+  default as validation,
+  OpenAPISchemaValidatorResult,
+} from 'openapi-schema-validator';
 import {OpenAPIV2, OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import path from 'path';
 import YAML from 'yaml';
 
-const SchemaValidator = validation.default;
+const [errors] = errorFactories({
+  definitions: {
+    invalidSchema: (issues: ReadonlyArray<ValidationIssue>) => ({
+      message:
+        'OpenAPI schema is invalid: ' +
+        issues.map(formatValidationIssue).join(', '),
+      tags: {issues},
+    }),
+    unexpectedVersion: (got: string, want: ReadonlyArray<OpenapiVersion>) => ({
+      message: `OpenAPI version ${got} is not acceptable`,
+      tags: {got, want},
+    }),
+  },
+});
+
+type ValidationIssue = OpenAPISchemaValidatorResult['errors'][number];
+
+function formatValidationIssue(i: ValidationIssue): string {
+  return `[${i.instancePath}] ${i.message}`;
+}
+
+const SchemaValidator = validation.default ?? validation; // Hack.
 
 /** Reads and validates an OpenAPI schema from a path. */
 export async function loadOpenapiDocument<V extends OpenapiVersion>(
-  /** File path, currently only YAML paths are supported. */
-  fp: string,
+  /** File path or URL. */
+  fp: string | URL,
   opts?: {
     /** Acceptable document versions. */
     readonly versions?: ReadonlyArray<V>;
     /** Custom decoding reviver. */
     readonly reviver?: (k: unknown, v: unknown) => unknown;
-    /** Resolve all `$refs` in the schema. */
-    readonly resolveReferences?: boolean;
   }
 ): Promise<OpenapiDocuments[V]> {
   const str = await readFile(fp, 'utf8');
 
   let obj;
-  const ext = path.extname(fp);
+  const ext = path.extname('' + fp);
   switch (ext) {
     case '.json':
       obj =
@@ -41,30 +62,21 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(
   }
 
   const version =
-    typeof obj?.openapi == 'string' ? obj.openapi.trim().slice(0, 3) : '';
+    typeof obj?.openapi == 'string'
+      ? obj.openapi.trim().slice(0, 3)
+      : obj.swagger;
   const allowed = opts?.versions ?? allVersions;
-  assert(allowed.includes(version), 'Incompatible version: %s', version);
+  if (!allowed.includes(version)) {
+    throw errors.unexpectedVersion(version, allowed);
+  }
 
   const validator = new SchemaValidator({version});
   const validated = validator.validate(obj);
-  assert(
-    !validated.errors.length,
-    'OpenAPI schema validation errors: %j',
-    validated.errors
-  );
-
-  if (!opts?.resolveReferences) {
-    return obj;
+  if (validated.errors.length) {
+    throw errors.invalidSchema(validated.errors);
   }
 
-  const resolver = new Resolver();
-  const resolved = await resolver.resolve(obj);
-  assert(
-    !resolved.errors.length,
-    'OpenAPI schema resolution errors: %j',
-    resolved.errors
-  );
-  return resolved.result;
+  return obj;
 }
 
 export interface OpenapiDocuments {
