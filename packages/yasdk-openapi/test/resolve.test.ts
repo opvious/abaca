@@ -23,7 +23,7 @@ describe('resolve references', () => {
       await resolver.resolve('#/missing');
       fail();
     } catch (err) {
-      expect(err).toMatchObject({code: 'ERR_UNRESOLVABLE'});
+      expect(err).toMatchObject({code: 'ERR_UNRESOLVABLE_REFERENCE'});
     }
   });
 });

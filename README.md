@@ -9,6 +9,12 @@ Yet another TypeScript OpenAPI SDK generator
 + Pluggable `fetch` implementation, without patching the global object
 + Customizable codecs, including wildcard support
 
+Alternatives:
+
++ https://github.com/ajaishankar/openapi-typescript-fetch
++ https://github.com/ferdikoomen/openapi-typescript-codegen
++ https://github.com/oazapfts/oazapfts
+
 ## Typings overview
 
 `yasdk` checks request types and narrows response types extensively:

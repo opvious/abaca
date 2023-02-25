@@ -1,3 +1,4 @@
+import {assert} from '@opvious/stl-errors';
 import {Command} from 'commander';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import generateTypes from 'openapi-typescript';
@@ -11,7 +12,7 @@ import {
 const COMMAND_NAME = 'yasdk';
 
 const preambleUrl = new URL(
-  '../resources/preamble/contents.ts',
+  '../resources/preamble/index.gen.ts',
   import.meta.url
 );
 
@@ -24,6 +25,7 @@ export function mainCommand(): Command {
     .action(async (opts) => {
       const doc = await loadOpenapiDocument(opts.input, {
         versions: ['3.0', '3.1'],
+        resolveAllReferences: true,
       });
       const [typesStr, preambleStr, valuesStr] = await Promise.all([
         generateTypes(doc, {
@@ -60,8 +62,6 @@ const methods = [
 async function generateValues(
   doc: OpenapiDocuments['3.0' | '3.1']
 ): Promise<string> {
-  const resolver = RefResolver.create(doc);
-
   const ops: any = {};
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
     for (const method of methods) {
@@ -70,19 +70,13 @@ async function generateValues(
         continue;
       }
       const codes: Record<string, string[]> = {};
-      for (const [code, refOrRes] of Object.entries(op.responses)) {
-        const res =
-          '$ref' in refOrRes
-            ? await resolver.resolve<any>(refOrRes.$ref)
-            : refOrRes;
+      for (const [code, res] of Object.entries(op.responses)) {
+        assert(!('$ref' in res), 'Unexpected reference', res);
         codes[code] = Object.keys(res.content ?? {});
       }
       const parameters: Record<string, string> = {};
-      for (const refOrParam of op.parameters ?? []) {
-        const param =
-          '$ref' in refOrParam
-            ? await resolver.resolve<any>(refOrParam.$ref)
-            : refOrParam;
+      for (const param of op.parameters ?? []) {
+        assert(!('$ref' in param), 'Unexpected reference', param);
         parameters[param.name] = param.in;
       }
       ops[op?.operationId] = {path, method, codes, parameters};
@@ -95,7 +89,17 @@ async function generateValues(
 
 const SUFFIX = `
 
-export type {operations};
+export type {
+  BaseFetch,
+  Coercer,
+  CoercerContext,
+  Decoder,
+  DecoderContext,
+  Encoder,
+  EncoderContext,
+  ResponseCode,
+  operations,
+};
 
 export type types = components['schemas'];
 

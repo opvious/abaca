@@ -11,8 +11,9 @@
   "type": "module",
   "files": [
     "bin/",
-    "lib/",
-    "resources/"
+    "lib/index.d.ts",
+    "lib/index.js",
+    "resources/preamble/index.gen.ts"
   ],
   "bin": "bin/yasdk.js",
   "exports": {},
@@ -20,10 +21,11 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
+    "gen-preamble": "./scripts/assemble-preamble",
     "gen-test-pets": "./bin/yasdk.js -i test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-tables": "./bin/yasdk.js -i test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
-    "gen-test": "([ -e test/pets-sdk.gen.ts ] || pnpm run gen-test-pets) && ([ -e test/tables-sdk.gen.ts ] || pnpm run gen-test-tables)",
-    "prepare": "pnpm run build",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
+    "prepare": "pnpm run gen-preamble && pnpm run build",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
   },

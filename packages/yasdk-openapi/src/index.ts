@@ -1,2 +1,2 @@
 export * from './load.js';
-export * from './resolve.js';
+export {RefResolver} from './resolve.js';

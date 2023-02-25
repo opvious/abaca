@@ -1,5 +1,6 @@
 import {errorFactories, unexpected} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
+import {Resolver} from '@stoplight/json-ref-resolver';
 import {readFile} from 'fs/promises';
 import {
   default as validation,
@@ -8,6 +9,8 @@ import {
 import {OpenAPIV2, OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import path from 'path';
 import YAML from 'yaml';
+
+import {resolveAll} from './resolve.js';
 
 const [errors] = errorFactories({
   definitions: {
@@ -41,6 +44,8 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(
     readonly versions?: ReadonlyArray<V>;
     /** Custom decoding reviver. */
     readonly reviver?: (k: unknown, v: unknown) => unknown;
+    /** Resolve all inline references. */
+    readonly resolveAllReferences?: boolean;
   }
 ): Promise<OpenapiDocuments[V]> {
   const str = await readFile(fp, 'utf8');
@@ -76,7 +81,7 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(
     throw errors.invalidSchema(validated.errors);
   }
 
-  return obj;
+  return opts?.resolveAllReferences ? resolveAll(obj) :obj;
 }
 
 export interface OpenapiDocuments {

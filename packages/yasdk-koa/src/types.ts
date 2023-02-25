@@ -27,72 +27,6 @@ type KeysOfValues<O> = Values<{
   [K in keyof O]: keyof O[K];
 }>;
 
-type AsyncOrSync<V> = V | Promise<V>;
-
-type MimeType = string;
-
-class ByMimeType<V> {
-  private constructor(private readonly entries: Map<MimeType, V>) {}
-
-  static create<V>(fallback: V): ByMimeType<V> {
-    return new ByMimeType(new Map([[FALLBACK_MIME_TYPE, fallback]]));
-  }
-
-  add(key: MimeType, val: V): void {
-    this.entries.set(key, val);
-  }
-
-  addAll(items: Record<MimeType, V> | undefined): void {
-    for (const [key, val] of Object.entries(items ?? {})) {
-      this.add(key, val);
-    }
-  }
-
-  getBest(key: MimeType): V {
-    const exact = this.entries.get(key);
-    if (exact) {
-      return exact;
-    }
-    const partial = this.entries.get(key.replace(/\/.+/, '/*'));
-    if (partial) {
-      return partial;
-    }
-    return this.entries.get(FALLBACK_MIME_TYPE)!;
-  }
-}
-
-type WithGlobs<M> = M | MimeTypePrefixes<M> | '*/*';
-
-type MimeTypePrefixes<M> = M extends `${infer P}/${infer _S}`
-  ? `${P}/*`
-  : never;
-
-type ValuesMatchingMimeType<O, G> = Values<{
-  [M in keyof O]: G extends WithGlobs<M> ? O[M] : never;
-}>;
-
-const JSON_MIME_TYPE = 'application/json';
-
-const jsonEncoder: Encoder<any> = (body) => JSON.stringify(body);
-
-const jsonDecoder: Decoder<any> = (res) => res.json();
-
-const TEXT_MIME_TYPE = 'text/*';
-
-const textEncoder: Encoder<any> = (body) => (body == null ? '' : '' + body);
-
-const textDecoder: Decoder<any> = (res) => res.text();
-
-const FALLBACK_MIME_TYPE = '*/*';
-
-const fallbackEncoder: Encoder<any> = (_body, ctx) => {
-  throw new Error('Unsupported request content-type: ' + ctx.contentType);
-};
-
-const fallbackDecoder: Decoder<any> = (_res, ctx) => {
-  throw new Error('Unsupported response content-type: ' + ctx.contentType);
-};
-
 type OperationTypes<N extends string = string> = {
   readonly [K in N]: OperationType;
 };
@@ -128,11 +62,6 @@ type ContentType = unknown;
 
 export type ResponseCode = number | ResponseCodeRange | 'default' | string;
 
-export type Coercer<F> = (
-  res: ResponseFor<F>,
-  ctx: CoercerContext
-) => MimeType | undefined;
-
 export interface CoercerContext {
   readonly contentType: MimeType | undefined;
   readonly accepted: ReadonlySet<MimeType>;
@@ -151,7 +80,6 @@ const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
   );
 };
 
-type ResponseCodeRange = '2XX' | '3XX' | '4XX' | '5XX';
 
 class ResponseClauseMatcher {
   private constructor(
@@ -518,13 +446,13 @@ function createSdkFor<
 
       const url = new URL(root + formatPath(op.path, params));
       const paramHeaders: any = {};
-      for (const [name, val] of Object.entries(params)) {
+      for (const [name, val] of Object.entries<any>(params)) {
         switch (op.parameters[name]) {
           case 'header':
-            paramHeaders[name] = val;
+            paramHeaders[name] = encodeURIComponent(val);
             break;
           case 'query':
-            url.searchParams.set(name, '' + val);
+            url.searchParams.set(name, encodeURIComponent(val));
             break;
         }
       }

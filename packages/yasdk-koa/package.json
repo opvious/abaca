@@ -31,10 +31,21 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
+    "@koa/router": "^10.1.1",
     "@opvious/stl-errors": "^0.15.8",
     "@opvious/stl-utils": "^0.15.8",
+    "co-body": "^6.1.0",
     "openapi-types": "^12.1.0",
     "yaml": "^2.2.1",
     "yasdk-openapi": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/co-body": "^6.1.0",
+    "@types/koa": "^2.13.1",
+    "@types/koa__router": "^8.0.11",
+    "@types/node-fetch": "^2.6.2",
+    "koa": "^2.13.1",
+    "koa-body": "^6.0.1",
+    "node-fetch": "^2.6.7"
   }
 }
