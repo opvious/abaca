@@ -43,32 +43,5 @@
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
     "node-fetch": "^2.6.7"
-  },
-  "jest": {
-    "coverageDirectory": "../../out/coverage/yasdk",
-    "coveragePathIgnorePatterns": [
-      "<rootDir>/node_modules/",
-      "<rootDir>/test/"
-    ],
-    "setupFilesAfterEnv": [
-      "jest-extended/all"
-    ],
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      ".d.ts",
-      ".js"
-    ],
-    "transform": {
-      "^.+\\.ts$": [
-        "ts-jest",
-        {
-          "babelConfig": {
-            "compact": false
-          },
-          "tsconfig": "test/tsconfig.json"
-        }
-      ]
-    }
-  },
-  "typedocMain": "src/index.ts"
+  }
 }
