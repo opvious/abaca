@@ -90,18 +90,18 @@ export type ResponsesMatchingMimeType<R extends ResponsesType, G> = Values<{
     : never;
 }>;
 
-export class ResponseClauseMatcher {
+export class ResponseClauseMatcher<S = null> {
   private constructor(
-    private readonly data: ReadonlyMap<ResponseCode, ReadonlySet<MimeType>>
+    private readonly data: ReadonlyMap<ResponseCode, ReadonlyMap<MimeType, S>>
   ) {}
 
-  static create(
-    codes: OperationDefinition['codes']
-  ): ResponseClauseMatcher {
-    const data = new Map<ResponseCode, Set<MimeType>>();
-    for (const [code, mtypes] of Object.entries(codes)) {
+  static create<S>(
+    responses: OperationDefinition<S>['responses']
+  ): ResponseClauseMatcher<S> {
+    const data = new Map<ResponseCode, Map<MimeType, S>>();
+    for (const [code, mtypes] of Object.entries(responses)) {
       const ncode = +code;
-      data.set(isNaN(ncode) ? code : ncode, new Set(mtypes));
+      data.set(isNaN(ncode) ? code : ncode, new Map(Object.entries(mtypes)));
     }
     return new ResponseClauseMatcher(data);
   }
@@ -111,20 +111,21 @@ export class ResponseClauseMatcher {
     readonly accepted: MimeType;
     readonly proposed: MimeType | '';
     readonly coerce: (eligible: ReadonlySet<MimeType>) => MimeType | undefined;
-  }): ResponseClause {
+  }): ResponseClause<S> {
     const {status, accepted, proposed, coerce} = args;
     const code = this.getBestCode(status);
     const declared = this.data.get(code);
+    const exact = declared?.get(proposed);
     if (
       proposed &&
-      declared?.has(proposed) &&
+      exact !== undefined &&
       contentTypeMatches(proposed, accepted)
     ) {
-      return {code, contentType: proposed};
+      return {code, contentType: proposed, schema: exact};
     }
     const eligible = new Set<MimeType>();
     if (declared) {
-      for (const mtype of declared) {
+      for (const [mtype] of declared) {
         if (contentTypeMatches(mtype, accepted)) {
           eligible.add(mtype);
         }
@@ -133,11 +134,16 @@ export class ResponseClauseMatcher {
     if (!eligible.size && !proposed) {
       return {code};
     }
-    return {code, contentType: coerce(eligible)};
+    const coerced = coerce(eligible);
+    return {
+      code,
+      contentType: coerced,
+      schema: coerced == null ? undefined : declared?.get(coerced),
+    };
   }
 
   declaredMimeTypes(status: number): ReadonlySet<MimeType> {
-    return this.data.get(this.getBestCode(status)) ?? new Set();
+    return new Set(this.data.get(this.getBestCode(status))?.keys());
   }
 
   private getBestCode(status: number): ResponseCode {
@@ -153,7 +159,8 @@ export class ResponseClauseMatcher {
   }
 }
 
-export interface ResponseClause {
+export interface ResponseClause<S = null> {
   readonly code: ResponseCode;
   readonly contentType?: MimeType;
+  readonly schema?: S;
 }

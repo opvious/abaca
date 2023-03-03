@@ -35,6 +35,31 @@ describe('load OpenAPI document', () => {
   });
 });
 
+describe('extract operation definitions', () => {
+  test('null hook', async () => {
+    const doc = await sut.loadOpenapiDocument(resourceUrl('pets.openapi.yaml'));
+    const defs = sut.extractOperationDefinitions(doc);
+    expect(defs).toEqual({
+      listPets: {
+        path: '/pets',
+        method: 'get',
+        parameters: {
+          limit: {location: 'query', schema: null},
+        },
+        responses: {
+          '200': {'application/json': null},
+          '2XX': {'text/plain': null},
+        },
+      },
+      createPet: {
+        path: '/pets',
+        method: 'post',
+
+      },
+    });
+  });
+});
+
 function resourceUrl(name: string): URL {
   return new URL(`./resources/${name}`, import.meta.url);
 }

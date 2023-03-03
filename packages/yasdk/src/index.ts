@@ -5,6 +5,7 @@ import generateTypes from 'openapi-typescript';
 import path from 'path';
 import {
   loadOpenapiDocument,
+  extractOperationDefinitions,
   OpenapiDocuments,
   RefResolver,
 } from 'yasdk-openapi';
@@ -48,40 +49,10 @@ export function mainCommand(): Command {
     });
 }
 
-const methods = [
-  'get',
-  'put',
-  'post',
-  'delete',
-  'options',
-  'head',
-  'patch',
-  'trace',
-] as const;
-
 async function generateValues(
   doc: OpenapiDocuments['3.0' | '3.1']
 ): Promise<string> {
-  const ops: any = {};
-  for (const [path, item] of Object.entries(doc.paths ?? {})) {
-    for (const method of methods) {
-      const op = item?.[method];
-      if (!op?.operationId) {
-        continue;
-      }
-      const codes: Record<string, string[]> = {};
-      for (const [code, res] of Object.entries(op.responses)) {
-        assert(!('$ref' in res), 'Unexpected reference', res);
-        codes[code] = Object.keys(res.content ?? {});
-      }
-      const parameters: Record<string, string> = {};
-      for (const param of op.parameters ?? []) {
-        assert(!('$ref' in param), 'Unexpected reference', param);
-        parameters[param.name] = param.in;
-      }
-      ops[op?.operationId] = {path, method, codes, parameters};
-    }
-  }
+  const ops = extractOperationDefinitions(doc);
   let out = `const allOperations = ${JSON.stringify(ops, null, 2)} as const;`;
   out += SUFFIX;
   return out;

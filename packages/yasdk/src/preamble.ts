@@ -83,6 +83,8 @@ export type Coercer<F> = (
 ) => MimeType | undefined;
 
 export interface CoercerContext {
+  readonly path: string;
+  readonly method: string;
   readonly contentType: MimeType | undefined;
   readonly eligible: ReadonlySet<MimeType>;
 }
@@ -93,7 +95,8 @@ const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
     return undefined;
   }
   throw new Error(
-    `Unexpected response content type ${mtype} for status ${res.status}`
+    `Unexpected ${ctx.path} ${ctx.method} response content type ${mtype} ` +
+      `for status ${res.status}`
   );
 };
 
@@ -272,8 +275,7 @@ interface BaseResponse {
   };
 }
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-function createSdkFor<
+export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE
@@ -301,7 +303,7 @@ function createSdkFor<
 
   const fetchers: any = {};
   for (const [id, op] of Object.entries<OperationDefinition>(operations)) {
-    const clauseMatcher = ResponseClauseMatcher.create(op.codes);
+    const clauseMatcher = ResponseClauseMatcher.create(op.responses);
     fetchers[id] = async (init: any): Promise<any> => {
       const {body: rawBody, encoder, decoder, ...input} = init ?? {};
       const params = input?.parameters ?? {};
@@ -309,7 +311,7 @@ function createSdkFor<
       const url = new URL(root + formatPath(op.path, params));
       const paramHeaders: any = {};
       for (const [name, val] of Object.entries<any>(params)) {
-        switch (op.parameters[name]) {
+        switch (op.parameters[name]?.location) {
           case 'header':
             paramHeaders[name] = encodeURIComponent(val);
             break;
@@ -355,7 +357,12 @@ function createSdkFor<
         status: res.status,
         accepted: accept,
         proposed: received,
-        coerce: (eligible) => coercer(res, {contentType: received, eligible}),
+        coerce: (eligible) => coercer(res, {
+          path: op.path,
+          method: op.method,
+          contentType: received,
+          eligible,
+        }),
       });
       let data;
       if (clause.contentType) {
@@ -371,6 +378,7 @@ function createSdkFor<
   }
   return fetchers;
 }
+
 function formatPath(p: string, o: Record<string, unknown>): string {
   return p.replace(/{[^}]+}/, (s) => {
     const r = o[s.slice(1, -1)];
@@ -378,7 +386,7 @@ function formatPath(p: string, o: Record<string, unknown>): string {
   });
 }
 
-interface CreateSdkOptionsFor<
+export interface CreateSdkOptionsFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE
@@ -418,14 +426,12 @@ interface CreateSdkOptionsFor<
   readonly coercer?: Coercer<F>;
 }
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-type RequestBodyFor<
+export type RequestBodyFor<
   O extends OperationType,
   M extends MimeType = typeof JSON_MIME_TYPE
 > = Get<Lookup<Lookup<O, 'requestBody'>, 'content'>, M>;
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-type RequestParametersFor<O extends OperationType> = Lookup<
+export type RequestParametersFor<O extends OperationType> = Lookup<
   O['parameters'],
   'path',
   {}
@@ -433,8 +439,7 @@ type RequestParametersFor<O extends OperationType> = Lookup<
   Lookup<O['parameters'], 'query', {}> &
   Lookup<O['parameters'], 'headers', {}>;
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-type ResponseDataFor<
+export type ResponseDataFor<
   O extends OperationType,
   C extends keyof O['responses'],
   M extends MimeType = typeof JSON_MIME_TYPE

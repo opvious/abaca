@@ -1,4 +1,4 @@
-import {errorFactories, unexpected} from '@opvious/stl-errors';
+import {assert, errorFactories, unexpected} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {Resolver} from '@stoplight/json-ref-resolver';
 import {readFile} from 'fs/promises';
@@ -11,6 +11,7 @@ import path from 'path';
 import YAML from 'yaml';
 
 import {resolveAll} from './resolve.js';
+import {OperationDefinition, ParameterDefinition} from './preamble/operations.js';
 
 const [errors] = errorFactories({
   definitions: {
@@ -95,3 +96,71 @@ export type OpenapiVersion = keyof OpenapiDocuments;
 export type OpenapiDocument = OpenapiDocuments[OpenapiVersion];
 
 const allVersions = ['2.0', '3.0', '3.1'] as const;
+
+/** The input document must be fully resolved. */
+export function extractOperationDefinitions(
+  doc: OpenapiDocument
+): Record<string, OperationDefinition>
+export function extractOperationDefinitions<S>(
+  doc: OpenapiDocument,
+  hook: (schema: unknown) => S
+): Record<string, OperationDefinition<S>>;
+export function extractOperationDefinitions(
+  doc: OpenapiDocument,
+  hook: (schema: any) => any = () => null
+): Record<string, OperationDefinition> {
+
+  const defs: Record<string, OperationDefinition<any>> = {};
+  for (const [path, item] of Object.entries(doc.paths ?? {})) {
+    for (const method of allOperationMethods) {
+      const op = item?.[method];
+      if (!op?.operationId) {
+        continue;
+      }
+      const responses: Record<string, Record<string, any>> = {};
+      for (const [code, res] of Object.entries<any>(op.responses)) {
+        assert(!('$ref' in res), 'Unexpected reference', res);
+        responses[code] = contentSchemas(res.content ?? {});
+      }
+      const parameters: Record<string, ParameterDefinition<any>> = {};
+      for (const param of op.parameters ?? []) {
+        assert(!('$ref' in param), 'Unexpected reference', param);
+        parameters[param.name] = {
+          location: param.in,
+          required: !!param.required,
+          schema: hook(param.schema),
+        };
+      }
+      defs[op.operationId] = {
+        path,
+        method,
+        parameters,
+        body: ifPresent(op.requestBody, (b) => ({
+          required: !!b.required,
+          schemas: contentSchemas(b.content)
+        })),
+        responses,
+      };
+    }
+  }
+  return defs;
+
+  function contentSchemas(obj: any): Record<string, any> {
+    const ret: Record<string, any> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      ret[key] = hook(val);
+    }
+    return ret;
+  }
+}
+
+const allOperationMethods = [
+  'get',
+  'put',
+  'post',
+  'delete',
+  'options',
+  'head',
+  'patch',
+  'trace',
+] as const;

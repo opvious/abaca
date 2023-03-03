@@ -63,15 +63,27 @@ export type ResponseCodesMatching<C extends ResponseCode> = C extends number
 
 // Reified definitions
 
-export type OperationDefinitions<O> = {
-  readonly [K in keyof O]: OperationDefinition;
+export type OperationDefinitions<O, S = null> = {
+  readonly [K in keyof O]: OperationDefinition<S>;
 };
 
-export interface OperationDefinition {
+export interface OperationDefinition<S = null> {
   readonly path: string;
   readonly method: string;
-  readonly parameters: Record<string, ParameterLocation>;
-  readonly codes: Record<ResponseCode, ReadonlyArray<MimeType>>;
+  readonly parameters: Record<string, ParameterDefinition<S>>;
+  readonly body?: BodyDefinition<S>;
+  readonly responses: Record<ResponseCode, Record<MimeType, S>>;
+}
+
+export interface ParameterDefinition<S> {
+  readonly location: ParameterLocation;
+  readonly required: boolean;
+  readonly schema: S;
 }
 
 export type ParameterLocation = 'header' | 'path' | 'query';
+
+export interface BodyDefinition<S> {
+  readonly required: boolean;
+  readonly schemas: Record<MimeType, S>;
+}
