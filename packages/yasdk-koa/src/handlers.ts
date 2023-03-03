@@ -20,6 +20,7 @@ import {
   ParametersType,
   ResponseClauseMatcher,
   ResponseCode,
+  ResponseCodesMatching,
   ResponseMimeTypes,
   ResponsesMatchingMimeType,
   ResponsesType,
@@ -34,9 +35,57 @@ export type HandlersFor<O extends OperationTypes, S = {}> = {
 }
 
 export type HandlerFor<O extends OperationType, S = {}> =
-  (ctx: Koa.ParameterizedContext<S, ContextFor<O>>) => AsyncOrSync<ResponseDataFor<O>>;
+  (ctx: Koa.ParameterizedContext<S, ContextFor<O>>) => AsyncOrSync<ValueFor<O>>;
 
-type ContextFor<_O extends OperationType> = Values<{
+type ContextFor<O extends OperationType> = ContextForBody<OperationBody<O>>;
+
+type ContextForBody<B> = undefined extends B
+  ? {}
+  : B extends undefined
+  ? ContextWithBody<Exclude<B, undefined>> | {}
+  : ContextWithBody<B>;
+
+type ContextWithBody<B> = Values<{
+  [M in keyof B]: {
+    readonly request: {
+      readonly type: M;
+      readonly body: B[M];
+    };
+  }
 }>;
 
-type ResponseDataFor<_O> = any; // TODO: number | D | {code, data, type}
+type OperationBody<O extends OperationType> = Lookup<Lookup<O, 'requestBody'>, 'content'>;
+
+type OperationResponse<O extends OperationType> = O extends OperationType<infer R> ? R : never;
+
+// TODO: number | D | {code, data, type}
+type ValueFor<O> = O extends OperationType<infer R>
+  ? (EmptyData<R> | ImplicitData<R> | ExplicitData<R>)
+  : never;
+
+type EmptyData<R extends ResponsesType> = Values<{
+  [C in keyof R]: Get<Get<R[C], 'content'>, typeof JSON_MIME_TYPE> extends never
+    ? ResponseCodesMatching<C>
+    : never;
+}>;
+
+type ImplicitData<R extends ResponsesType> = Values<{
+  [C in keyof R]: Get<R[C], 'content'> extends Has<typeof JSON_MIME_TYPE, infer V>
+    ? {
+      readonly code: ResponseCodesMatching<C, keyof R>;
+      readonly data: V,
+    }
+    : never
+}>
+
+type ExplicitData<R extends ResponsesType> = Values<{
+  [C in keyof R]: ExplicitDataForCode<C, Get<R[C], 'content'>, keyof R>
+}>
+
+type ExplicitDataForCode<C, D, X> = Values<{
+  [M in keyof D]: {
+    readonly code: ResponseCodesMatching<C, X>;
+    readonly type: M;
+    readonly data: D[M];
+  }
+}>;

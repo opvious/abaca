@@ -27,7 +27,11 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
+    "gen-test-pets": "yasdk -i test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
+    "gen-test-tables": "yasdk -i test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
     "prepare": "pnpm run build",
+    "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src"
   },
   "dependencies": {

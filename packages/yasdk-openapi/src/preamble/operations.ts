@@ -51,15 +51,21 @@ type ResponseCodeString<
 
 type ResponseCodeRangeFor<P extends Prefix> = `${P}XX`;
 
-export type ResponseCodesMatching<C extends ResponseCode> = C extends number
+type AllResponseCodes = ResponseCodeString extends `${infer N extends number}`
+  ? N
+  : never;
+
+export type ResponseCodesMatching<C, X = never> = C extends number
   ? `${C}` extends ResponseCodeString
     ? C
     : never
   : C extends ResponseCodeRangeFor<infer P>
-  ? ResponseCodeString<P> extends `${infer N extends number}`
-    ? N
-    : never
-  : never;
+    ? ResponseCodeString<P> extends `${infer N extends number}`
+      ? Exclude<N, X>
+      : never
+    : C extends 'default'
+      ? Exclude<AllResponseCodes, ResponseCodesMatching<Exclude<X, 'default'>>>
+      : never;
 
 // Reified definitions
 

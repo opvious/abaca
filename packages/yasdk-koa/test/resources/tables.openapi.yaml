@@ -1,0 +1,65 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: Data tables service
+paths:
+  /tables/{id}:
+    get:
+      operationId: getTable
+      parameters:
+        - $ref: "#/components/parameters/TableId"
+      responses:
+        '200':
+          description: A matching table was found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Table"
+            text/csv:
+              schema:
+                type: string
+        '404':
+          description: Table not found
+    put:
+      operationId: setTable
+      tags:
+        - pets
+      parameters:
+        - $ref: "#/components/parameters/TableId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Table"
+          text/csv:
+            schema:
+              type: string
+      responses:
+        '201':
+          description: Table created
+        '204':
+          description: Table updated
+components:
+  parameters:
+    TableId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    Table:
+      type: object
+      required: [rows]
+      properties:
+        header:
+          $ref: "#/components/schemas/Row"
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/Row"
+    Row:
+      type: array
+      items:
+        type: string

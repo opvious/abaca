@@ -1,48 +1,6 @@
 import * as coBody from 'co-body';
 import Koa from 'koa';
-import {AsyncOrSync, ValueOf} from 'ts-essentials';
-
-import {MimeType} from './common.js';
-
-class ByMimeType<V> {
-  private constructor(private readonly entries: Map<MimeType, V>) {}
-
-  static create<V>(fallback: V): ByMimeType<V> {
-    return new ByMimeType(new Map([[FALLBACK_MIME_TYPE, fallback]]));
-  }
-
-  add(key: MimeType, val: V): void {
-    this.entries.set(key, val);
-  }
-
-  addAll(items: Record<MimeType, V> | undefined): void {
-    for (const [key, val] of Object.entries(items ?? {})) {
-      this.add(key, val);
-    }
-  }
-
-  getBest(key: MimeType): V {
-    const exact = this.entries.get(key);
-    if (exact) {
-      return exact;
-    }
-    const partial = this.entries.get(key.replace(/\/.+/, '/*'));
-    if (partial) {
-      return partial;
-    }
-    return this.entries.get(FALLBACK_MIME_TYPE)!;
-  }
-}
-
-type WithGlobs<M> = M | MimeTypePrefixes<M> | '*/*';
-
-type MimeTypePrefixes<M> = M extends `${infer P}/${infer _S}`
-  ? `${P}/*`
-  : never;
-
-type ValuesMatchingMimeType<O, G> = ValueOf<{
-  [M in keyof O]: G extends WithGlobs<M> ? O[M] : never;
-}>;
+import {AsyncOrSync, ResponseCode} from 'yasdk-openapi/preamble';
 
 export type Decoder<B, S = {}> = (
   ctx: Koa.ParameterizedContext<S>
