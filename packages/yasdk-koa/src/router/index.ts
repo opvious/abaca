@@ -21,6 +21,7 @@ import {
   OperationDefinition,
   OperationTypes,
   ResponseClauseMatcher,
+  ResponseCode,
   TEXT_MIME_TYPE,
 } from 'yasdk-openapi/preamble';
 
@@ -79,7 +80,7 @@ const [errors, codes] = errorFactories({
     }),
     invalidResponse: (errors: ReadonlyArray<ErrorObject>) => ({
       message: 'Invalid response body: ' + formatValidationErrors(errors),
-      tags: {errors}
+      tags: {errors},
     }),
     unacceptableResponse: (type: string, eligible: ReadonlyArray<string>) => ({
       message:
@@ -131,6 +132,7 @@ export function operationsRouter<
     try {
       await next();
     } catch (err) {
+      console.error(err);
       if (!isStandardError(err, codes)) {
         throw err;
       }
@@ -176,7 +178,7 @@ export function operationsRouter<
           } catch (err) {
             throw errors.unreadableRequestBody(err);
           }
-          registry.validateRequestBody(body, opid);
+          registry.validateRequestBody(body, opid, qtype);
           Object.assign(ctx.request, {body});
         } else if (def.body?.required) {
           throw errors.missingRequestBody();
@@ -212,7 +214,7 @@ export function operationsRouter<
         }
 
         ctx.type = clause.contentType;
-        registry.validateResponse(data, opid);
+        registry.validateResponse(data, opid, clause.contentType, clause.code);
         const encoder = encoders.getBest(ctx.type);
         await encoder(data, ctx);
       }
@@ -241,17 +243,22 @@ class Registry {
 
   register(schema: any, env: HookEnv): string {
     let key;
-    if (env.target.kind === 'parameter') {
-      const {name} = env.target;
-      key = schemaKey(env.operationId, name);
+    const {operationId, target} = env;
+    if (target.kind === 'parameter') {
+      const {name} = target;
+      key = schemaKey(operationId, name);
       // Nest within an object to enable coercion and better error reporting.
-      this.parameters.addSchema({
-        type: 'object',
-        properties: {[name]: schema},
-        required: [name],
-      }, key);
+      this.parameters.addSchema(
+        {
+          type: 'object',
+          properties: {[name]: schema ?? {type: 'string'}},
+          required: [name],
+        },
+        key
+      );
     } else {
-      key = schemaKey(env.operationId, env.target.kind);
+      const code = 'code' in target ? target.code : undefined;
+      key = schemaKey(operationId, bodySchemaSuffix(target.type, code));
       this.bodies.addSchema(schema, key);
     }
     return key;
@@ -300,8 +307,8 @@ class Registry {
     }
   }
 
-  validateRequestBody(body: unknown, opid: string): void {
-    const key = schemaKey(opid, 'requestBody');
+  validateRequestBody(body: unknown, opid: string, type: string): void {
+    const key = schemaKey(opid, bodySchemaSuffix(type));
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     if (!validate(body)) {
@@ -309,8 +316,13 @@ class Registry {
     }
   }
 
-  validateResponse(data: unknown, opid: string): void {
-    const key = schemaKey(opid, 'response');
+  validateResponse(
+    data: unknown,
+    opid: string,
+    type: string,
+    code: ResponseCode
+  ): void {
+    const key = schemaKey(opid, bodySchemaSuffix(type, code));
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing response schema', key);
     if (!validate(data)) {
@@ -321,6 +333,10 @@ class Registry {
 
 function schemaKey(opid: string, suffix: string): string {
   return `${opid}#${suffix}`;
+}
+
+function bodySchemaSuffix(type: MimeType, code?: ResponseCode): string {
+  return code == null ? type : `${type}@${code}`;
 }
 
 function formatValidationErrors(errs: ReadonlyArray<ErrorObject>): string {

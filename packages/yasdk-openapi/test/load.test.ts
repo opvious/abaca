@@ -44,16 +44,54 @@ describe('extract operation definitions', () => {
         path: '/pets',
         method: 'get',
         parameters: {
-          limit: {location: 'query', schema: null},
+          limit: {location: 'query', required: false, schema: null},
         },
+        body: undefined,
         responses: {
           '200': {'application/json': null},
           '2XX': {'text/plain': null},
+          default: {'application/json': null},
         },
       },
       createPet: {
         path: '/pets',
         method: 'post',
+        body: {required: true, schemas: {'application/json': null}},
+        parameters: {},
+        responses: {
+          '201': {'text/plain': null},
+          default: {'application/json': null},
+        },
+      },
+      getPetAge: {
+        path: '/pets/{petId}/age',
+        body: undefined,
+        method: 'get',
+        parameters: {petId: {location: 'path', required: true, schema: null}},
+        responses: {
+          '200': {'application/json': null},
+          '400': {'text/plain': null},
+          '404': {},
+        },
+      },
+      showPetById: {
+        path: '/pets/{petId}',
+        body: undefined,
+        method: 'get',
+        parameters: {petId: {location: 'path', required: true, schema: null}},
+        responses: {
+          '200': {'application/json': null},
+          default: {'application/json': null},
+        },
+      },
+      updatePetTag: {
+        path: '/pets/{petId}',
+        body: {required: true, schemas: {'application/json': null}},
+        method: 'put',
+        parameters: {petId: {location: 'path', required: true, schema: null}},
+        responses: {
+          '200': {'application/json': null},
+        },
       },
     });
   });

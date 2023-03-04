@@ -273,7 +273,7 @@ type SdkFunction<O, I, F, M extends MimeType> = {} extends I
     ) => Output<O, Exact<I, A> extends never ? A : {}, F, M>
   : <A extends I>(args: A) => Output<O, A, F, M>;
 
-export type BaseFetch = (url: URL, init: BaseInit) => Promise<BaseResponse>;
+export type BaseFetch = (url: string, init: BaseInit) => Promise<BaseResponse>;
 
 interface BaseInit<B = any> {
   readonly body?: B;
@@ -357,7 +357,7 @@ export function createSdkFor<
         delete headers['content-type'];
       }
 
-      const res = await realFetch(url, {
+      const res = await realFetch('' + url, {
         ...base,
         ...input.options,
         headers,

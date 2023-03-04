@@ -33,12 +33,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pets"
-        '2XX':
-          description: A paged array of pets
-          content:
-            text/plain:
-              schema:
-                $ref: "#/components/schemas/Pets"
         default:
           description: unexpected error
           content:
@@ -138,6 +132,8 @@ paths:
         - name: petId
           in: path
           required: true
+          schema:
+            type: string
       responses:
         '200':
           description: OK

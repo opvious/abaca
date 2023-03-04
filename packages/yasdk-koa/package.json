@@ -48,9 +48,8 @@
     "@types/co-body": "^6.1.0",
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
-    "@types/node-fetch": "^2.6.2",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^3.3.0"
   }
 }

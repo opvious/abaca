@@ -15,6 +15,7 @@ import {
   OperationDefinition,
   ParameterDefinition,
   ParameterLocation,
+  ResponseCode,
 } from './preamble/operations.js';
 import {resolveAll} from './resolve.js';
 
@@ -127,6 +128,7 @@ export function extractOperationDefinitions(
         assert(!('$ref' in res), 'Unexpected reference', res);
         responses[code] = contentSchemas(res.content ?? {}, operationId, {
           kind: 'response',
+          code,
         });
       }
       const parameters: Record<string, ParameterDefinition<any>> = {};
@@ -166,8 +168,11 @@ export function extractOperationDefinitions(
     target: any
   ): Record<string, any> {
     const ret: Record<string, any> = {};
-    for (const [key, val] of Object.entries(obj)) {
-      ret[key] = hook(val, {operationId, target: {...target, type: key}});
+    for (const [key, val] of Object.entries<any>(obj)) {
+      ret[key] = hook(val.schema, {
+        operationId,
+        target: {...target, type: key},
+      });
     }
     return ret;
   }
@@ -180,7 +185,7 @@ export interface HookEnv {
 
 export type HookTarget = KindAmong<{
   requestBody: {readonly type: MimeType; readonly required: boolean};
-  response: {readonly type: MimeType};
+  response: {readonly type: MimeType; readonly code: ResponseCode};
   parameter: {
     readonly name: string;
     readonly required: boolean;

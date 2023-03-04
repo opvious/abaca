@@ -17,5 +17,5 @@ export function resourceUrl(name: string): URL {
 }
 
 export function loadDocument(name: string): Promise<OpenapiDocument> {
-  return loadOpenapiDocument(resourceUrl(name));
+  return loadOpenapiDocument(resourceUrl(name), {resolveAllReferences: true});
 }
