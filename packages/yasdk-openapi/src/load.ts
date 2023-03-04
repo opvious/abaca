@@ -14,7 +14,6 @@ import {
   MimeType,
   OperationDefinition,
   ParameterDefinition,
-  ParameterLocation,
   ResponseCode,
 } from './preamble/operations.js';
 import {resolveAll} from './resolve.js';
@@ -175,7 +174,7 @@ export interface HookEnv {
 export type HookTarget = KindAmong<{
   requestBody: {readonly type: MimeType};
   response: {readonly type: MimeType; readonly code: ResponseCode};
-  parameter: {readonly name: string;};
+  parameter: {readonly name: string};
 }>;
 
 const allOperationMethods = [

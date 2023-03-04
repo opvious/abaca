@@ -125,7 +125,7 @@ export function operationsRouter<
 
   const registry = new Registry();
   const defs = extractOperationDefinitions(doc, (schema, env) => {
-    registry.register(schema, env)
+    registry.register(schema, env);
   });
 
   const router = new Router<any>().use(async (ctx, next) => {

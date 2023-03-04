@@ -1,4 +1,4 @@
-import { assert, unexpected} from '@opvious/stl-errors';
+import {assert, unexpected} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
