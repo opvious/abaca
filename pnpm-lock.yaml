@@ -72,6 +72,7 @@ importers:
       node-fetch: ^3.3.0
       openapi-types: ^12.1.0
       yaml: ^2.2.1
+      yasdk: workspace:*
       yasdk-openapi: workspace:*
     dependencies:
       '@koa/router': 10.1.1
@@ -89,6 +90,7 @@ importers:
       koa: 2.14.1
       koa-body: 6.0.1
       node-fetch: 3.3.0
+      yasdk: link:../yasdk
 
   packages/yasdk-openapi:
     specifiers:
