@@ -224,3 +224,9 @@ await fetchSdk.uploadTable({
 $ pnpm i
 $ pnpm dlx husky install # Set up git hooks, only needed once
 ```
+
+## Alternatives
+
++ https://github.com/ajaishankar/openapi-typescript-fetch
++ https://github.com/ferdikoomen/openapi-typescript-codegen
++ https://github.com/oazapfts/oazapfts

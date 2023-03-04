@@ -1,6 +1,6 @@
 {
   "name": "yasdk-openapi",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "repository": "github:mtth/yasdk",
   "description": "YASDK OpenAPI utilities",
   "keywords": [
@@ -13,7 +13,10 @@
   "files": [
     "lib/"
   ],
-  "exports": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./preamble": "./lib/preamble/index.js"
+  },
   "typesVersions": {
     "*": {
       "*": [
@@ -27,6 +30,7 @@
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
     "prepare": "pnpm run build",
+    "test": "vitest",
     "watch": "tsc -b -w src"
   },
   "dependencies": {
@@ -35,7 +39,6 @@
     "@stoplight/json-ref-resolver": "^3.1.5",
     "openapi-schema-validator": "^12.1.0",
     "openapi-types": "^12.1.0",
-    "openapi-typescript": "^6.1.0",
     "yaml": "^2.2.1"
   }
 }

@@ -1,249 +1,35 @@
-type Has<N extends number | string | symbol, V> = {
-  readonly [K in N]: V;
-};
+import {
+  AllBodyMimeTypes,
+  AllResponseMimeTypes,
+  AllResponsesMatchingMimeType,
+  AsyncOrSync,
+  BodiesMatchingMimeType,
+  ByMimeType,
+  Exact,
+  Get,
+  Has,
+  JSON_MIME_TYPE,
+  Lookup,
+  MimeType,
+  OperationDefinition,
+  OperationDefinitions,
+  OperationType,
+  OperationTypes,
+  ParametersType,
+  PLAIN_MIME_TYPE,
+  ResponseClauseMatcher,
+  ResponseCode,
+  ResponseMimeTypes,
+  ResponsesMatchingMimeType,
+  ResponsesType,
+  TEXT_MIME_TYPE,
+  Values,
+  ValuesMatchingMimeTypes,
+  WithMimeTypeGlobs,
+} from 'yasdk-openapi/preamble';
 
-type Get<O, N extends keyof O | string, D = never> = O extends Has<N, infer V>
-  ? V & {}
-  : D;
-
-type Lookup<O, N extends keyof O | string, D = undefined> = O extends Has<
-  N,
-  infer V
->
-  ? V & {}
-  : O extends Partial<Has<N, infer V>>
-  ? (V & {}) | undefined
-  : D;
-
-type Exact<T, V> = T extends V
-  ? Exclude<keyof T, keyof V> extends never
-    ? T
-    : never
-  : never;
-
-type Values<O> = O[keyof O];
-
-type KeysOfValues<O> = Values<{
-  [K in keyof O]: keyof O[K];
-}>;
-
-type AsyncOrSync<V> = V | Promise<V>;
-
-type MimeType = string;
-
-class ByMimeType<V> {
-  private constructor(private readonly entries: Map<MimeType, V>) {}
-
-  static create<V>(fallback: V): ByMimeType<V> {
-    return new ByMimeType(new Map([[FALLBACK_MIME_TYPE, fallback]]));
-  }
-
-  add(key: MimeType, val: V): void {
-    this.entries.set(key, val);
-  }
-
-  addAll(items: Record<MimeType, V> | undefined): void {
-    for (const [key, val] of Object.entries(items ?? {})) {
-      this.add(key, val);
-    }
-  }
-
-  getBest(key: MimeType): V {
-    const exact = this.entries.get(key);
-    if (exact) {
-      return exact;
-    }
-    const partial = this.entries.get(key.replace(/\/.+/, '/*'));
-    if (partial) {
-      return partial;
-    }
-    return this.entries.get(FALLBACK_MIME_TYPE)!;
-  }
-}
-
-type WithGlobs<M> = M | MimeTypePrefixes<M> | '*/*';
-
-type MimeTypePrefixes<M> = M extends `${infer P}/${infer _S}`
-  ? `${P}/*`
-  : never;
-
-type ValuesMatchingMimeType<O, G> = Values<{
-  [M in keyof O]: G extends WithGlobs<M> ? O[M] : never;
-}>;
-
-const JSON_MIME_TYPE = 'application/json';
-
-const jsonEncoder: Encoder<any> = (body) => JSON.stringify(body);
-
-const jsonDecoder: Decoder<any> = (res) => res.json();
-
-const TEXT_MIME_TYPE = 'text/*';
-
-const textEncoder: Encoder<any> = (body) => (body == null ? '' : '' + body);
-
-const textDecoder: Decoder<any> = (res) => res.text();
-
-const FALLBACK_MIME_TYPE = '*/*';
-
-const fallbackEncoder: Encoder<any> = (_body, ctx) => {
-  throw new Error('Unsupported request content-type: ' + ctx.contentType);
-};
-
-const fallbackDecoder: Decoder<any> = (_res, ctx) => {
-  throw new Error('Unsupported response content-type: ' + ctx.contentType);
-};
-
-type OperationTypes<N extends string = string> = {
-  readonly [K in N]: OperationType;
-};
-
-interface OperationType<
-  R extends ResponsesType = {},
-  P extends ParametersType = {}
-> {
-  readonly parameters?: P;
-  readonly requestBody?: {readonly content: ContentTypes};
-  readonly responses: R;
-}
-
-interface ParametersType<P = {}, Q = {}, H = {}> {
-  readonly path?: P;
-  readonly query?: Q;
-  readonly headers?: H;
-}
-
-interface ResponsesType {
-  readonly [C: ResponseCode]:
-    | never
-    | {
-        readonly content: ContentTypes;
-      };
-}
-
-interface ContentTypes {
-  readonly [M: MimeType]: ContentType;
-}
-
-type ContentType = unknown;
-
-export type ResponseCode = number | ResponseCodeRange | 'default' | string;
-
-export type Coercer<F> = (
-  res: ResponseFor<F>,
-  ctx: CoercerContext
-) => MimeType | undefined;
-
-export interface CoercerContext {
-  readonly contentType: MimeType | undefined;
-  readonly accepted: ReadonlySet<MimeType>;
-  readonly declared: ReadonlySet<MimeType>;
-}
-
-const PLAIN_MIME_TYPE = 'text/plain';
-
-const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
-  const mtype = ctx.contentType;
-  if (mtype === PLAIN_MIME_TYPE &&!ctx.accepted.has(PLAIN_MIME_TYPE)) {
-    return undefined;
-  }
-  throw new Error(
-    `Unexpected response content type ${mtype} for status ${res.status}`
-  );
-};
-
-type ResponseCodeRange = '2XX' | '3XX' | '4XX' | '5XX';
-
-class ResponseClauseMatcher {
-  private constructor(
-    private readonly data: ReadonlyMap<ResponseCode, ReadonlySet<MimeType>>,
-    private readonly coercer: Coercer<BaseFetch>
-  ) {}
-
-  static create(
-    codes: OperationDefinition['codes'],
-    coercer: Coercer<BaseFetch>
-  ): ResponseClauseMatcher {
-    const data = new Map<ResponseCode, Set<MimeType>>();
-    for (const [code, mtypes] of Object.entries(codes)) {
-      const ncode = +code;
-      data.set(isNaN(ncode) ? code : ncode, new Set(mtypes));
-    }
-    return new ResponseClauseMatcher(data, coercer);
-  }
-
-  getBest(res: BaseResponse, accept: MimeType): ResponseClause {
-    const code = this.getBestCode(res.status);
-    const raw = res.headers.get('content-type');
-    const received = raw?.split(';')?.[0];
-    const declared = this.data.get(code);
-    if (
-      received &&
-      declared?.has(received) &&
-      contentTypeMatches(received, accept)
-    ) {
-      return {code, contentType: received};
-    }
-    const accepted = new Set<MimeType>();
-    if (declared) {
-      for (const mtype of declared) {
-        if (contentTypeMatches(mtype, accept)) {
-          accepted.add(mtype);
-        }
-      }
-    }
-    if (!accepted.size && !received) {
-      return {code};
-    }
-    const coerced = this.coercer(res, {
-      contentType: received ?? undefined,
-      accepted,
-      declared: declared ?? new Set(),
-    });
-    return {code, contentType: coerced};
-  }
-
-  private getBestCode(status: number): ResponseCode {
-    const {data} = this;
-    if (data.has(status)) {
-      return status;
-    }
-    const partial = ((status / 100) | 0) + 'XX';
-    if (data.has(partial)) {
-      return partial;
-    }
-    return 'default';
-  }
-}
-
-function contentTypeMatches(exact: MimeType, glob: MimeType): boolean {
-  if (exact === glob || glob === FALLBACK_MIME_TYPE) {
-    return true;
-  }
-  const got = exact.split('/');
-  const want = glob.split('/');
-  return got[0] === want[0] && (got[1] === want[1] || want[1] === '*');
-}
-
-interface ResponseClause {
-  readonly code: ResponseCode;
-  readonly contentType?: MimeType;
-}
-
-type OperationDefinitions<O> = {
-  readonly [K in keyof O]: OperationDefinition;
-};
-
-interface OperationDefinition {
-  readonly path: string;
-  readonly method: string;
-  readonly parameters: Record<string, ParameterLocation>;
-  readonly codes: Record<ResponseCode, ReadonlyArray<MimeType>>;
-}
-
-type ParameterLocation = 'header' | 'path' | 'query';
-
-type Encoders<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [G in WithGlobs<AllBodyMimeTypes<O>>]?: Encoder<
+type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
+  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
     BodiesMatchingMimeType<O, G>,
     F
   >;
@@ -260,19 +46,8 @@ export interface EncoderContext<F> {
   readonly options?: RequestOptionsFor<F>;
 }
 
-type AllBodyMimeTypes<O extends OperationTypes> = Values<{
-  [K in keyof O]: keyof Lookup<O[K]['requestBody'], 'content'>;
-}>;
-
-type BodiesMatchingMimeType<O extends OperationTypes, G> = Values<{
-  [K in keyof O]: ValuesMatchingMimeType<
-    Lookup<O[K]['requestBody'], 'content'>,
-    G
-  >;
-}>;
-
-type Decoders<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [G in WithGlobs<AllResponseMimeTypes<O>>]?: Decoder<
+type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
+  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
     AllResponsesMatchingMimeType<O, G>,
     F
   >;
@@ -289,23 +64,41 @@ export interface DecoderContext<F> {
   readonly options?: RequestOptionsFor<F>;
 }
 
-type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> = Values<{
-  [K in keyof O]: ResponseMimeTypes<O[K]['responses']>;
-}>;
+const jsonEncoder: Encoder<any> = (body) => JSON.stringify(body);
+const jsonDecoder: Decoder<any> = (res) => res.json();
 
-type ResponseMimeTypes<R extends ResponsesType> = KeysOfValues<{
-  [C in keyof R as R[C] extends never ? never : C]: R[C]['content'];
-}>;
+const textEncoder: Encoder<any> = (body) => (body == null ? '' : '' + body);
+const textDecoder: Decoder<any> = (res) => res.text();
 
-type AllResponsesMatchingMimeType<O extends OperationTypes, G> = Values<{
-  [K in keyof O]: ResponsesMatchingMimeType<O[K]['responses'], G>;
-}>;
+const fallbackEncoder: Encoder<any> = (_body, ctx) => {
+  throw new Error('Unsupported request content-type: ' + ctx.contentType);
+};
+const fallbackDecoder: Decoder<any> = (_res, ctx) => {
+  throw new Error('Unsupported response content-type: ' + ctx.contentType);
+};
 
-type ResponsesMatchingMimeType<R extends ResponsesType, G> = Values<{
-  [C in keyof R]: R[C] extends Has<'content', infer O>
-    ? ValuesMatchingMimeType<O, G>
-    : never;
-}>;
+export type Coercer<F> = (
+  res: ResponseFor<F>,
+  ctx: CoercerContext
+) => MimeType | undefined;
+
+export interface CoercerContext {
+  readonly path: string;
+  readonly method: string;
+  readonly contentType: MimeType | undefined;
+  readonly eligible: ReadonlySet<MimeType>;
+}
+
+const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
+  const mtype = ctx.contentType;
+  if (mtype === PLAIN_MIME_TYPE) {
+    return undefined;
+  }
+  throw new Error(
+    `Unexpected ${ctx.path} ${ctx.method} response content type ${mtype} ` +
+      `for status ${res.status}`
+  );
+};
 
 type RequestInitFor<F> = F extends (url: any, init?: infer R) => any
   ? R
@@ -372,7 +165,10 @@ type MaybeAcceptInput<
   M extends MimeType
 > = Values<R> extends never
   ? {}
-  : DefaultAcceptInput<R, F, M> | CustomAcceptInput<R, F>;
+  :
+      | DefaultAcceptInput<R, F, M>
+      | SingleAcceptInput<R, F>
+      | MultiAcceptInput<R, F>;
 
 type DefaultAcceptInput<
   R extends ResponsesType,
@@ -385,12 +181,24 @@ type DefaultAcceptInput<
     }
   : never;
 
-type CustomAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
-  [M in WithGlobs<ResponseMimeTypes<R>> & string]: {
+type SingleAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
+  [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
     readonly headers: {readonly accept: M};
     readonly decoder?: AcceptDecoder<R, F, M>;
   };
 }>;
+
+type MultiAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
+  [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
+    readonly headers: {readonly accept: PrefixedMimeType<M>};
+    readonly decoder?: AcceptDecoder<R, F, ResponseMimeTypes<R>>;
+  };
+}>;
+
+type PrefixedMimeType<
+  M extends MimeType,
+  S extends string = string
+> = `${M}, ${S}`;
 
 type AcceptDecoder<
   R extends ResponsesType,
@@ -432,9 +240,9 @@ type DataOutput<M extends MimeType, R extends ResponsesType> =
   | MaybeUnknownOutput<R>;
 
 type ExpectedDataOutput<M extends MimeType, R extends ResponsesType> = Values<{
-  [C in keyof R]: R[C] extends never
-    ? CodedData<C, undefined>
-    : WithCode<C, ValuesMatchingMimeType<R[C]['content'], M>>;
+  [C in keyof R]: R[C] extends Has<'content', infer O>
+    ? WithCode<C, ValuesMatchingMimeTypes<O, M>>
+    : CodedData<C, undefined>;
 }>;
 
 type WithCode<C, D> = CodedData<C, D extends never ? undefined : D>;
@@ -465,9 +273,7 @@ type SdkFunction<O, I, F, M extends MimeType> = {} extends I
     ) => Output<O, Exact<I, A> extends never ? A : {}, F, M>
   : <A extends I>(args: A) => Output<O, A, F, M>;
 
-const defaultEmptyTypes = ['text/plain'];
-
-export type BaseFetch = (url: URL, init: BaseInit) => Promise<BaseResponse>;
+export type BaseFetch = (url: string, init: BaseInit) => Promise<BaseResponse>;
 
 interface BaseInit<B = any> {
   readonly body?: B;
@@ -482,8 +288,7 @@ interface BaseResponse {
   };
 }
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-function createSdkFor<
+export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE
@@ -511,20 +316,20 @@ function createSdkFor<
 
   const fetchers: any = {};
   for (const [id, op] of Object.entries<OperationDefinition>(operations)) {
-    const clauseMatcher = ResponseClauseMatcher.create(op.codes, coercer);
+    const clauseMatcher = ResponseClauseMatcher.create(op.responses);
     fetchers[id] = async (init: any): Promise<any> => {
       const {body: rawBody, encoder, decoder, ...input} = init ?? {};
       const params = input?.parameters ?? {};
 
       const url = new URL(root + formatPath(op.path, params));
       const paramHeaders: any = {};
-      for (const [name, val] of Object.entries(params)) {
-        switch (op.parameters[name]) {
+      for (const [name, val] of Object.entries<any>(params)) {
+        switch (op.parameters[name]?.location) {
           case 'header':
-            paramHeaders[name] = val;
+            paramHeaders[name] = encodeURIComponent(val);
             break;
           case 'query':
-            url.searchParams.set(name, '' + val);
+            url.searchParams.set(name, encodeURIComponent(val));
             break;
         }
       }
@@ -552,7 +357,7 @@ function createSdkFor<
         delete headers['content-type'];
       }
 
-      const res = await realFetch(url, {
+      const res = await realFetch('' + url, {
         ...base,
         ...input.options,
         headers,
@@ -560,7 +365,19 @@ function createSdkFor<
         body,
       });
 
-      const clause = clauseMatcher.getBest(res, accept);
+      const received = res.headers.get('content-type')?.split(';')?.[0] ?? '';
+      const clause = clauseMatcher.getBest({
+        status: res.status,
+        accepted: [accept],
+        proposed: received,
+        coerce: (eligible) =>
+          coercer(res, {
+            path: op.path,
+            method: op.method,
+            contentType: received,
+            eligible,
+          }),
+      });
       let data;
       if (clause.contentType) {
         const decode = decoder ?? decoders.getBest(clause.contentType);
@@ -576,11 +393,6 @@ function createSdkFor<
   return fetchers;
 }
 
-function extractResponseType(res: Response): string | '' {
-  const val = res.headers.get('content-type');
-  return val?.split(';')[0] ?? '';
-}
-
 function formatPath(p: string, o: Record<string, unknown>): string {
   return p.replace(/{[^}]+}/, (s) => {
     const r = o[s.slice(1, -1)];
@@ -588,7 +400,7 @@ function formatPath(p: string, o: Record<string, unknown>): string {
   });
 }
 
-interface CreateSdkOptionsFor<
+export interface CreateSdkOptionsFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE
@@ -603,14 +415,14 @@ interface CreateSdkOptionsFor<
   readonly options?: RequestOptionsFor<F>;
 
   /** Global request body encoders. */
-  readonly encoders?: Encoders<O, F>;
+  readonly encoders?: EncodersFor<O, F>;
 
   /** Global response decoders. */
-  readonly decoders?: Decoders<O, F>;
+  readonly decoders?: DecodersFor<O, F>;
 
   /** Underlying fetch method. */
   readonly fetch?: (
-    url: URL,
+    url: string,
     init: BaseInit<BodyInitFor<F>> & RequestOptionsFor<F>
   ) => Promise<ResponseFor<F>>;
 
@@ -628,14 +440,12 @@ interface CreateSdkOptionsFor<
   readonly coercer?: Coercer<F>;
 }
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-type RequestBodyFor<
+export type RequestBodyFor<
   O extends OperationType,
   M extends MimeType = typeof JSON_MIME_TYPE
 > = Get<Lookup<Lookup<O, 'requestBody'>, 'content'>, M>;
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-type RequestParametersFor<O extends OperationType> = Lookup<
+export type RequestParametersFor<O extends OperationType> = Lookup<
   O['parameters'],
   'path',
   {}
@@ -643,8 +453,7 @@ type RequestParametersFor<O extends OperationType> = Lookup<
   Lookup<O['parameters'], 'query', {}> &
   Lookup<O['parameters'], 'headers', {}>;
 
-// eslint-disable-next-line unused-imports/no-unused-vars
-type ResponseDataFor<
+export type ResponseDataFor<
   O extends OperationType,
   C extends keyof O['responses'],
   M extends MimeType = typeof JSON_MIME_TYPE

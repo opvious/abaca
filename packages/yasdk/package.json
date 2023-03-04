@@ -1,6 +1,6 @@
 {
   "name": "yasdk",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "repository": "github:mtth/yasdk",
   "description": "Yet another TypesScript SDK generator",
   "keywords": [
@@ -11,8 +11,9 @@
   "type": "module",
   "files": [
     "bin/",
-    "lib/",
-    "resources/"
+    "lib/index.d.ts",
+    "lib/index.js",
+    "resources/preamble/index.gen.ts"
   ],
   "bin": "bin/yasdk.js",
   "exports": {},
@@ -20,19 +21,18 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
-    "gen-test-pets": "[ -e test/pets-sdk.gen.ts ] || ./bin/yasdk.js -i test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
-    "gen-test-tables": "[ -e test/tables-sdk.gen.ts ] || ./bin/yasdk.js -i test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-preamble": "./scripts/assemble-preamble",
+    "gen-test-pets": "./bin/yasdk.js -i test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
+    "gen-test-tables": "./bin/yasdk.js -i test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
-    "prepare": "pnpm run build",
-    "test": "pnpm run gen-test && jest",
+    "prepare": "pnpm run gen-preamble && pnpm run build",
+    "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
     "@opvious/stl-errors": "^0.15.8",
-    "@stoplight/json-ref-resolver": "^3.1.5",
     "commander": "^10.0.0",
     "openapi-typescript": "^6.1.0",
-    "yaml": "^2.2.1",
     "yasdk-openapi": "workspace:*"
   },
   "devDependencies": {
@@ -43,32 +43,5 @@
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
     "node-fetch": "^2.6.7"
-  },
-  "jest": {
-    "coverageDirectory": "../../out/coverage/yasdk",
-    "coveragePathIgnorePatterns": [
-      "<rootDir>/node_modules/",
-      "<rootDir>/test/"
-    ],
-    "setupFilesAfterEnv": [
-      "jest-extended/all"
-    ],
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      ".d.ts",
-      ".js"
-    ],
-    "transform": {
-      "^.+\\.ts$": [
-        "ts-jest",
-        {
-          "babelConfig": {
-            "compact": false
-          },
-          "tsconfig": "test/tsconfig.json"
-        }
-      ]
-    }
-  },
-  "typedocMain": "src/index.ts"
+  }
 }

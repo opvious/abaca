@@ -1,0 +1,16 @@
+{
+  "extends": "@opvious/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "module": "node16",
+    "noImplicitAny": false,
+    "noErrorTruncation": true,
+    "outDir": "../out/test",
+    "useUnknownInCatchVariables": false
+  },
+  "references": [
+    {
+      "path": "../src"
+    }
+  ]
+}

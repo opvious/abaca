@@ -1,0 +1,56 @@
+{
+  "name": "yasdk-koa",
+  "version": "0.2.0",
+  "repository": "github:mtth/yasdk",
+  "description": "YASDK OpenAPI utilities",
+  "keywords": [
+    "koa",
+    "openapi",
+    "yasdk"
+  ],
+  "author": "Matthieu Monsch <mtth@apache.org>",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "lib/"
+  ],
+  "exports": "./lib/index.js",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./lib/*",
+        "./lib/*/index.js"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out",
+    "fix": "prettier --write",
+    "gen-test-pets": "yasdk -i test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
+    "gen-test-tables": "yasdk -i test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
+    "prepare": "pnpm run build",
+    "test": "pnpm run gen-test && vitest",
+    "watch": "tsc -b -w src"
+  },
+  "dependencies": {
+    "@koa/router": "^10.1.1",
+    "@opvious/stl-errors": "^0.15.8",
+    "@opvious/stl-utils": "^0.15.8",
+    "ajv": "^8.12.0",
+    "co-body": "^6.1.0",
+    "openapi-types": "^12.1.0",
+    "yaml": "^2.2.1",
+    "yasdk-openapi": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/co-body": "^6.1.0",
+    "@types/koa": "^2.13.1",
+    "@types/koa__router": "^8.0.11",
+    "koa": "^2.13.1",
+    "koa-body": "^6.0.1",
+    "node-fetch": "^3.3.0",
+    "yasdk": "workspace:*"
+  }
+}

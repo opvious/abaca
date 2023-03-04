@@ -1,15 +1,17 @@
-import {assert} from '@opvious/stl-errors';
-import {Resolver} from '@stoplight/json-ref-resolver';
 import {Command} from 'commander';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import generateTypes from 'openapi-typescript';
 import path from 'path';
-import {loadOpenapiDocument, OpenapiDocuments} from 'yasdk-openapi';
+import {
+  extractOperationDefinitions,
+  loadOpenapiDocument,
+  OpenapiDocuments,
+} from 'yasdk-openapi';
 
 const COMMAND_NAME = 'yasdk';
 
 const preambleUrl = new URL(
-  '../resources/preamble/contents.ts',
+  '../resources/preamble/index.gen.ts',
   import.meta.url
 );
 
@@ -22,11 +24,10 @@ export function mainCommand(): Command {
     .action(async (opts) => {
       const doc = await loadOpenapiDocument(opts.input, {
         versions: ['3.0', '3.1'],
+        resolveAllReferences: true,
       });
       const [typesStr, preambleStr, valuesStr] = await Promise.all([
-        // `YAML.parse` produces immutable nodes, this is a hack to produce a
-        // mutable clone.
-        generateTypes(JSON.parse(JSON.stringify(doc)), {
+        generateTypes(doc, {
           commentHeader: '',
           immutableTypes: true,
         }),
@@ -34,7 +35,7 @@ export function mainCommand(): Command {
         generateValues(doc),
       ]);
       const out = [
-        '// This file was auto-generated\n',
+        '// No not edit, this file was auto-generated\n',
         preambleStr,
         typesStr
           .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
@@ -46,50 +47,10 @@ export function mainCommand(): Command {
     });
 }
 
-const methods = [
-  'get',
-  'put',
-  'post',
-  'delete',
-  'options',
-  'head',
-  'patch',
-  'trace',
-] as const;
-
 async function generateValues(
   doc: OpenapiDocuments['3.0' | '3.1']
 ): Promise<string> {
-  const resolver = new Resolver();
-
-  async function resolve(ref: any): Promise<any> {
-    const resolved = await resolver.resolve(doc, {jsonPointer: ref});
-    assert(!resolved.errors.length, 'Unable to resolve path');
-    return resolved.result;
-  }
-
-  const ops: any = {};
-  for (const [path, item] of Object.entries(doc.paths ?? {})) {
-    for (const method of methods) {
-      const op = item?.[method];
-      if (!op?.operationId) {
-        continue;
-      }
-      const codes: Record<string, string[]> = {};
-      for (const [code, refOrRes] of Object.entries(op.responses)) {
-        const res =
-          '$ref' in refOrRes ? await resolve(refOrRes.$ref) : refOrRes;
-        codes[code] = Object.keys(res.content ?? {});
-      }
-      const parameters: Record<string, string> = {};
-      for (const refOrParam of op.parameters ?? []) {
-        const param =
-          '$ref' in refOrParam ? await resolve(refOrParam.$ref) : refOrParam;
-        parameters[param.name] = param.in;
-      }
-      ops[op?.operationId] = {path, method, codes, parameters};
-    }
-  }
+  const ops = extractOperationDefinitions(doc);
   let out = `const allOperations = ${JSON.stringify(ops, null, 2)} as const;`;
   out += SUFFIX;
   return out;
@@ -97,7 +58,17 @@ async function generateValues(
 
 const SUFFIX = `
 
-export type {operations};
+export type {
+  BaseFetch,
+  Coercer,
+  CoercerContext,
+  Decoder,
+  DecoderContext,
+  Encoder,
+  EncoderContext,
+  ResponseCode,
+  operations,
+};
 
 export type types = components['schemas'];
 

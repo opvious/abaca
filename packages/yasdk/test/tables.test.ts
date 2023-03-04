@@ -4,6 +4,7 @@ import http from 'http';
 import Koa from 'koa';
 import koaBody from 'koa-body';
 import fetch from 'node-fetch';
+import {afterAll, beforeAll, describe, expect, test} from 'vitest';
 
 import {startApp} from './helpers';
 import {createSdk, Sdk, types} from './tables-sdk.gen';
@@ -76,7 +77,7 @@ describe('tables', () => {
     }
   });
 
-  test('fetch any', async () => {
+  test('fetch any with glob', async () => {
     const res = await sdk.getTable({
       parameters: {id: 'id5'},
       headers: {accept: '*/*'},
@@ -84,6 +85,36 @@ describe('tables', () => {
     switch (res.code) {
       case 200:
         expect<types['Table'] | string>(res.data).toEqual('');
+        break;
+      case 404:
+        expect<undefined>(res.data).toBeUndefined();
+        break;
+    }
+  });
+
+  test('fetch any with list', async () => {
+    const res = await sdk.getTable({
+      parameters: {id: 'id5'},
+      headers: {accept: 'application/json, text/csv'},
+    });
+    switch (res.code) {
+      case 200:
+        expect<types['Table'] | string>(res.data).toEqual('');
+        break;
+      case 404:
+        expect<undefined>(res.data).toBeUndefined();
+        break;
+    }
+  });
+
+  test('fetch any with partial overlap list', async () => {
+    const res = await sdk.getTable({
+      parameters: {id: 'id5'},
+      headers: {accept: 'application/json, text/xml'},
+    });
+    switch (res.code) {
+      case 200:
+        expect<types['Table']>(res.data).toEqual('');
         break;
       case 404:
         expect<undefined>(res.data).toBeUndefined();
