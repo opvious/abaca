@@ -37,8 +37,8 @@ export type MimeType = string;
 
 export type ContentType = unknown;
 
-export type OperationDefinitions<O, S = null> = {
-  readonly [K in keyof O]: OperationDefinition<S>;
+export type OperationDefinitions<O> = {
+  readonly [K in keyof O]: OperationDefinition;
 };
 
 type OperationMethod =
@@ -51,23 +51,22 @@ type OperationMethod =
   | 'patch'
   | 'trace';
 
-export interface OperationDefinition<S = null> {
+export interface OperationDefinition {
   readonly path: string;
   readonly method: OperationMethod;
-  readonly parameters: Record<string, ParameterDefinition<S>>;
-  readonly body?: BodyDefinition<S>;
-  readonly responses: Record<ResponseCode, Record<MimeType, S>>;
+  readonly parameters: Record<string, ParameterDefinition>;
+  readonly body?: BodyDefinition;
+  readonly responses: Record<ResponseCode, ReadonlyArray<MimeType>>;
 }
 
-export interface ParameterDefinition<S> {
+export interface ParameterDefinition {
   readonly location: ParameterLocation;
   readonly required: boolean;
-  readonly schema: S;
 }
 
 export type ParameterLocation = 'header' | 'path' | 'query';
 
-export interface BodyDefinition<S> {
+export interface BodyDefinition {
   readonly required: boolean;
-  readonly schemas: Record<MimeType, S>;
+  readonly types: ReadonlyArray<MimeType>;
 }

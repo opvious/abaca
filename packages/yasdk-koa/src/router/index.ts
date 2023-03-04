@@ -124,9 +124,9 @@ export function operationsRouter<
   encoders.addAll(args.encoders as any);
 
   const registry = new Registry();
-  const defs = extractOperationDefinitions(doc, (schema, env) =>
+  const defs = extractOperationDefinitions(doc, (schema, env) => {
     registry.register(schema, env)
-  );
+  });
 
   const router = new Router<any>().use(async (ctx, next) => {
     try {
@@ -168,8 +168,7 @@ export function operationsRouter<
         const qtype = ctx.request.type;
         if (qtype) {
           const decoder = decoders.getBest(qtype);
-          const schema = def.body?.schemas[qtype];
-          if (!decoder || !schema) {
+          if (!decoder) {
             throw errors.unsupportedRequestContentType(qtype);
           }
           let body;
@@ -241,12 +240,11 @@ class Registry {
   private readonly parameters = new Ajv({coerceTypes: true});
   private readonly bodies = new Ajv();
 
-  register(schema: any, env: HookEnv): string {
-    let key;
+  register(schema: any, env: HookEnv): void {
     const {operationId, target} = env;
     if (target.kind === 'parameter') {
       const {name} = target;
-      key = schemaKey(operationId, name);
+      const key = schemaKey(operationId, name);
       // Nest within an object to enable coercion and better error reporting.
       this.parameters.addSchema(
         {
@@ -258,16 +256,15 @@ class Registry {
       );
     } else {
       const code = 'code' in target ? target.code : undefined;
-      key = schemaKey(operationId, bodySchemaSuffix(target.type, code));
+      const key = schemaKey(operationId, bodySchemaSuffix(target.type, code));
       this.bodies.addSchema(schema, key);
     }
-    return key;
   }
 
   injectParameters(
     ctx: DefaultOperationContext,
     opid: string,
-    def: OperationDefinition<string>
+    def: OperationDefinition
   ): void {
     const {parameters} = this;
     const errs: ErrorObject[] = [];

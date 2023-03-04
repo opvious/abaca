@@ -120,18 +120,18 @@ export type ResponsesMatchingMimeType<
     : never;
 }>;
 
-export class ResponseClauseMatcher<S = null> {
+export class ResponseClauseMatcher {
   private constructor(
-    private readonly data: ReadonlyMap<ResponseCode, ReadonlyMap<MimeType, S>>
+    private readonly data: ReadonlyMap<ResponseCode, ReadonlySet<MimeType>>
   ) {}
 
-  static create<S>(
-    responses: OperationDefinition<S>['responses']
-  ): ResponseClauseMatcher<S> {
-    const data = new Map<ResponseCode, Map<MimeType, S>>();
+  static create(
+    responses: OperationDefinition['responses']
+  ): ResponseClauseMatcher {
+    const data = new Map<ResponseCode, ReadonlySet<MimeType>>();
     for (const [code, mtypes] of Object.entries(responses)) {
       const ncode = +code;
-      data.set(isNaN(ncode) ? code : ncode, new Map(Object.entries(mtypes)));
+      data.set(isNaN(ncode) ? code : ncode, new Set(mtypes));
     }
     return new ResponseClauseMatcher(data);
   }
@@ -141,17 +141,16 @@ export class ResponseClauseMatcher<S = null> {
     readonly accepted: ReadonlyArray<MimeType>;
     readonly proposed: MimeType | '';
     readonly coerce: (eligible: ReadonlySet<MimeType>) => MimeType | undefined;
-  }): ResponseClause<S> {
+  }): ResponseClause {
     const {status, accepted, proposed, coerce} = args;
     const code = this.getBestCode(status);
     const declared = this.data.get(code);
-    const exact = declared?.get(proposed);
     if (
       proposed &&
-      exact !== undefined &&
+      declared?.has(proposed) &&
       contentTypeMatches(proposed, accepted)
     ) {
-      return {code, contentType: proposed, schema: exact};
+      return {code, contentType: proposed};
     }
     const eligible = new Set<MimeType>();
     if (declared) {
@@ -168,13 +167,12 @@ export class ResponseClauseMatcher<S = null> {
     return {
       code,
       contentType: coerced,
-      schema: coerced == null ? undefined : declared?.get(coerced),
     };
   }
 
   declaredMimeTypes(status?: number): ReadonlySet<MimeType> {
     if (status != null) {
-      return new Set(this.data.get(this.getBestCode(status))?.keys());
+      return this.data.get(this.getBestCode(status)) ?? new Set();
     }
     const ret = new Set<MimeType>();
     for (const mtypes of this.data.values()) {
@@ -214,8 +212,7 @@ export class ResponseClauseMatcher<S = null> {
   }
 }
 
-export interface ResponseClause<S = null> {
+export interface ResponseClause {
   readonly code: ResponseCode;
   readonly contentType?: MimeType;
-  readonly schema?: S;
 }

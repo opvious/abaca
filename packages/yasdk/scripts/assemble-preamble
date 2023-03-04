@@ -19,7 +19,7 @@ main() {
       "$preamble_imports/mime-types.ts" \
       "$preamble_contents" \
     | sed -E \
-      -e '/^import {/,/^} from/d' \
+      -e '/^import \{/,/^\} from/d' \
       -e 's/^export //g' \
       >"$dst"
 }

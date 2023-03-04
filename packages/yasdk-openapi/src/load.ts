@@ -105,17 +105,10 @@ const allVersions = ['2.0', '3.0', '3.1'] as const;
 
 /** The input document must be fully resolved. */
 export function extractOperationDefinitions(
-  doc: OpenapiDocument
-): Record<string, OperationDefinition>;
-export function extractOperationDefinitions<S>(
   doc: OpenapiDocument,
-  hook: (schema: unknown, env: HookEnv) => S
-): Record<string, OperationDefinition<S>>;
-export function extractOperationDefinitions(
-  doc: OpenapiDocument,
-  hook: (schema: any, env: HookEnv) => any = (): null => null
+  hook?: (schema: any, env: HookEnv) => void
 ): Record<string, OperationDefinition> {
-  const defs: Record<string, OperationDefinition<any>> = {};
+  const defs: Record<string, OperationDefinition> = {};
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
     for (const method of allOperationMethods) {
       const op = item?.[method];
@@ -123,27 +116,26 @@ export function extractOperationDefinitions(
       if (!operationId) {
         continue;
       }
-      const responses: Record<string, Record<string, any>> = {};
+      const responses: Record<string, ReadonlyArray<MimeType>> = {};
       for (const [code, res] of Object.entries<any>(op.responses)) {
         assert(!('$ref' in res), 'Unexpected reference', res);
-        responses[code] = contentSchemas(res.content ?? {}, operationId, {
+        responses[code] = contentTypes(res.content ?? {}, operationId, {
           kind: 'response',
           code,
         });
       }
-      const parameters: Record<string, ParameterDefinition<any>> = {};
+      const parameters: Record<string, ParameterDefinition> = {};
       for (const param of op.parameters ?? []) {
         assert(!('$ref' in param), 'Unexpected reference', param);
         const required = !!param.required;
         const location = param.in;
-        parameters[param.name] = {
-          location,
-          required,
-          schema: hook(param.schema, {
+        parameters[param.name] = {location, required};
+        if (hook) {
+          hook(param.schema, {
             operationId,
-            target: {kind: 'parameter', location, name: param.name, required},
-          }),
-        };
+            target: {kind: 'parameter', name: param.name},
+          });
+        }
       }
       defs[operationId] = {
         path,
@@ -151,10 +143,7 @@ export function extractOperationDefinitions(
         parameters,
         body: ifPresent(op.requestBody, (b) => ({
           required: !!b.required,
-          schemas: contentSchemas(b.content, operationId, {
-            kind: 'requestBody',
-            required: !!b.required,
-          }),
+          types: contentTypes(b.content, operationId, {kind: 'requestBody'}),
         })),
         responses,
       };
@@ -162,17 +151,17 @@ export function extractOperationDefinitions(
   }
   return defs;
 
-  function contentSchemas(
+  function contentTypes(
     obj: any,
     operationId: string,
     target: any
-  ): Record<string, any> {
-    const ret: Record<string, any> = {};
+  ): ReadonlyArray<MimeType> {
+    const ret: MimeType[] = [];
     for (const [key, val] of Object.entries<any>(obj)) {
-      ret[key] = hook(val.schema, {
-        operationId,
-        target: {...target, type: key},
-      });
+      ret.push(key);
+      if (hook) {
+        hook(val.schema, {operationId, target: {...target, type: key}});
+      }
     }
     return ret;
   }
@@ -184,13 +173,9 @@ export interface HookEnv {
 }
 
 export type HookTarget = KindAmong<{
-  requestBody: {readonly type: MimeType; readonly required: boolean};
+  requestBody: {readonly type: MimeType};
   response: {readonly type: MimeType; readonly code: ResponseCode};
-  parameter: {
-    readonly name: string;
-    readonly required: boolean;
-    readonly location: ParameterLocation;
-  };
+  parameter: {readonly name: string;};
 }>;
 
 const allOperationMethods = [
