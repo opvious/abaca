@@ -66,6 +66,7 @@ importers:
       '@types/koa': ^2.13.1
       '@types/koa__router': ^8.0.11
       '@types/node-fetch': ^2.6.2
+      ajv: ^8.12.0
       co-body: ^6.1.0
       koa: ^2.13.1
       koa-body: ^6.0.1
@@ -77,6 +78,7 @@ importers:
       '@koa/router': 10.1.1
       '@opvious/stl-errors': 0.15.8
       '@opvious/stl-utils': 0.15.8
+      ajv: 8.12.0
       co-body: 6.1.0
       openapi-types: 12.1.0
       yaml: 2.2.1

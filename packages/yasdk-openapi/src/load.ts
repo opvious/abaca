@@ -1,6 +1,6 @@
 import {assert, errorFactories, unexpected} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {Resolver} from '@stoplight/json-ref-resolver';
+import {KindAmong} from '@opvious/stl-utils/objects';
 import {readFile} from 'fs/promises';
 import {
   default as validation,
@@ -10,8 +10,13 @@ import {OpenAPIV2, OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import path from 'path';
 import YAML from 'yaml';
 
+import {
+  MimeType,
+  OperationDefinition,
+  ParameterDefinition,
+  ParameterLocation,
+} from './preamble/operations.js';
 import {resolveAll} from './resolve.js';
-import {OperationDefinition, ParameterDefinition} from './preamble/operations.js';
 
 const [errors] = errorFactories({
   definitions: {
@@ -82,7 +87,7 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(
     throw errors.invalidSchema(validated.errors);
   }
 
-  return opts?.resolveAllReferences ? resolveAll(obj) :obj;
+  return opts?.resolveAllReferences ? resolveAll(obj) : obj;
 }
 
 export interface OpenapiDocuments {
@@ -100,44 +105,54 @@ const allVersions = ['2.0', '3.0', '3.1'] as const;
 /** The input document must be fully resolved. */
 export function extractOperationDefinitions(
   doc: OpenapiDocument
-): Record<string, OperationDefinition>
+): Record<string, OperationDefinition>;
 export function extractOperationDefinitions<S>(
   doc: OpenapiDocument,
-  hook: (schema: unknown) => S
+  hook: (schema: unknown, env: HookEnv) => S
 ): Record<string, OperationDefinition<S>>;
 export function extractOperationDefinitions(
   doc: OpenapiDocument,
-  hook: (schema: any) => any = () => null
+  hook: (schema: any, env: HookEnv) => any = (): null => null
 ): Record<string, OperationDefinition> {
-
   const defs: Record<string, OperationDefinition<any>> = {};
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
     for (const method of allOperationMethods) {
       const op = item?.[method];
-      if (!op?.operationId) {
+      const operationId = op?.operationId;
+      if (!operationId) {
         continue;
       }
       const responses: Record<string, Record<string, any>> = {};
       for (const [code, res] of Object.entries<any>(op.responses)) {
         assert(!('$ref' in res), 'Unexpected reference', res);
-        responses[code] = contentSchemas(res.content ?? {});
+        responses[code] = contentSchemas(res.content ?? {}, operationId, {
+          kind: 'response',
+        });
       }
       const parameters: Record<string, ParameterDefinition<any>> = {};
       for (const param of op.parameters ?? []) {
         assert(!('$ref' in param), 'Unexpected reference', param);
+        const required = !!param.required;
+        const location = param.in;
         parameters[param.name] = {
-          location: param.in,
-          required: !!param.required,
-          schema: hook(param.schema),
+          location,
+          required,
+          schema: hook(param.schema, {
+            operationId,
+            target: {kind: 'parameter', location, name: param.name, required},
+          }),
         };
       }
-      defs[op.operationId] = {
+      defs[operationId] = {
         path,
         method,
         parameters,
         body: ifPresent(op.requestBody, (b) => ({
           required: !!b.required,
-          schemas: contentSchemas(b.content)
+          schemas: contentSchemas(b.content, operationId, {
+            kind: 'requestBody',
+            required: !!b.required,
+          }),
         })),
         responses,
       };
@@ -145,14 +160,33 @@ export function extractOperationDefinitions(
   }
   return defs;
 
-  function contentSchemas(obj: any): Record<string, any> {
+  function contentSchemas(
+    obj: any,
+    operationId: string,
+    target: any
+  ): Record<string, any> {
     const ret: Record<string, any> = {};
     for (const [key, val] of Object.entries(obj)) {
-      ret[key] = hook(val);
+      ret[key] = hook(val, {operationId, target: {...target, type: key}});
     }
     return ret;
   }
 }
+
+export interface HookEnv {
+  readonly operationId: string;
+  readonly target: HookTarget;
+}
+
+export type HookTarget = KindAmong<{
+  requestBody: {readonly type: MimeType; readonly required: boolean};
+  response: {readonly type: MimeType};
+  parameter: {
+    readonly name: string;
+    readonly required: boolean;
+    readonly location: ParameterLocation;
+  };
+}>;
 
 const allOperationMethods = [
   'get',

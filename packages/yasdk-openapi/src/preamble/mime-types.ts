@@ -1,4 +1,4 @@
-import {Lookup, Has, KeysOfValues, Values} from './common.js';
+import {Has, KeysOfValues, Lookup, Values} from './common.js';
 import {
   MimeType,
   OperationDefinition,
@@ -7,28 +7,45 @@ import {
   ResponsesType,
 } from './operations.js';
 
-export type WithGlobs<M> = M | MimeTypePrefixes<M> | '*/*';
+export type WithMimeTypeGlobs<M extends MimeType> =
+  | M
+  | MimeTypePrefixes<M>
+  | '*/*';
 
 export const JSON_MIME_TYPE = 'application/json';
 export const TEXT_MIME_TYPE = 'text/*';
 export const PLAIN_MIME_TYPE = 'text/plain';
 export const FALLBACK_MIME_TYPE = '*/*';
 
-export type MimeTypePrefixes<M> = M extends `${infer P}/${infer _S}`
-  ? `${P}/*`
-  : never;
+export type MimeTypePrefixes<M extends MimeType> =
+  M extends `${infer P}/${infer _S}` ? `${P}/*` : never;
 
-export type ValuesMatchingMimeType<O, G> = Values<{
-  [M in keyof O]: G extends WithGlobs<M> ? O[M] : never;
+type SplitMimeTypes<G extends MimeType> = G extends `${infer G1}, ${infer G2}`
+  ? G1 | SplitMimeTypes<G2>
+  : G;
+
+export type ValuesMatchingMimeTypes<O, G extends MimeType> = Values<{
+  [M in keyof O & MimeType]: SplitMimeTypes<G> &
+    WithMimeTypeGlobs<M> extends never
+    ? never
+    : O[M];
 }>;
 
-export function contentTypeMatches(exact: MimeType, glob: MimeType): boolean {
-  if (exact === glob || glob === FALLBACK_MIME_TYPE) {
-    return true;
+function contentTypeMatches(
+  exact: MimeType,
+  globs: ReadonlyArray<MimeType>
+): boolean {
+  for (const glob of globs) {
+    if (exact === glob || glob === FALLBACK_MIME_TYPE) {
+      return true;
+    }
+    const got = exact.split('/');
+    const want = glob.split('/');
+    if (got[0] === want[0] && (got[1] === want[1] || want[1] === '*')) {
+      return true;
+    }
   }
-  const got = exact.split('/');
-  const want = glob.split('/');
-  return got[0] === want[0] && (got[1] === want[1] || want[1] === '*');
+  return false;
 }
 
 export class ByMimeType<V> {
@@ -63,30 +80,43 @@ export class ByMimeType<V> {
 
 export type AllBodyMimeTypes<O extends OperationTypes> = Values<{
   [K in keyof O]: keyof Lookup<O[K]['requestBody'], 'content'>;
-}>;
+}> &
+  MimeType;
 
-export type BodiesMatchingMimeType<O extends OperationTypes, G> = Values<{
-  [K in keyof O]: ValuesMatchingMimeType<
+export type BodiesMatchingMimeType<
+  O extends OperationTypes,
+  G extends MimeType
+> = Values<{
+  [K in keyof O]: ValuesMatchingMimeTypes<
     Lookup<O[K]['requestBody'], 'content'>,
     G
   >;
 }>;
 
-export type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> = Values<{
-  [K in keyof O]: ResponseMimeTypes<O[K]['responses']>;
-}>;
+export type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> =
+  Values<{
+    [K in keyof O]: ResponseMimeTypes<O[K]['responses']>;
+  }> &
+    MimeType;
 
 export type ResponseMimeTypes<R extends ResponsesType> = KeysOfValues<{
   [C in keyof R]: R[C] extends Has<'content', infer O> ? O : never;
-}>;
+}> &
+  MimeType;
 
-export type AllResponsesMatchingMimeType<O extends OperationTypes, G> = Values<{
+export type AllResponsesMatchingMimeType<
+  O extends OperationTypes,
+  G extends MimeType
+> = Values<{
   [K in keyof O]: ResponsesMatchingMimeType<O[K]['responses'], G>;
 }>;
 
-export type ResponsesMatchingMimeType<R extends ResponsesType, G> = Values<{
+export type ResponsesMatchingMimeType<
+  R extends ResponsesType,
+  G extends MimeType
+> = Values<{
   [C in keyof R]: R[C] extends Has<'content', infer O>
-    ? ValuesMatchingMimeType<O, G>
+    ? ValuesMatchingMimeTypes<O, G>
     : never;
 }>;
 
@@ -108,7 +138,7 @@ export class ResponseClauseMatcher<S = null> {
 
   getBest(args: {
     readonly status: number;
-    readonly accepted: MimeType;
+    readonly accepted: ReadonlyArray<MimeType>;
     readonly proposed: MimeType | '';
     readonly coerce: (eligible: ReadonlySet<MimeType>) => MimeType | undefined;
   }): ResponseClause<S> {
@@ -125,7 +155,7 @@ export class ResponseClauseMatcher<S = null> {
     }
     const eligible = new Set<MimeType>();
     if (declared) {
-      for (const [mtype] of declared) {
+      for (const mtype of declared.keys()) {
         if (contentTypeMatches(mtype, accepted)) {
           eligible.add(mtype);
         }
@@ -142,8 +172,33 @@ export class ResponseClauseMatcher<S = null> {
     };
   }
 
-  declaredMimeTypes(status: number): ReadonlySet<MimeType> {
-    return new Set(this.data.get(this.getBestCode(status))?.keys());
+  declaredMimeTypes(status?: number): ReadonlySet<MimeType> {
+    if (status != null) {
+      return new Set(this.data.get(this.getBestCode(status))?.keys());
+    }
+    const ret = new Set<MimeType>();
+    for (const mtypes of this.data.values()) {
+      for (const mtype of mtypes.keys()) {
+        ret.add(mtype);
+      }
+    }
+    return ret;
+  }
+
+  acceptable(accepted: ReadonlyArray<MimeType>): boolean {
+    for (const mtypes of this.data.values()) {
+      let overlap = false;
+      for (const mtype of mtypes.keys()) {
+        if (contentTypeMatches(mtype, accepted)) {
+          overlap = true;
+          break;
+        }
+      }
+      if (!overlap) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private getBestCode(status: number): ResponseCode {

@@ -15,8 +15,8 @@ import {
   OperationDefinitions,
   OperationType,
   OperationTypes,
-  PLAIN_MIME_TYPE,
   ParametersType,
+  PLAIN_MIME_TYPE,
   ResponseClauseMatcher,
   ResponseCode,
   ResponseMimeTypes,
@@ -24,12 +24,12 @@ import {
   ResponsesType,
   TEXT_MIME_TYPE,
   Values,
-  ValuesMatchingMimeType,
-  WithGlobs,
+  ValuesMatchingMimeTypes,
+  WithMimeTypeGlobs,
 } from 'yasdk-openapi/preamble';
 
-type Encoders<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [G in WithGlobs<AllBodyMimeTypes<O>>]?: Encoder<
+type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
+  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
     BodiesMatchingMimeType<O, G>,
     F
   >;
@@ -46,8 +46,8 @@ export interface EncoderContext<F> {
   readonly options?: RequestOptionsFor<F>;
 }
 
-type Decoders<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [G in WithGlobs<AllResponseMimeTypes<O>>]?: Decoder<
+type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
+  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
     AllResponsesMatchingMimeType<O, G>,
     F
   >;
@@ -91,7 +91,7 @@ export interface CoercerContext {
 
 const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
   const mtype = ctx.contentType;
-  if (mtype === PLAIN_MIME_TYPE && !ctx.eligible.has(PLAIN_MIME_TYPE)) {
+  if (mtype === PLAIN_MIME_TYPE) {
     return undefined;
   }
   throw new Error(
@@ -165,7 +165,10 @@ type MaybeAcceptInput<
   M extends MimeType
 > = Values<R> extends never
   ? {}
-  : DefaultAcceptInput<R, F, M> | CustomAcceptInput<R, F>;
+  :
+      | DefaultAcceptInput<R, F, M>
+      | SingleAcceptInput<R, F>
+      | MultiAcceptInput<R, F>;
 
 type DefaultAcceptInput<
   R extends ResponsesType,
@@ -178,12 +181,24 @@ type DefaultAcceptInput<
     }
   : never;
 
-type CustomAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
-  [M in WithGlobs<ResponseMimeTypes<R>> & string]: {
+type SingleAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
+  [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
     readonly headers: {readonly accept: M};
     readonly decoder?: AcceptDecoder<R, F, M>;
   };
 }>;
+
+type MultiAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
+  [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
+    readonly headers: {readonly accept: PrefixedMimeType<M>};
+    readonly decoder?: AcceptDecoder<R, F, ResponseMimeTypes<R>>;
+  };
+}>;
+
+type PrefixedMimeType<
+  M extends MimeType,
+  S extends string = string
+> = `${M}, ${S}`;
 
 type AcceptDecoder<
   R extends ResponsesType,
@@ -226,7 +241,7 @@ type DataOutput<M extends MimeType, R extends ResponsesType> =
 
 type ExpectedDataOutput<M extends MimeType, R extends ResponsesType> = Values<{
   [C in keyof R]: R[C] extends Has<'content', infer O>
-    ? WithCode<C, ValuesMatchingMimeType<O, M>>
+    ? WithCode<C, ValuesMatchingMimeTypes<O, M>>
     : CodedData<C, undefined>;
 }>;
 
@@ -257,8 +272,6 @@ type SdkFunction<O, I, F, M extends MimeType> = {} extends I
       args?: A
     ) => Output<O, Exact<I, A> extends never ? A : {}, F, M>
   : <A extends I>(args: A) => Output<O, A, F, M>;
-
-const defaultEmptyTypes = ['text/plain'];
 
 export type BaseFetch = (url: URL, init: BaseInit) => Promise<BaseResponse>;
 
@@ -355,14 +368,15 @@ export function createSdkFor<
       const received = res.headers.get('content-type')?.split(';')?.[0] ?? '';
       const clause = clauseMatcher.getBest({
         status: res.status,
-        accepted: accept,
+        accepted: [accept],
         proposed: received,
-        coerce: (eligible) => coercer(res, {
-          path: op.path,
-          method: op.method,
-          contentType: received,
-          eligible,
-        }),
+        coerce: (eligible) =>
+          coercer(res, {
+            path: op.path,
+            method: op.method,
+            contentType: received,
+            eligible,
+          }),
       });
       let data;
       if (clause.contentType) {
@@ -401,10 +415,10 @@ export interface CreateSdkOptionsFor<
   readonly options?: RequestOptionsFor<F>;
 
   /** Global request body encoders. */
-  readonly encoders?: Encoders<O, F>;
+  readonly encoders?: EncodersFor<O, F>;
 
   /** Global response decoders. */
-  readonly decoders?: Decoders<O, F>;
+  readonly decoders?: DecodersFor<O, F>;
 
   /** Underlying fetch method. */
   readonly fetch?: (

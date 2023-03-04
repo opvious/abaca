@@ -38,6 +38,7 @@
     "@koa/router": "^10.1.1",
     "@opvious/stl-errors": "^0.15.8",
     "@opvious/stl-utils": "^0.15.8",
+    "ajv": "^8.12.0",
     "co-body": "^6.1.0",
     "openapi-types": "^12.1.0",
     "yaml": "^2.2.1",

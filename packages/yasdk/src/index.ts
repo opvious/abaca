@@ -1,13 +1,11 @@
-import {assert} from '@opvious/stl-errors';
 import {Command} from 'commander';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import generateTypes from 'openapi-typescript';
 import path from 'path';
 import {
-  loadOpenapiDocument,
   extractOperationDefinitions,
+  loadOpenapiDocument,
   OpenapiDocuments,
-  RefResolver,
 } from 'yasdk-openapi';
 
 const COMMAND_NAME = 'yasdk';

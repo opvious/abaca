@@ -54,7 +54,6 @@ describe('extract operation definitions', () => {
       createPet: {
         path: '/pets',
         method: 'post',
-
       },
     });
   });

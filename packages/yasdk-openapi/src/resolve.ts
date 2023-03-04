@@ -5,17 +5,15 @@ import {OpenapiDocument} from './load.js';
 
 const [errors] = errorFactories({
   definitions: {
-    unresolvableReference: (
-      ref: string,
-      issues: ReadonlyArray<Issue>
-    ) => ({
+    unresolvableReference: (ref: string, issues: ReadonlyArray<Issue>) => ({
       message:
         `Reference ${ref} could not be resolved: ` +
         issues.map(formatIssue).join(', '),
       tags: {ref, issues},
     }),
     unresolvable: (issues: ReadonlyArray<Issue>) => ({
-      message: 'Input could not be fully dereferenced: ' +
+      message:
+        'Input could not be fully dereferenced: ' +
         issues.map(formatIssue).join(', '),
       tags: {issues},
     }),

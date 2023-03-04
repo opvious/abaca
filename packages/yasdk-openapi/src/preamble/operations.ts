@@ -23,7 +23,7 @@ export type ResponsesType = {
     | {
         readonly content: ContentTypes;
       };
-}
+};
 
 export type ResponseCodeRange = '2XX' | '3XX' | '4XX' | '5XX';
 
@@ -37,45 +37,23 @@ export type MimeType = string;
 
 export type ContentType = unknown;
 
-// Response code matching
-
-type Prefix = '2' | '3' | '4' | '5';
-
-type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
-
-type ResponseCodeString<
-  P extends Prefix = Prefix,
-  D1 extends Digit = Digit,
-  D2 extends Digit = Digit
-> = `${P}${D1}${D2}`;
-
-type ResponseCodeRangeFor<P extends Prefix> = `${P}XX`;
-
-type AllResponseCodes = ResponseCodeString extends `${infer N extends number}`
-  ? N
-  : never;
-
-export type ResponseCodesMatching<C, X = never> = C extends number
-  ? `${C}` extends ResponseCodeString
-    ? C
-    : never
-  : C extends ResponseCodeRangeFor<infer P>
-    ? ResponseCodeString<P> extends `${infer N extends number}`
-      ? Exclude<N, X>
-      : never
-    : C extends 'default'
-      ? Exclude<AllResponseCodes, ResponseCodesMatching<Exclude<X, 'default'>>>
-      : never;
-
-// Reified definitions
-
 export type OperationDefinitions<O, S = null> = {
   readonly [K in keyof O]: OperationDefinition<S>;
 };
 
+type OperationMethod =
+  | 'get'
+  | 'put'
+  | 'post'
+  | 'delete'
+  | 'options'
+  | 'head'
+  | 'patch'
+  | 'trace';
+
 export interface OperationDefinition<S = null> {
   readonly path: string;
-  readonly method: string;
+  readonly method: OperationMethod;
   readonly parameters: Record<string, ParameterDefinition<S>>;
   readonly body?: BodyDefinition<S>;
   readonly responses: Record<ResponseCode, Record<MimeType, S>>;
