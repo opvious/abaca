@@ -53,10 +53,9 @@ export {
 
 const [errors, codes] = errorFactories({
   definitions: {
-    invalidRequest: (cause: RequestError) => ({
-      message: 'Invalid request: ' + cause.message,
-      tags: cause.tags,
-      cause,
+    invalidRequest: (origin: RequestError) => ({
+      message: 'Invalid request: ' + origin.message,
+      tags: {origin},
     }),
     invalidResponseData: (errors: ReadonlyArray<ErrorObject>) => ({
       message: 'Invalid response data: ' + formatValidationErrors(errors),
@@ -95,7 +94,7 @@ const [requestErrors] = errorFactories({
       tags: {status: 400},
     }),
     invalidParameters: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid request parameters: ' + formatValidationErrors(errors),
+      message: 'Invalid parameters: ' + formatValidationErrors(errors),
       tags: {status: 400, errors},
     }),
     unsupportedContentType: (type: string) => ({
@@ -103,7 +102,7 @@ const [requestErrors] = errorFactories({
       tags: {status: 415},
     }),
     missingBody: () => ({
-      message: 'This operation expects a request body but none was found',
+      message: 'This operation expects a body but none was found',
       tags: {status: 400},
     }),
     unexpectedBody: {
@@ -111,12 +110,12 @@ const [requestErrors] = errorFactories({
       tags: {status: 400},
     },
     unreadableBody: (cause: unknown) => ({
-      message: 'Request body could not be decoded: ' + errorMessage(cause),
+      message: 'Body could not be decoded: ' + errorMessage(cause),
       tags: {status: 400},
       cause,
     }),
     invalidBody: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid request body: ' + formatValidationErrors(errors),
+      message: 'Invalid body: ' + formatValidationErrors(errors),
       tags: {status: 400, errors},
     }),
   },
@@ -195,10 +194,11 @@ export function operationsRouter<
       if (!isStandardError(err, codes.InvalidRequest)) {
         throw err;
       }
-      ctx.status = err.tags.status;
-      ctx.set(ERROR_CODE_HEADER, err.code);
+      const {origin} = err.tags;
+      ctx.status = origin.tags.status;
+      ctx.set(ERROR_CODE_HEADER, origin.code);
       if (ctx.accepts([JSON_MIME_TYPE, PLAIN_MIME_TYPE]) === JSON_MIME_TYPE) {
-        ctx.body = {message: err.message, code: err.code, tags: err.tags};
+        ctx.body = {message: err.message, code: origin.code, tags: origin.tags};
       } else {
         ctx.body = err.message;
       }

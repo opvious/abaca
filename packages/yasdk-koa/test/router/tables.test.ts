@@ -2,14 +2,7 @@ import {assert, unreachable} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from 'vitest';
+import {afterAll, beforeAll, beforeEach, describe, expect, test} from 'vitest';
 
 import * as sut from '../../src/router/index.js';
 import {loadDocument, startApp} from '../helpers.js';
@@ -73,6 +66,18 @@ describe('tables', async () => {
   test('get missing', async () => {
     const res = await sdk.getTable({parameters: {id: 'unknown'}});
     expect(res).toMatchObject({code: 404, data: undefined});
+  });
+
+  test('set invalid', async () => {
+    const res = await sdk.setTable({
+      parameters: {id: 'unused'},
+      body: {rows: 123} as any,
+    });
+    expect(res).toMatchObject({
+      code: 'default',
+      data: {code: 'ERR_REQUEST_INVALID_BODY'},
+      raw: {status: 400},
+    });
   });
 });
 
