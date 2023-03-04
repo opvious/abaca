@@ -9,11 +9,11 @@ import {loadDocument, startApp} from '../helpers.js';
 import {createSdk, operations, Sdk, types} from '../pets-sdk.gen.js';
 
 describe('pets', async () => {
-  const handlers: sut.HandlersFor<operations> = {};
+  const handlers: sut.KoaHandlersFor<operations> = {};
   let sdk: Sdk<typeof fetch>;
   let server: http.Server;
 
-  function setHandlers(obj: sut.HandlersFor<operations>): void {
+  function setHandlers(obj: sut.KoaHandlersFor<operations>): void {
     for (const key of Object.keys(handlers)) {
       delete handlers[key];
     }
