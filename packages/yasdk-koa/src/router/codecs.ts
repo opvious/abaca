@@ -10,41 +10,37 @@ import {
   WithMimeTypeGlobs,
 } from 'yasdk-openapi/preamble';
 
-export type DecodersFor<O extends OperationTypes, S = {}> = {
-  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
+export type KoaDecodersFor<O extends OperationTypes, S = {}> = {
+  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: KoaDecoder<
     AllResponsesMatchingMimeType<O, G>,
     S
   >;
 };
 
-export type Decoder<B, S = {}> = (
+export type KoaDecoder<B, S = {}> = (
   ctx: Koa.ParameterizedContext<S>
 ) => AsyncOrSync<B>;
 
-export type EncodersFor<O extends OperationTypes, S = {}> = {
-  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
+export type KoaEncodersFor<O extends OperationTypes, S = {}> = {
+  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: KoaEncoder<
     BodiesMatchingMimeType<O, G>,
     S
   >;
 };
 
-export type Encoder<D, S = {}> = (
+export type KoaEncoder<D, S = {}> = (
   data: D,
   ctx: Koa.ParameterizedContext<S>
 ) => AsyncOrSync<void>;
 
-export const jsonDecoder: Decoder<any> = (ctx) => coBody.json(ctx.req);
+export const jsonDecoder: KoaDecoder<any> = (ctx) => coBody.json(ctx.req);
 
-export const jsonEncoder: Encoder<any> = (data, ctx) => {
+export const jsonEncoder: KoaEncoder<any> = (data, ctx) => {
   ctx.body = JSON.stringify(data);
 };
 
-export const textDecoder: Decoder<any> = (ctx) => coBody.text(ctx.req);
+export const textDecoder: KoaDecoder<any> = (ctx) => coBody.text(ctx.req);
 
-export const textEncoder: Encoder<any> = (data, ctx) => {
+export const textEncoder: KoaEncoder<any> = (data, ctx) => {
   ctx.body = '' + data;
-};
-
-export const fallbackEncoder: Encoder<any, any> = (_data, ctx) => {
-  throw new Error('Unsupported response content-type: ' + ctx.type);
 };
