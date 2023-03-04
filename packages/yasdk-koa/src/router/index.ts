@@ -38,10 +38,15 @@ import {
 import {
   DefaultOperationContext,
   DefaultOperationTypes,
-  HandlersFor,
+  KoaHandlersFor,
 } from './handlers.js';
 
-export {HandlerFor, HandlersFor} from './handlers.js';
+export {
+  KoaContextsFor,
+  KoaHandlerFor,
+  KoaHandlersFor,
+  KoaValuesFor,
+} from './handlers.js';
 
 const [errors, codes] = errorFactories({
   definitions: {
@@ -83,10 +88,10 @@ const [errors, codes] = errorFactories({
       message: 'Invalid response body: ' + formatValidationErrors(errors),
       tags: {errors},
     }),
-    unacceptableResponse: (type: string, eligible: ReadonlyArray<string>) => ({
+    unacceptableResponse: (type: string, accepted: ReadonlyArray<string>) => ({
       message:
-        `Response type ${type} does not belong to the set of eligible values ` +
-        `for this request (${eligible.join(', ')})`,
+        `Response type ${type} does not belong to the set of acceptable ` +
+        `values for this request (${accepted.join(', ')})`,
     }),
     unexpectedResponseBody: {
       message: 'This response should not have a body',
@@ -103,15 +108,31 @@ export function operationsRouter<
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 >(args: {
+  /** Fully resolved OpenAPI document. */
   readonly doc: OpenapiDocument;
-  readonly handlers: HandlersFor<O, S, M>;
-  readonly defaultType?: M;
+
+  /** Handler implementations. */
+  readonly handlers: KoaHandlersFor<O, S, M>;
+
+  /**
+   * Defaults to `handlers` if `handlers`'s constructor has a defined name
+   * different from `Object` and `undefined` otherwise.
+   */
+  readonly handlerContext?: unknown;
+
+  /**
+   * Fallback handler used when no implementation exists for a given operation.
+   */
   readonly fallback?: (ctx: DefaultOperationContext<S>) => Promise<void>;
+
+  readonly defaultType?: M;
+
   readonly decoders?: DecodersFor<O, S>;
   readonly encoders?: EncodersFor<O, S>;
 }): Router<S> {
   const {doc} = args;
   const handlers: any = args.handlers;
+  const handlerContext = args.handlerContext ?? defaultHandlerContext(handlers);
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const fallback = args.fallback ?? defaultFallback;
 
@@ -188,18 +209,18 @@ export function operationsRouter<
           await fallback(ctx);
           return;
         }
-        const res = await handler(ctx);
-        ctx.status = typeof res == 'number' ? res : res.status ?? 200;
+        const res = await handler.call(handlerContext, ctx);
+        const status = typeof res == 'number' ? res : res.status ?? 200;
 
         const atype =
           typeof res == 'number' ? undefined : res.type ?? defaultType;
         const data = typeof res == 'number' ? undefined : res.data;
         const clause = matcher.getBest({
-          status: ctx.status,
+          status,
           accepted,
           proposed: atype ?? '',
-          coerce: (eligible) => {
-            throw errors.unacceptableResponse(atype, [...eligible]);
+          coerce: () => {
+            throw errors.unacceptableResponse(atype, accepted);
           },
         });
         if (!clause.contentType) {
@@ -207,16 +228,28 @@ export function operationsRouter<
             throw errors.unexpectedResponseBody();
           }
           ctx.body = null;
+          // We must set the status after the body since setting the body to
+          // `null` automatically changes the status to 204.
+          ctx.status = status;
           return;
         }
         ctx.type = clause.contentType;
         registry.validateResponse(data, opid, clause.contentType, clause.code);
         const encoder = encoders.getBest(ctx.type);
-        await encoder(data, ctx);
+        try {
+          await encoder(data, ctx);
+        } finally {
+          ctx.status = status;
+        }
       }
     );
   }
   return router;
+}
+
+function defaultHandlerContext(obj: any): unknown {
+  const name = obj?.constructor?.name;
+  return name == null || name === 'Object' ? undefined : obj;
 }
 
 async function defaultFallback(ctx: DefaultOperationContext): Promise<void> {

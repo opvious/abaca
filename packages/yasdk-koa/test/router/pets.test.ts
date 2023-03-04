@@ -2,13 +2,7 @@ import {assert} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  test,
-} from 'vitest';
+import {afterAll, beforeAll, describe, expect, test} from 'vitest';
 
 import * as sut from '../../src/router/index.js';
 import {loadDocument, startApp} from '../helpers.js';

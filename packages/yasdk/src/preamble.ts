@@ -86,17 +86,25 @@ export interface CoercerContext {
   readonly path: string;
   readonly method: string;
   readonly contentType: MimeType | undefined;
-  readonly eligible: ReadonlySet<MimeType>;
+
+  /** undefined if implicit. */
+  readonly declared: ReadonlySet<MimeType> | undefined;
 }
 
 const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
   const mtype = ctx.contentType;
-  if (mtype === PLAIN_MIME_TYPE) {
+  if (
+    (mtype === PLAIN_MIME_TYPE || mtype === JSON_MIME_TYPE || mtype == null) &&
+    ctx.declared == null
+  ) {
+    return mtype;
+  }
+  if (mtype === PLAIN_MIME_TYPE && !ctx.declared?.has(PLAIN_MIME_TYPE)) {
     return undefined;
   }
   throw new Error(
-    `Unexpected ${ctx.path} ${ctx.method} response content type ${mtype} ` +
-      `for status ${res.status}`
+    `Unexpected ${ctx.method.toUpperCase()} '${ctx.path}' response content ` +
+      `type ${mtype} for status ${res.status}`
   );
 };
 
@@ -370,12 +378,12 @@ export function createSdkFor<
         status: res.status,
         accepted: [accept],
         proposed: received,
-        coerce: (eligible) =>
+        coerce: (declared) =>
           coercer(res, {
             path: op.path,
             method: op.method,
-            contentType: received,
-            eligible,
+            contentType: received || undefined,
+            declared,
           }),
       });
       let data;

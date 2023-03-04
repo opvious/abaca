@@ -140,7 +140,9 @@ export class ResponseClauseMatcher {
     readonly status: number;
     readonly accepted: ReadonlyArray<MimeType>;
     readonly proposed: MimeType | '';
-    readonly coerce: (eligible: ReadonlySet<MimeType>) => MimeType | undefined;
+    readonly coerce: (
+      declared: ReadonlySet<MimeType> | undefined
+    ) => MimeType | undefined;
   }): ResponseClause {
     const {status, accepted, proposed, coerce} = args;
     const code = this.getBestCode(status);
@@ -152,22 +154,11 @@ export class ResponseClauseMatcher {
     ) {
       return {code, contentType: proposed};
     }
-    const eligible = new Set<MimeType>();
-    if (declared) {
-      for (const mtype of declared.keys()) {
-        if (contentTypeMatches(mtype, accepted)) {
-          eligible.add(mtype);
-        }
-      }
-    }
-    if (!eligible.size && !proposed) {
+    if (!declared?.size && !proposed) {
       return {code};
     }
-    const coerced = coerce(eligible);
-    return {
-      code,
-      contentType: coerced,
-    };
+    const coerced = coerce(declared);
+    return {code, contentType: coerced};
   }
 
   declaredMimeTypes(status?: number): ReadonlySet<MimeType> {
