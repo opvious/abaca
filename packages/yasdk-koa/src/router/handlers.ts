@@ -11,19 +11,19 @@ import {
   Values,
 } from 'yasdk-openapi/preamble';
 
-export type HandlersFor<
+export type KoaHandlersFor<
   O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 > = {
-  readonly [K in keyof O]?: HandlerFor<O[K], S, M>;
+  readonly [K in keyof O]?: KoaHandlerFor<O[K], S, M>;
 };
 
-export type HandlerFor<
+export type KoaHandlerFor<
   O extends OperationType = DefaultOperationType,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
-> = (ctx: OperationContext<O, S>) => AsyncOrSync<OperationValue<O, M>>;
+> = (ctx: KoaContext<O, S>) => AsyncOrSync<KoaValue<O, M>>;
 
 export interface DefaultOperationTypes {
   readonly [id: string]: DefaultOperationType;
@@ -42,12 +42,19 @@ interface DefaultParametersType {
 
 type UnknownRecord = Record<string, unknown>;
 
-export type OperationContext<
-  O extends OperationType,
+export type KoaContextsFor<
+  O extends OperationTypes<keyof O & string>,
   S = {}
-> = Koa.ParameterizedContext<S, ContextFor<O>>;
+> = {
+  readonly [K in keyof O]: KoaContext<O[K], S>;
+};
 
-export type DefaultOperationContext<S = {}> = OperationContext<
+type KoaContext<O extends OperationType, S = {}> = Koa.ParameterizedContext<
+  S,
+  ContextFor<O>
+>;
+
+export type DefaultOperationContext<S = {}> = KoaContext<
   DefaultOperationType,
   S
 >;
@@ -92,9 +99,14 @@ type OperationParams<O extends OperationType> = O extends OperationType<
   ? P
   : {};
 
-export type OperationValue<O, M extends MimeType> = O extends OperationType<
-  infer R
->
+export type KoaValuesFor<
+  O extends OperationTypes<keyof O & string>,
+  M extends MimeType = typeof JSON_MIME_TYPE
+> = {
+  readonly [K in keyof O]: KoaValue<O[K], M>;
+};
+
+type KoaValue<O, M extends MimeType> = O extends OperationType<infer R>
   ? EmptyData<R> | NonEmptyData<R, M>
   : never;
 
@@ -135,7 +147,7 @@ type CodeRangeFor<P extends StatusPrefix> = `${P}XX`;
 
 type AllCodes = StatusString extends `${infer N extends number}` ? N : never;
 
-export type StatusesMatching<C, X = never> = C extends number
+type StatusesMatching<C, X = never> = C extends number
   ? `${C}` extends StatusString
     ? C
     : never

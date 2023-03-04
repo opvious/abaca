@@ -6,6 +6,7 @@ import {
   errorFactories,
   errorMessage,
   isStandardError,
+  StandardError,
 } from '@opvious/stl-errors';
 import {default as ajv, ErrorObject} from 'ajv';
 import {
@@ -20,32 +21,70 @@ import {
   MimeType,
   OperationDefinition,
   OperationTypes,
+  PLAIN_MIME_TYPE,
   ResponseClauseMatcher,
   ResponseCode,
   TEXT_MIME_TYPE,
 } from 'yasdk-openapi/preamble';
 
 import {
-  Decoder,
-  DecodersFor,
-  EncodersFor,
-  fallbackEncoder,
   jsonDecoder,
   jsonEncoder,
+  KoaDecoder,
+  KoaDecodersFor,
+  KoaEncoder,
+  KoaEncodersFor,
   textDecoder,
   textEncoder,
 } from './codecs.js';
 import {
   DefaultOperationContext,
   DefaultOperationTypes,
-  HandlersFor,
+  KoaHandlersFor,
 } from './handlers.js';
 
-export {HandlerFor, HandlersFor} from './handlers.js';
+export {KoaDecoder, KoaEncoder} from './codecs.js';
+export {
+  KoaContextsFor,
+  KoaHandlerFor,
+  KoaHandlersFor,
+  KoaValuesFor,
+} from './handlers.js';
 
 const [errors, codes] = errorFactories({
   definitions: {
-    unacceptableRequest: () => ({
+    invalidRequest: (origin: RequestError) => ({
+      message: 'Invalid request: ' + origin.message,
+      tags: {origin},
+    }),
+    invalidResponseData: (errors: ReadonlyArray<ErrorObject>) => ({
+      message: 'Invalid response data: ' + formatValidationErrors(errors),
+      tags: {errors},
+    }),
+    unacceptableResponseType: (
+      type: string,
+      accepted: ReadonlyArray<string>
+    ) => ({
+      message:
+        `Response type ${type} does not belong to the set of acceptable ` +
+        `values for this request (${accepted.join(', ')})`,
+    }),
+    unexpectedResponseBody: {
+      message: 'This response should not have a body',
+    },
+    unwritableResponseType: (type: string) => ({
+      message: `Response type ${type} does not have a matching encoder`,
+    }),
+  },
+});
+
+export const errorCodes = codes;
+
+type RequestError = StandardError<{readonly status: number}>;
+
+const [requestErrors] = errorFactories({
+  definitions: {
+    unacceptable: () => ({
       message:
         'Request must accept at least one content type for each response code',
       tags: {status: 406},
@@ -54,68 +93,86 @@ const [errors, codes] = errorFactories({
       message: `Parameter ${name} is required but was missing`,
       tags: {status: 400},
     }),
-    invalidRequestParameters: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid request parameters: ' + formatValidationErrors(errors),
+    invalidParameters: (errors: ReadonlyArray<ErrorObject>) => ({
+      message: 'Invalid parameters: ' + formatValidationErrors(errors),
       tags: {status: 400, errors},
     }),
-    unsupportedRequestContentType: (type: string) => ({
+    unsupportedContentType: (type: string) => ({
       message: `Content-type ${type} is not supported`,
       tags: {status: 415},
     }),
-    missingRequestBody: {
-      message: 'This operation expects a request body but none was found',
+    missingBody: () => ({
+      message: 'This operation expects a body but none was found',
       tags: {status: 400},
-    },
-    unexpectedRequestBody: {
+    }),
+    unexpectedBody: {
       message: 'This operation does not support requests with a body',
       tags: {status: 400},
     },
-    unreadableRequestBody: (cause: unknown) => ({
-      message: 'Request body could not be decoded: ' + errorMessage(cause),
+    unreadableBody: (cause: unknown) => ({
+      message: 'Body could not be decoded: ' + errorMessage(cause),
       tags: {status: 400},
       cause,
     }),
-    invalidRequestBody: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid request body: ' + formatValidationErrors(errors),
+    invalidBody: (errors: ReadonlyArray<ErrorObject>) => ({
+      message: 'Invalid body: ' + formatValidationErrors(errors),
       tags: {status: 400, errors},
     }),
-    invalidResponse: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid response body: ' + formatValidationErrors(errors),
-      tags: {errors},
-    }),
-    unacceptableResponse: (type: string, eligible: ReadonlyArray<string>) => ({
-      message:
-        `Response type ${type} does not belong to the set of eligible values ` +
-        `for this request (${eligible.join(', ')})`,
-    }),
-    unexpectedResponseBody: {
-      message: 'This response should not have a body',
-    },
   },
+  prefix: 'ERR_REQUEST_',
 });
 
 const Ajv = ajv.default ?? ajv;
 
 const ERROR_CODE_HEADER = 'error-code';
 
+/** Creates a type-safe router for operations defined in the document. */
 export function operationsRouter<
   O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 >(args: {
+  /** Fully resolved OpenAPI document. */
   readonly doc: OpenapiDocument;
-  readonly handlers: HandlersFor<O, S, M>;
-  readonly defaultType?: M;
+
+  /** Handler implementations. */
+  readonly handlers: KoaHandlersFor<O, S, M>;
+
+  /**
+   * Defaults to `handlers` if `handlers`'s constructor has a defined name
+   * different from `Object` and `undefined` otherwise.
+   */
+  readonly handlerContext?: unknown;
+
+  /**
+   * Fallback handler used when no implementation exists for a given operation.
+   */
   readonly fallback?: (ctx: DefaultOperationContext<S>) => Promise<void>;
-  readonly decoders?: DecodersFor<O, S>;
-  readonly encoders?: EncodersFor<O, S>;
+
+  /** Default response data content-type. Defaults to `application/json`. */
+  readonly defaultType?: M;
+
+  /**
+   * Additional request decoders. The default supports uncompressed `text/*` and
+   * `application/json` content-types.
+   */
+  readonly decoders?: KoaDecodersFor<O, S>;
+
+  /**
+   * Additional response encoders. The default supports uncompressed `text/*`
+   * and `application/json` content-types.
+   */
+  readonly encoders?: KoaEncodersFor<O, S>;
 }): Router<S> {
   const {doc} = args;
   const handlers: any = args.handlers;
+  const handlerContext = args.handlerContext ?? defaultHandlerContext(handlers);
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const fallback = args.fallback ?? defaultFallback;
 
-  const decoders = ByMimeType.create<Decoder<any, any> | undefined>(undefined);
+  const decoders = ByMimeType.create<KoaDecoder<any, any> | undefined>(
+    undefined
+  );
   decoders.add(JSON_MIME_TYPE, jsonDecoder);
   decoders.add(TEXT_MIME_TYPE, textDecoder);
   decoders.addAll(args.decoders as any);
@@ -134,17 +191,14 @@ export function operationsRouter<
     try {
       await next();
     } catch (err) {
-      if (!isStandardError(err, codes)) {
+      if (!isStandardError(err, codes.InvalidRequest)) {
         throw err;
       }
-      ctx.status = check.isNumber.orAbsent(err.tags.status) ?? 500;
-      ctx.set(ERROR_CODE_HEADER, err.code);
-      if (ctx.status >= 500) {
-        // TODO: Telemetry.
-        return;
-      }
-      if (ctx.accepts('application/json')) {
-        ctx.body = {message: err.message, code: err.code, tags: err.tags};
+      const {origin} = err.tags;
+      ctx.status = origin.tags.status;
+      ctx.set(ERROR_CODE_HEADER, origin.code);
+      if (ctx.accepts([JSON_MIME_TYPE, PLAIN_MIME_TYPE]) === JSON_MIME_TYPE) {
+        ctx.body = {message: err.message, code: origin.code, tags: origin.tags};
       } else {
         ctx.body = err.message;
       }
@@ -160,7 +214,7 @@ export function operationsRouter<
       async (ctx: Router.RouterContext) => {
         const accepted = ensureArray(ctx.accept.types() || FALLBACK_MIME_TYPE);
         if (!matcher.acceptable(accepted)) {
-          throw errors.unacceptableRequest();
+          throw errors.invalidRequest(requestErrors.unacceptable());
         }
 
         registry.injectParameters(ctx, opid, def);
@@ -169,18 +223,20 @@ export function operationsRouter<
         if (qtype) {
           const decoder = decoders.getBest(qtype);
           if (!decoder) {
-            throw errors.unsupportedRequestContentType(qtype);
+            throw errors.invalidRequest(
+              requestErrors.unsupportedContentType(qtype)
+            );
           }
           let body;
           try {
             body = await decoder(ctx);
           } catch (err) {
-            throw errors.unreadableRequestBody(err);
+            throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
           registry.validateRequestBody(body, opid, qtype);
           Object.assign(ctx.request, {body});
         } else if (def.body?.required) {
-          throw errors.missingRequestBody();
+          throw errors.invalidRequest(requestErrors.missingBody());
         }
 
         const handler = handlers[opid];
@@ -188,18 +244,18 @@ export function operationsRouter<
           await fallback(ctx);
           return;
         }
-        const res = await handler(ctx);
-        ctx.status = typeof res == 'number' ? res : res.status ?? 200;
+        const res = await handler.call(handlerContext, ctx);
+        const status = typeof res == 'number' ? res : res.status ?? 200;
 
         const atype =
           typeof res == 'number' ? undefined : res.type ?? defaultType;
         const data = typeof res == 'number' ? undefined : res.data;
         const clause = matcher.getBest({
-          status: ctx.status,
+          status,
           accepted,
           proposed: atype ?? '',
-          coerce: (eligible) => {
-            throw errors.unacceptableResponse(atype, [...eligible]);
+          coerce: () => {
+            throw errors.unacceptableResponseType(atype, accepted);
           },
         });
         if (!clause.contentType) {
@@ -207,16 +263,32 @@ export function operationsRouter<
             throw errors.unexpectedResponseBody();
           }
           ctx.body = null;
+          // We must set the status after the body since setting the body to
+          // `null` automatically changes the status to 204.
+          ctx.status = status;
           return;
         }
         ctx.type = clause.contentType;
         registry.validateResponse(data, opid, clause.contentType, clause.code);
         const encoder = encoders.getBest(ctx.type);
-        await encoder(data, ctx);
+        try {
+          await encoder(data, ctx);
+        } finally {
+          ctx.status = status;
+        }
       }
     );
   }
   return router;
+}
+
+const fallbackEncoder: KoaEncoder<any, any> = (_data, ctx) => {
+  throw errors.unwritableResponseType(ctx.type);
+};
+
+function defaultHandlerContext(obj: any): unknown {
+  const name = obj?.constructor?.name;
+  return name == null || name === 'Object' ? undefined : obj;
 }
 
 async function defaultFallback(ctx: DefaultOperationContext): Promise<void> {
@@ -282,7 +354,7 @@ class Registry {
       }
       if (str == null) {
         if (pdef.required) {
-          throw errors.missingParameter(name);
+          throw errors.invalidRequest(requestErrors.missingParameter(name));
         }
         continue;
       }
@@ -297,7 +369,7 @@ class Registry {
       }
     }
     if (errs.length) {
-      throw errors.invalidRequestParameters(errs);
+      throw errors.invalidRequest(requestErrors.invalidParameters(errs));
     }
   }
 
@@ -306,7 +378,9 @@ class Registry {
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     if (!validate(body)) {
-      throw errors.invalidRequestBody([...check.isPresent(validate.errors)]);
+      throw errors.invalidRequest(
+        requestErrors.invalidBody([...check.isPresent(validate.errors)])
+      );
     }
   }
 
@@ -320,7 +394,7 @@ class Registry {
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing response schema', key);
     if (!validate(data)) {
-      throw errors.invalidResponse([...check.isPresent(validate.errors)]);
+      throw errors.invalidResponseData([...check.isPresent(validate.errors)]);
     }
   }
 }
