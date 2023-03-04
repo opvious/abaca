@@ -422,7 +422,7 @@ export interface CreateSdkOptionsFor<
 
   /** Underlying fetch method. */
   readonly fetch?: (
-    url: URL,
+    url: string,
     init: BaseInit<BodyInitFor<F>> & RequestOptionsFor<F>
   ) => Promise<ResponseFor<F>>;
 

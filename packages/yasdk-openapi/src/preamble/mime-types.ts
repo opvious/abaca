@@ -185,8 +185,11 @@ export class ResponseClauseMatcher {
 
   acceptable(accepted: ReadonlyArray<MimeType>): boolean {
     for (const mtypes of this.data.values()) {
+      if (!mtypes.size) {
+        continue;
+      }
       let overlap = false;
-      for (const mtype of mtypes.keys()) {
+      for (const mtype of mtypes) {
         if (contentTypeMatches(mtype, accepted)) {
           overlap = true;
           break;

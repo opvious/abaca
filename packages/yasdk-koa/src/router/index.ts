@@ -48,6 +48,7 @@ const [errors, codes] = errorFactories({
     unacceptableRequest: () => ({
       message:
         'Request must accept at least one content type for each response code',
+      tags: {status: 406},
     }),
     missingParameter: (name: string) => ({
       message: `Parameter ${name} is required but was missing`,
@@ -109,7 +110,8 @@ export function operationsRouter<
   readonly decoders?: DecodersFor<O, S>;
   readonly encoders?: EncodersFor<O, S>;
 }): Router<S> {
-  const {doc, handlers} = args;
+  const {doc} = args;
+  const handlers: any = args.handlers;
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const fallback = args.fallback ?? defaultFallback;
 
@@ -132,7 +134,6 @@ export function operationsRouter<
     try {
       await next();
     } catch (err) {
-      console.error(err);
       if (!isStandardError(err, codes)) {
         throw err;
       }
@@ -143,14 +144,13 @@ export function operationsRouter<
         return;
       }
       if (ctx.accepts('application/json')) {
-        ctx.body = {message: err.message, tags: err.tags};
+        ctx.body = {message: err.message, code: err.code, tags: err.tags};
       } else {
         ctx.body = err.message;
       }
     }
   });
   for (const [opid, def] of Object.entries(defs)) {
-    const handler = (handlers as any)[opid];
     const matcher = ResponseClauseMatcher.create(def.responses);
 
     assert(def.method !== 'trace', 'trace is not supported yet');
@@ -183,11 +183,11 @@ export function operationsRouter<
           throw errors.missingRequestBody();
         }
 
+        const handler = handlers[opid];
         if (!handler) {
           await fallback(ctx);
           return;
         }
-
         const res = await handler(ctx);
         ctx.status = typeof res == 'number' ? res : res.status ?? 200;
 
@@ -202,16 +202,13 @@ export function operationsRouter<
             throw errors.unacceptableResponse(atype, [...eligible]);
           },
         });
-
         if (!clause.contentType) {
-          // No response body expected.
           if (data != null) {
             throw errors.unexpectedResponseBody();
           }
           ctx.body = null;
           return;
         }
-
         ctx.type = clause.contentType;
         registry.validateResponse(data, opid, clause.contentType, clause.code);
         const encoder = encoders.getBest(ctx.type);

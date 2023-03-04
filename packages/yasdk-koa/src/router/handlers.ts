@@ -12,7 +12,7 @@ import {
 } from 'yasdk-openapi/preamble';
 
 export type HandlersFor<
-  O extends OperationTypes = DefaultOperationTypes,
+  O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 > = {
@@ -95,11 +95,11 @@ type OperationParams<O extends OperationType> = O extends OperationType<
 export type OperationValue<O, M extends MimeType> = O extends OperationType<
   infer R
 >
-  ? EmptyData<R, M> | NonEmptyData<R, M>
+  ? EmptyData<R> | NonEmptyData<R, M>
   : never;
 
-type EmptyData<R extends ResponsesType, M extends MimeType> = Values<{
-  [C in keyof R]: Get<Get<R[C], 'content'>, M> extends never
+type EmptyData<R extends ResponsesType> = Values<{
+  [C in keyof R]: Get<R[C], 'content'> extends never
     ? StatusesMatching<C>
     : never;
 }>;
