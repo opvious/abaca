@@ -27,7 +27,10 @@ export function mainCommand(): Command {
         resolveAllReferences: true,
       });
       const [typesStr, preambleStr, valuesStr] = await Promise.all([
-        generateTypes(doc, {
+        // We must clone the document since `openapi-typescript` will mutate it
+        // (for example to filter `x-` properties) and `doc` contains immutable
+        // nodes.
+        generateTypes(JSON.parse(JSON.stringify(doc)), {
           commentHeader: '',
           immutableTypes: true,
         }),
