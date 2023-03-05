@@ -69,6 +69,7 @@ export type {
   DecoderContext,
   Encoder,
   EncoderContext,
+  RequestOptions,
   ResponseCode,
   operations,
 };

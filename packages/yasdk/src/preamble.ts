@@ -43,7 +43,7 @@ export type Encoder<B, F extends BaseFetch = typeof fetch> = (
 export interface EncoderContext<F> {
   readonly contentType: string;
   readonly headers: RequestHeaders;
-  readonly options?: RequestOptionsFor<F>;
+  readonly options?: RequestOptions<F>;
 }
 
 type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
@@ -61,7 +61,7 @@ export type Decoder<R, F extends BaseFetch = typeof fetch> = (
 export interface DecoderContext<F> {
   readonly contentType: string;
   readonly headers: RequestHeaders;
-  readonly options?: RequestOptionsFor<F>;
+  readonly options?: RequestOptions<F>;
 }
 
 const jsonEncoder: Encoder<any> = (body) => JSON.stringify(body);
@@ -131,12 +131,12 @@ type Input<
 
 interface CommonInput<F> {
   readonly headers?: RequestHeaders;
-  readonly options?: RequestOptionsFor<F>;
+  readonly options?: RequestOptions<F>;
 }
 
 type RequestHeaders = Record<string, string>;
 
-export type RequestOptionsFor<F> = Omit<
+export type RequestOptions<F> = Omit<
   RequestInitFor<F>,
   'body' | 'headers' | 'method'
 >;
@@ -420,7 +420,7 @@ export interface CreateSdkOptionsFor<
    * Other global request options. These can similarly be overriden in
    * individual fetch calls.
    */
-  readonly options?: RequestOptionsFor<F>;
+  readonly options?: RequestOptions<F>;
 
   /** Global request body encoders. */
   readonly encoders?: EncodersFor<O, F>;
@@ -431,7 +431,7 @@ export interface CreateSdkOptionsFor<
   /** Underlying fetch method. */
   readonly fetch?: (
     url: string,
-    init: BaseInit<BodyInitFor<F>> & RequestOptionsFor<F>
+    init: BaseInit<BodyInitFor<F>> & RequestOptions<F>
   ) => Promise<ResponseFor<F>>;
 
   /**
