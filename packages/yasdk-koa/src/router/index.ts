@@ -128,7 +128,7 @@ const Ajv = ajv.default ?? ajv;
 const ERROR_CODE_HEADER = 'error-code';
 
 /** Creates a type-safe router for operations defined in the document. */
-export function koaOperationsRouter<
+export function createOperationsRouter<
   O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE

@@ -1,11 +1,9 @@
-import {assert} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
-import {afterAll, beforeAll, describe, expect, test} from 'vitest';
 
 import * as sut from '../../src/router/index.js';
-import {loadDocument, startApp} from '../helpers.js';
+import {loadDocument, serverAddress, startApp} from '../helpers.js';
 import {createSdk, operations, Sdk, types} from '../pets-sdk.gen.js';
 
 describe('pets', async () => {
@@ -22,18 +20,13 @@ describe('pets', async () => {
 
   beforeAll(async () => {
     const doc = await loadDocument('pets.openapi.yaml');
-    const router = sut.koaOperationsRouter<operations>({doc, handlers});
+    const router = sut.createOperationsRouter<operations>({doc, handlers});
 
     const app = new Koa<any, any>()
       .use(router.allowedMethods())
       .use(router.routes());
     server = await startApp(app);
-
-    const addr = server.address();
-    assert(addr, 'Missing server address');
-    const root =
-      typeof addr == 'string' ? addr : `http://localhost:${addr.port}`;
-    sdk = createSdk(root, {fetch});
+    sdk = createSdk(serverAddress(server), {fetch});
   });
 
   afterAll(() => {

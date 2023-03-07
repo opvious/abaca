@@ -1,5 +1,5 @@
 import Router from '@koa/router';
-import {assert} from '@opvious/stl-errors';
+import {MarkPresent} from '@opvious/stl-utils/objects';
 import events from 'events';
 import ProxyServer, {
   createProxy,
@@ -16,7 +16,7 @@ import {
 import {routerPath} from './common.js';
 
 /** Creates a proxy for OpenAPI operations. */
-export function koaOperationsProxy<
+export function createOperationsProxy<
   D extends OpenapiDocument,
   U extends Record<string, ProxyServerOptions>
 >(args: {
@@ -26,9 +26,12 @@ export function koaOperationsProxy<
   /** Upstream server options. */
   readonly upstreams: U;
 
-  /** Maps operations to upstream key. Unmapped operations are not proxied. */
+  /**
+   * Maps operations to upstream key. Unmapped operations are not proxied.
+   * Operations without an ID or with `trace` method are always skipped.
+   */
   readonly dispatch: (
-    op: OpenapiOperation<D>,
+    op: MarkPresent<OpenapiOperation<D>, 'operationId'>,
     path: string
   ) => (keyof U & string) | undefined;
 
@@ -51,12 +54,11 @@ export function koaOperationsProxy<
   };
 
   const router = new Router<any, any>();
-  for (const [path, pathObj] of Object.entries(args.doc)) {
+  for (const [path, pathObj] of Object.entries<any>(args.doc.paths ?? {})) {
     for (const meth of allOperationMethods) {
-      assert(meth !== 'trace', 'Trace operations are not supported yet');
       const opObj = pathObj[meth];
       const opId = opObj?.operationId;
-      if (!opId) {
+      if (!opId || meth === 'trace') {
         continue;
       }
       const key = args.dispatch(opObj, path);

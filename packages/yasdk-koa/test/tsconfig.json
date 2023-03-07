@@ -6,6 +6,7 @@
     "noImplicitAny": false,
     "noErrorTruncation": true,
     "outDir": "../out/test",
+    "types": ["vitest/globals"],
     "useUnknownInCatchVariables": false
   },
   "references": [

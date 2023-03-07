@@ -1,5 +1,4 @@
 import {fail} from '@opvious/stl-errors';
-import {beforeAll, describe, expect, test} from 'vitest';
 
 import {loadOpenapiDocument} from '../src/load.js';
 import * as sut from '../src/resolve.js';
