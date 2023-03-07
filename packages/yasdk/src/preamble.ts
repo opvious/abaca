@@ -87,11 +87,8 @@ export interface CoercerContext {
   readonly path: string;
   readonly method: string;
   readonly contentType: MimeType | undefined;
-
   readonly accepted: ReadonlyArray<MimeType>;
-
-  /** undefined if implicit. */
-  readonly declared: ReadonlySet<MimeType> | undefined;
+  readonly declared: ReadonlySet<MimeType> | undefined; // undefined if implicit
 }
 
 const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
@@ -108,7 +105,7 @@ const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
   throw new Error(
     `Unexpected ${ctx.method.toUpperCase()} ${ctx.path} response content ` +
       `type ${mtype} for status ${res.status} (accepted: ${ctx.accepted}, ` +
-      `declared: ${ctx.declared ? ctx.declared : '<unknown>'})`
+      `declared: ${ctx.declared ? [...ctx.declared] : '<unknown>'})`
   );
 };
 
