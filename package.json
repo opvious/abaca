@@ -1,11 +1,12 @@
 {
   "name": "@opvious/yasdk-packages",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": true,
   "repository": "github:mtth/yasdk",
   "author": "Matthieu Monsch <mtth@apache.org>",
   "license": "MIT",
   "scripts": {
+    "bump": "pnpm -r --include-workspace-root exec npm version ${BUMP:-patch}",
     "clean": "pnpm -r -F !. run clean && rm -rf node_modules out",
     "fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && pnpm run lint --fix",
     "lint": "eslint 'packages/*/{src,test}/**/*.{ts,tsx}'",

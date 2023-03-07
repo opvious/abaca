@@ -22,7 +22,7 @@ describe('pets', async () => {
 
   beforeAll(async () => {
     const doc = await loadDocument('pets.openapi.yaml');
-    const router = sut.operationsRouter<operations>({doc, handlers});
+    const router = sut.koaOperationsRouter<operations>({doc, handlers});
 
     const app = new Koa<any, any>()
       .use(router.allowedMethods())

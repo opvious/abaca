@@ -8,8 +8,8 @@ export {
   KoaEncoder,
   KoaHandlerFor,
   KoaHandlersFor,
+  koaOperationsRouter,
   KoaValuesFor,
-  operationsRouter,
 } from './router/index.js';
 
 export const errorCodes = mergeErrorCodes({

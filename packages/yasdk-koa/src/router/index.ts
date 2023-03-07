@@ -11,8 +11,8 @@ import {
 import {default as ajv, ErrorObject} from 'ajv';
 import {
   extractOperationDefinitions,
-  HookEnv,
   OpenapiDocument,
+  OperationHookEnv,
 } from 'yasdk-openapi';
 import {
   ByMimeType,
@@ -27,6 +27,7 @@ import {
   TEXT_MIME_TYPE,
 } from 'yasdk-openapi/preamble';
 
+import {routerPath} from '../common.js';
 import {
   jsonDecoder,
   jsonEncoder,
@@ -127,7 +128,7 @@ const Ajv = ajv.default ?? ajv;
 const ERROR_CODE_HEADER = 'error-code';
 
 /** Creates a type-safe router for operations defined in the document. */
-export function operationsRouter<
+export function koaOperationsRouter<
   O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
@@ -301,15 +302,11 @@ function ensureArray<V>(
   return (Array.isArray(val) ? val : [val]) as any;
 }
 
-function routerPath(p: string): string {
-  return p.replace(/{([^}]+)}/g, ':$1');
-}
-
 class Registry {
   private readonly parameters = new Ajv({coerceTypes: true});
   private readonly bodies = new Ajv();
 
-  register(schema: any, env: HookEnv): void {
+  register(schema: any, env: OperationHookEnv): void {
     const {operationId, target} = env;
     if (target.kind === 'parameter') {
       const {name} = target;

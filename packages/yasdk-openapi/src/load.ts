@@ -102,10 +102,17 @@ export type OpenapiDocument = OpenapiDocuments[OpenapiVersion];
 
 const allVersions = ['2.0', '3.0', '3.1'] as const;
 
+export type OpenapiOperation<D extends OpenapiDocument> =
+  D extends OpenapiDocuments['2.0']
+    ? OpenAPIV2.OperationObject
+    : D extends OpenapiDocuments['3.0']
+    ? OpenAPIV3.OperationObject
+    : OpenAPIV3_1.OperationObject;
+
 /** The input document must be fully resolved. */
 export function extractOperationDefinitions(
   doc: OpenapiDocument,
-  hook?: (schema: any, env: HookEnv) => void
+  hook?: (schema: any, env: OperationHookEnv) => void
 ): Record<string, OperationDefinition> {
   const defs: Record<string, OperationDefinition> = {};
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
@@ -166,18 +173,18 @@ export function extractOperationDefinitions(
   }
 }
 
-export interface HookEnv {
+export interface OperationHookEnv {
   readonly operationId: string;
-  readonly target: HookTarget;
+  readonly target: OperationHookTarget;
 }
 
-export type HookTarget = KindAmong<{
+export type OperationHookTarget = KindAmong<{
   requestBody: {readonly type: MimeType};
   response: {readonly type: MimeType; readonly code: ResponseCode};
   parameter: {readonly name: string};
 }>;
 
-const allOperationMethods = [
+export const allOperationMethods = [
   'get',
   'put',
   'post',

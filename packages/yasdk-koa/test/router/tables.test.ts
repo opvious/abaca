@@ -15,7 +15,10 @@ describe('tables', async () => {
 
   beforeAll(async () => {
     const doc = await loadDocument('tables.openapi.yaml');
-    const router = sut.operationsRouter<operations>({doc, handlers: handler});
+    const router = sut.koaOperationsRouter<operations>({
+      doc,
+      handlers: handler,
+    });
 
     const app = new Koa<any, any>()
       .use(router.allowedMethods())

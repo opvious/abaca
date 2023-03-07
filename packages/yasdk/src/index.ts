@@ -38,7 +38,7 @@ export function mainCommand(): Command {
         generateValues(doc),
       ]);
       const out = [
-        '// No not edit, this file was auto-generated\n',
+        '// Do not edit, this file was auto-generated\n',
         preambleStr,
         typesStr
           .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
