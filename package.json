@@ -10,7 +10,7 @@
     "clean": "pnpm -r -F !. run clean && rm -rf node_modules out",
     "fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && pnpm run lint --fix",
     "lint": "eslint 'packages/*/{src,test}/**/*.{ts,tsx}'",
-    "test": "pnpm -r run test run --coverage"
+    "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in packages/*; do cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; done"
   },
   "devDependencies": {
     "@opvious/eslint-plugin": "^0.1.20",
