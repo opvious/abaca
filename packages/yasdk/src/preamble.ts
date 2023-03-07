@@ -22,6 +22,7 @@ import {
   ResponseMimeTypes,
   ResponsesMatchingMimeType,
   ResponsesType,
+  splitMimeType,
   TEXT_MIME_TYPE,
   Values,
   ValuesMatchingMimeTypes,
@@ -87,6 +88,8 @@ export interface CoercerContext {
   readonly method: string;
   readonly contentType: MimeType | undefined;
 
+  readonly accepted: ReadonlyArray<MimeType>;
+
   /** undefined if implicit. */
   readonly declared: ReadonlySet<MimeType> | undefined;
 }
@@ -103,8 +106,9 @@ const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
     return undefined;
   }
   throw new Error(
-    `Unexpected ${ctx.method.toUpperCase()} '${ctx.path}' response content ` +
-      `type ${mtype} for status ${res.status}`
+    `Unexpected ${ctx.method.toUpperCase()} ${ctx.path} response content ` +
+      `type ${mtype} for status ${res.status} (accepted: ${ctx.accepted}, ` +
+      `declared: ${ctx.declared ? ctx.declared : '<unknown>'})`
   );
 };
 
@@ -373,10 +377,11 @@ export function createSdkFor<
         body,
       });
 
+      const accepted = splitMimeType(accept);
       const received = res.headers.get('content-type')?.split(';')?.[0] ?? '';
       const clause = clauseMatcher.getBest({
         status: res.status,
-        accepted: [accept],
+        accepted,
         proposed: received,
         coerce: (declared) =>
           coercer(res, {
@@ -384,6 +389,7 @@ export function createSdkFor<
             method: op.method,
             contentType: received || undefined,
             declared,
+            accepted,
           }),
       });
       let data;

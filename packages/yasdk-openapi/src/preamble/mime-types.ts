@@ -31,16 +31,20 @@ export type ValuesMatchingMimeTypes<O, G extends MimeType> = Values<{
     : O[M];
 }>;
 
+export function splitMimeType(item: string): ReadonlyArray<MimeType> {
+  return item.split(',').map((i) => i.trim());
+}
+
 function contentTypeMatches(
   exact: MimeType,
-  globs: ReadonlyArray<MimeType>
+  accepted: ReadonlyArray<MimeType>
 ): boolean {
-  for (const glob of globs) {
-    if (exact === glob || glob === FALLBACK_MIME_TYPE) {
+  for (const item of accepted) {
+    if (exact === item || item === FALLBACK_MIME_TYPE) {
       return true;
     }
     const got = exact.split('/');
-    const want = glob.split('/');
+    const want = item.split('/');
     if (got[0] === want[0] && (got[1] === want[1] || want[1] === '*')) {
       return true;
     }
