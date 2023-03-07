@@ -1,10 +1,7 @@
 import Router from '@koa/router';
 import {MarkPresent} from '@opvious/stl-utils/objects';
 import events from 'events';
-import ProxyServer, {
-  createProxy,
-  ServerOptions as ProxyServerOptions,
-} from 'http-proxy';
+import ProxyServer from 'http-proxy';
 import Koa from 'koa';
 import koaCompose from 'koa-compose';
 import {
@@ -18,7 +15,7 @@ import {routerPath} from './common.js';
 /** Creates a proxy for OpenAPI operations. */
 export function createOperationsProxy<
   D extends OpenapiDocument,
-  U extends Record<string, ProxyServerOptions>
+  U extends Record<string, ProxyServer.ServerOptions>
 >(args: {
   /** OpenAPI document. */
   readonly doc: D;
@@ -47,7 +44,7 @@ export function createOperationsProxy<
     if (server) {
       return server;
     }
-    server = createProxy(args.upstreams[key]);
+    server = ProxyServer.createProxy(args.upstreams[key]);
     args.setup?.(server, key);
     proxies.set(key, server);
     return server;
