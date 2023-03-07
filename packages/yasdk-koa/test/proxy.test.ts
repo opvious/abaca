@@ -1,6 +1,7 @@
 import {assert} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
+import fetch from 'node-fetch';
 
 import * as sut from '../src/proxy.js';
 import {createOperationsRouter} from '../src/router/index.js';
@@ -10,6 +11,7 @@ import {createSdk, operations, Sdk, types} from './tables-sdk.gen.js';
 describe('operation proxy', () => {
   let sdk: Sdk<typeof fetch>;
   let server, readServer, writeServer: http.Server;
+  let address: string;
   let table: types['Table'] | undefined;
 
   beforeAll(async () => {
@@ -42,7 +44,8 @@ describe('operation proxy', () => {
       dispatch: (op) => (op.operationId === 'getTable' ? 'read' : 'write'),
     });
     server = await startApp(new Koa().use(proxy));
-    sdk = createSdk(serverAddress(server), {fetch});
+    address = serverAddress(server);
+    sdk = createSdk(address, {fetch});
   });
 
   afterAll(() => {
