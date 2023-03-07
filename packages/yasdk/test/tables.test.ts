@@ -4,7 +4,6 @@ import http from 'http';
 import Koa from 'koa';
 import koaBody from 'koa-body';
 import fetch from 'node-fetch';
-import {afterAll, beforeAll, describe, expect, test} from 'vitest';
 
 import {startApp} from './helpers';
 import {createSdk, Sdk, types} from './tables-sdk.gen';

@@ -1,5 +1,4 @@
 import {fail} from '@opvious/stl-errors';
-import {describe, expect, test} from 'vitest';
 
 import * as sut from '../src/load.js';
 

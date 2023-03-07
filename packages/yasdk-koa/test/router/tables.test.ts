@@ -2,10 +2,9 @@ import {assert, unreachable} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
-import {afterAll, beforeAll, beforeEach, describe, expect, test} from 'vitest';
 
 import * as sut from '../../src/router/index.js';
-import {loadDocument, startApp} from '../helpers.js';
+import {loadDocument, serverAddress, startApp} from '../helpers.js';
 import {createSdk, operations, Sdk, types} from '../tables-sdk.gen.js';
 
 describe('tables', async () => {
@@ -15,7 +14,7 @@ describe('tables', async () => {
 
   beforeAll(async () => {
     const doc = await loadDocument('tables.openapi.yaml');
-    const router = sut.koaOperationsRouter<operations>({
+    const router = sut.createOperationsRouter<operations>({
       doc,
       handlers: handler,
     });
@@ -24,12 +23,7 @@ describe('tables', async () => {
       .use(router.allowedMethods())
       .use(router.routes());
     server = await startApp(app);
-
-    const addr = server.address();
-    assert(addr, 'Missing server address');
-    const root =
-      typeof addr == 'string' ? addr : `http://localhost:${addr.port}`;
-    sdk = createSdk(root, {fetch});
+    sdk = createSdk(serverAddress(server), {fetch});
   });
 
   beforeEach(() => {

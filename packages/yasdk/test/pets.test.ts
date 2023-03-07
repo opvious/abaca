@@ -5,7 +5,6 @@ import Koa from 'koa';
 import koaBody from 'koa-body';
 import fetch from 'node-fetch';
 import {Writable} from 'ts-essentials';
-import {afterAll, beforeAll, describe, expect, test} from 'vitest';
 
 import {startApp, touch} from './helpers';
 import {createSdk, RequestBody, ResponseData, Sdk, types} from './pets-sdk.gen';
@@ -17,7 +16,9 @@ describe('pets', () => {
 
   beforeAll(async () => {
     const router = newRouter();
-    const app = new Koa().use(router.allowedMethods()).use(router.routes());
+    const app = new Koa<any, any>()
+      .use(router.allowedMethods())
+      .use(router.routes());
     server = await startApp(app);
     const addr = server.address();
     assert(addr, 'Missing server address');
