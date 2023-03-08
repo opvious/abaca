@@ -1,7 +1,7 @@
 import Router from '@koa/router';
 import {assert} from '@opvious/stl-errors';
 import {instrumentsFor, noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
-import {ArrayMultimap,firstElement} from '@opvious/stl-utils/collections';
+import {ArrayMultimap, firstElement} from '@opvious/stl-utils/collections';
 import {MarkPresent} from '@opvious/stl-utils/objects';
 import events from 'events';
 import ProxyServer from 'http-proxy';
@@ -49,7 +49,7 @@ export function createOperationsProxy<
    */
   readonly setup?: (server: ProxyServer, key: keyof U & string) => void;
 
-  /** Telemetry. */
+  /** Telemetry provider. */
   readonly telemetry?: Telemetry;
 
   /**
