@@ -16,7 +16,7 @@ import {
 } from 'yasdk-openapi';
 import {
   ByMimeType,
-  FALLBACK_MIME_TYPE,
+  isResponseTypeValid,
   JSON_MIME_TYPE,
   MimeType,
   OperationDefinition,
@@ -63,12 +63,15 @@ const [errors, codes] = errorFactories({
       tags: {errors},
     }),
     unacceptableResponseType: (
+      oid: string,
       type: string,
-      accepted: ReadonlyArray<string>
+      accepted: Iterable<string>,
+      declared: Iterable<string> | undefined
     ) => ({
       message:
         `Response type ${type} does not belong to the set of acceptable ` +
-        `values for this request (${accepted.join(', ')})`,
+        `values for operation ${oid} (accepted=[${[...accepted].join(', ')}]` +
+        `, declared=[${[...(declared ?? [])].join(', ')}])`,
     }),
     unexpectedResponseBody: {
       message: 'This response should not have a body',
@@ -205,20 +208,20 @@ export function createOperationsRouter<
       }
     }
   });
-  for (const [opid, def] of Object.entries(defs)) {
+  for (const [oid, def] of Object.entries(defs)) {
     const matcher = ResponseClauseMatcher.create(def.responses);
 
     assert(def.method !== 'trace', 'trace is not supported yet');
     router[def.method](
-      opid,
+      oid,
       routerPath(def.path),
       async (ctx: Router.RouterContext) => {
-        const accepted = ensureArray(ctx.accept.types() || FALLBACK_MIME_TYPE);
+        const accepted = new Set(ctx.accepts());
         if (!matcher.acceptable(accepted)) {
           throw errors.invalidRequest(requestErrors.unacceptable());
         }
 
-        registry.injectParameters(ctx, opid, def);
+        registry.injectParameters(ctx, oid, def);
 
         const qtype = ctx.request.type;
         if (qtype) {
@@ -234,13 +237,13 @@ export function createOperationsRouter<
           } catch (err) {
             throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
-          registry.validateRequestBody(body, opid, qtype);
+          registry.validateRequestBody(body, oid, qtype);
           Object.assign(ctx.request, {body});
         } else if (def.body?.required) {
           throw errors.invalidRequest(requestErrors.missingBody());
         }
 
-        const handler = handlers[opid];
+        const handler = handlers[oid];
         if (!handler) {
           await fallback(ctx);
           return;
@@ -251,15 +254,11 @@ export function createOperationsRouter<
         const atype =
           typeof res == 'number' ? undefined : res.type ?? defaultType;
         const data = typeof res == 'number' ? undefined : res.data;
-        const clause = matcher.getBest({
-          status,
-          accepted,
-          proposed: atype ?? '',
-          coerce: () => {
-            throw errors.unacceptableResponseType(atype, accepted);
-          },
-        });
-        if (!clause.contentType) {
+        const {code, declared} = matcher.getBest(status);
+        if (!isResponseTypeValid({value: atype, declared, accepted})) {
+          throw errors.unacceptableResponseType(oid, atype, accepted, declared);
+        }
+        if (!atype) {
           if (data != null) {
             throw errors.unexpectedResponseBody();
           }
@@ -269,9 +268,9 @@ export function createOperationsRouter<
           ctx.status = status;
           return;
         }
-        ctx.type = clause.contentType;
-        registry.validateResponse(data, opid, clause.contentType, clause.code);
-        const encoder = encoders.getBest(ctx.type);
+        ctx.type = atype;
+        registry.validateResponse(data, oid, atype, code);
+        const encoder = encoders.getBest(atype);
         try {
           await encoder(data, ctx);
         } finally {
@@ -294,12 +293,6 @@ function defaultHandlerContext(obj: any): unknown {
 
 async function defaultFallback(ctx: DefaultOperationContext): Promise<void> {
   ctx.status = 501;
-}
-
-function ensureArray<V>(
-  val: V | ReadonlyArray<V>
-): V extends ReadonlyArray<any> ? V : ReadonlyArray<V> {
-  return (Array.isArray(val) ? val : [val]) as any;
 }
 
 class Registry {
@@ -329,7 +322,7 @@ class Registry {
 
   injectParameters(
     ctx: DefaultOperationContext,
-    opid: string,
+    oid: string,
     def: OperationDefinition
   ): void {
     const {parameters} = this;
@@ -355,7 +348,7 @@ class Registry {
         }
         continue;
       }
-      const key = schemaKey(opid, name);
+      const key = schemaKey(oid, name);
       const validate = parameters.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
@@ -370,8 +363,8 @@ class Registry {
     }
   }
 
-  validateRequestBody(body: unknown, opid: string, type: string): void {
-    const key = schemaKey(opid, bodySchemaSuffix(type));
+  validateRequestBody(body: unknown, oid: string, type: string): void {
+    const key = schemaKey(oid, bodySchemaSuffix(type));
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     if (!validate(body)) {
@@ -383,11 +376,11 @@ class Registry {
 
   validateResponse(
     data: unknown,
-    opid: string,
+    oid: string,
     type: string,
     code: ResponseCode
   ): void {
-    const key = schemaKey(opid, bodySchemaSuffix(type, code));
+    const key = schemaKey(oid, bodySchemaSuffix(type, code));
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing response schema', key);
     if (!validate(data)) {
@@ -396,8 +389,8 @@ class Registry {
   }
 }
 
-function schemaKey(opid: string, suffix: string): string {
-  return `${opid}#${suffix}`;
+function schemaKey(oid: string, suffix: string): string {
+  return `${oid}#${suffix}`;
 }
 
 function bodySchemaSuffix(type: MimeType, code?: ResponseCode): string {

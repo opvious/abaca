@@ -31,13 +31,9 @@ export type ValuesMatchingMimeTypes<O, G extends MimeType> = Values<{
     : O[M];
 }>;
 
-export function splitMimeType(item: string): ReadonlyArray<MimeType> {
-  return item.split(',').map((i) => i.trim());
-}
-
 function contentTypeMatches(
   exact: MimeType,
-  accepted: ReadonlyArray<MimeType>
+  accepted: Iterable<MimeType>
 ): boolean {
   for (const item of accepted) {
     if (exact === item || item === FALLBACK_MIME_TYPE) {
@@ -140,45 +136,24 @@ export class ResponseClauseMatcher {
     return new ResponseClauseMatcher(data);
   }
 
-  getBest(args: {
-    readonly status: number;
-    readonly accepted: ReadonlyArray<MimeType>;
-    readonly proposed: MimeType | '';
-    readonly coerce: (
-      declared: ReadonlySet<MimeType> | undefined
-    ) => MimeType | undefined;
-  }): ResponseClause {
-    const {status, accepted, proposed, coerce} = args;
+  getBest(status: number): ResponseClause {
     const code = this.getBestCode(status);
-    const declared = this.data.get(code);
-    if (
-      proposed &&
-      declared?.has(proposed) &&
-      contentTypeMatches(proposed, accepted)
-    ) {
-      return {code, contentType: proposed};
-    }
-    if (!declared?.size && !proposed) {
-      return {code};
-    }
-    const coerced = coerce(declared);
-    return {code, contentType: coerced};
+    return {code, declared: this.data.get(code)};
   }
 
-  declaredMimeTypes(status?: number): ReadonlySet<MimeType> {
-    if (status != null) {
-      return this.data.get(this.getBestCode(status)) ?? new Set();
+  private getBestCode(status: number): ResponseCode {
+    const {data} = this;
+    if (data.has(status)) {
+      return status;
     }
-    const ret = new Set<MimeType>();
-    for (const mtypes of this.data.values()) {
-      for (const mtype of mtypes.keys()) {
-        ret.add(mtype);
-      }
+    const partial = ((status / 100) | 0) + 'XX';
+    if (data.has(partial)) {
+      return partial;
     }
-    return ret;
+    return 'default';
   }
 
-  acceptable(accepted: ReadonlyArray<MimeType>): boolean {
+  acceptable(accepted: Iterable<MimeType>): boolean {
     for (const mtypes of this.data.values()) {
       if (!mtypes.size) {
         continue;
@@ -196,21 +171,38 @@ export class ResponseClauseMatcher {
     }
     return true;
   }
+}
 
-  private getBestCode(status: number): ResponseCode {
-    const {data} = this;
-    if (data.has(status)) {
-      return status;
-    }
-    const partial = ((status / 100) | 0) + 'XX';
-    if (data.has(partial)) {
-      return partial;
-    }
-    return 'default';
+export function isResponseTypeValid(args: {
+  readonly value: MimeType | undefined;
+  readonly declared: ReadonlySet<MimeType> | undefined;
+  readonly accepted: ReadonlySet<MimeType>;
+}): boolean {
+  const {value, declared, accepted} = args;
+  if (declared == null) {
+    return value == null || contentTypeMatches(value, accepted);
   }
+  if (!declared.size) {
+    return value == null;
+  }
+  if (value == null || !declared.has(value)) {
+    return false;
+  }
+  return contentTypeMatches(value, accepted);
+}
+
+export function acceptedMimeTypes(header: string): ReadonlySet<MimeType> {
+  const mtypes = new Set<MimeType>();
+  for (const item of header.split(',')) {
+    const mtype = item.split(';')[0]!.trim();
+    if (mtype && !mtypes.has(mtype)) {
+      mtypes.add(mtype);
+    }
+  }
+  return mtypes;
 }
 
 export interface ResponseClause {
   readonly code: ResponseCode;
-  readonly contentType?: MimeType;
+  readonly declared?: ReadonlySet<MimeType>;
 }
