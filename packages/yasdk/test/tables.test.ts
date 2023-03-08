@@ -21,7 +21,11 @@ describe('tables', () => {
     assert(addr, 'Missing server address');
     sdk = createSdk(
       typeof addr == 'string' ? addr : `http://localhost:${addr.port}`,
-      {fetch}
+      {
+        decoders: {'application/csv': (res) => res.text()},
+        encoders: {'application/csv': (body) => body},
+        fetch,
+      }
     );
   });
 
@@ -44,7 +48,7 @@ describe('tables', () => {
   test('upload CSV', async () => {
     await sdk.setTable({
       parameters: {id: 'id2'},
-      headers: {'content-type': 'text/csv'},
+      headers: {'content-type': 'application/csv'},
       body: 'r1\nr2',
     });
   });
@@ -64,7 +68,7 @@ describe('tables', () => {
   test('fetch CSV', async () => {
     const res = await sdk.getTable({
       parameters: {id: 'id4'},
-      headers: {accept: 'text/csv'},
+      headers: {accept: 'application/csv'},
     });
     switch (res.code) {
       case 200:
@@ -94,7 +98,7 @@ describe('tables', () => {
   test('fetch any with list', async () => {
     const res = await sdk.getTable({
       parameters: {id: 'id5'},
-      headers: {accept: 'application/json, text/csv'},
+      headers: {accept: 'application/json, application/csv'},
     });
     switch (res.code) {
       case 200:
@@ -109,7 +113,7 @@ describe('tables', () => {
   test('fetch any with partial overlap list', async () => {
     const res = await sdk.getTable({
       parameters: {id: 'id5'},
-      headers: {accept: 'application/json, text/xml'},
+      headers: {accept: 'application/json, application/xml'},
     });
     switch (res.code) {
       case 200:
@@ -132,11 +136,11 @@ function newRouter(): Router {
         ctx.status = 404;
         return;
       }
-      switch (ctx.accepts(['application/json', 'text/csv'])) {
+      switch (ctx.accepts(['application/json', 'application/csv'])) {
         case 'application/json':
           ctx.body = table;
           break;
-        case 'text/csv':
+        case 'application/csv':
           ctx.body = table.rows.map((r) => r.join(',')).join('\n');
           break;
         default:
@@ -149,7 +153,7 @@ function newRouter(): Router {
         case 'application/json':
           table = ctx.request.body;
           break;
-        case 'text/csv':
+        case 'application/csv':
           table = ctx.request.body.split('\n').map((r) => r.split(','));
           break;
       }

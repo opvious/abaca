@@ -70,7 +70,7 @@ describe('pets', () => {
 
   test('unexpected code', async () => {
     const res = await sdk.listPets({
-      headers: {accept: '*/*'},
+      headers: {accept: 'text/*'},
     });
     switch (res.code) {
       case 200:
@@ -163,7 +163,7 @@ describe('pets', () => {
         touch<number>(res.data);
         throw unexpected(res);
       case 400:
-        touch<undefined>(res.data);
+        touch<string>(res.data);
         throw unexpected(res);
       case 404:
         break;
@@ -245,7 +245,7 @@ function newRouter(): Router {
         ctx.body = {code: 400, message: 'Limit too high'};
         return;
       }
-      if (ctx.accepts('text/plain')) {
+      if (!ctx.accepts('application/json')) {
         ctx.status = 406;
         ctx.body = 'json only';
         return;

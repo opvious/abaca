@@ -93,21 +93,24 @@ export type ResponseData<
 
 export type CreateSdkOptions<
   F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE
-> = CreateSdkOptionsFor<operations, F, M>;
+  M extends string = typeof JSON_MIME_TYPE,
+  A extends MimeType = typeof DEFAULT_ACCEPT
+> = CreateSdkOptionsFor<operations, F, M, A>;
 
 export type Sdk<
   F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE
-> = SdkFor<operations, F, M>;
+  M extends string = typeof JSON_MIME_TYPE,
+  A extends MimeType = typeof DEFAULT_ACCEPT
+> = SdkFor<operations, F, M, A>;
 
 export function createSdk<
   F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE
+  M extends string = typeof JSON_MIME_TYPE,
+  A extends MimeType = typeof DEFAULT_ACCEPT
 >(
   url: string | URL,
-  opts?: CreateSdkOptions<F, M>
-): SdkFor<operations, F, M> {
-  return createSdkFor<operations, F, M>(allOperations, url, opts);
+  opts?: CreateSdkOptions<F, M, A>
+): SdkFor<operations, F, M, A> {
+  return createSdkFor<operations, F, M, A>(allOperations, url, opts);
 }
 `;

@@ -24,6 +24,7 @@ import {
   ResponseMimeTypes,
   ResponsesMatchingMimeType,
   ResponsesType,
+  SplitMimeTypes,
   TEXT_MIME_TYPE,
   Values,
   ValuesMatchingMimeTypes,
@@ -121,11 +122,12 @@ type ResponseFor<F> = F extends (url: any, init?: any) => Promise<infer R>
 type Input<
   O,
   F extends BaseFetch,
-  M extends MimeType
+  M extends MimeType,
+  A extends MimeType
 > = O extends OperationType<infer R, infer P>
   ? CommonInput<F> &
       MaybeBodyInput<Lookup<Lookup<O, 'requestBody'>, 'content'>, F, M> &
-      MaybeAcceptInput<R, F, M> &
+      MaybeAcceptInput<R, F, A> &
       MaybeParamInput<P>
   : never;
 
@@ -175,38 +177,35 @@ type MaybeAcceptInput<
   ? {}
   :
       | DefaultAcceptInput<R, F, M>
-      | SingleAcceptInput<R, F>
-      | MultiAcceptInput<R, F>;
+      | SimpleAcceptInput<R, F>
+      | CustomAcceptInput<R, F>;
 
 type DefaultAcceptInput<
   R extends ResponsesType,
   F extends BaseFetch,
-  M extends MimeType
-> = M extends ResponseMimeTypes<R>
-  ? {
-      readonly headers?: {readonly accept?: M};
-      readonly decoder?: AcceptDecoder<R, F, M>;
-    }
-  : never;
+  A extends MimeType
+> = SplitMimeTypes<A> & ResponseMimeTypes<R> extends never
+  ? never
+  : {
+      readonly headers?: {readonly accept?: A};
+      readonly decoder?: AcceptDecoder<R, F, A>;
+    };
 
-type SingleAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
+type SimpleAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
   [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
     readonly headers: {readonly accept: M};
     readonly decoder?: AcceptDecoder<R, F, M>;
   };
 }>;
 
-type MultiAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
+type CustomAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
   [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
     readonly headers: {readonly accept: PrefixedMimeType<M>};
     readonly decoder?: AcceptDecoder<R, F, ResponseMimeTypes<R>>;
   };
 }>;
 
-type PrefixedMimeType<
-  M extends MimeType,
-  S extends string = string
-> = `${M}, ${S}`;
+type PrefixedMimeType<M extends MimeType> = `${M}${string}`;
 
 type AcceptDecoder<
   R extends ResponsesType,
@@ -224,11 +223,11 @@ type MaybeParam<V> = keyof V extends never
   ? {readonly parameters?: V}
   : {readonly parameters: V};
 
-type Output<O, A, F, M extends MimeType> = O extends OperationType<infer R>
-  ? CommonOutput<F> & DataOutput<GetHeader<A, 'accept', M> & MimeType, R>
+type Output<O, X, F, A extends MimeType> = O extends OperationType<infer R>
+  ? CommonOutput<F> & DataOutput<GetHeader<X, 'accept', A> & MimeType, R>
   : never;
 
-type GetHeader<A, H extends string, D> = A extends HasHeader<H, infer V>
+type GetHeader<X, H extends string, D> = X extends HasHeader<H, infer V>
   ? V
   : D;
 
@@ -267,19 +266,20 @@ type MaybeUnknownOutput<R extends ResponsesType> = 'default' extends keyof R
 type SdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends MimeType = typeof JSON_MIME_TYPE,
+  A extends MimeType = typeof DEFAULT_ACCEPT
 > = {
-  readonly [K in keyof O]: SdkFunction<O[K], Input<O[K], F, M>, F, M>;
+  readonly [K in keyof O]: SdkFunction<O[K], Input<O[K], F, M, A>, F, A>;
 };
 
 // We use this convoluted approach instead of a union of overloaded function
 // interfaces (or types) to allow reference lookups to see-through this
 // definition and link directly to the underlying operation type.
-type SdkFunction<O, I, F, M extends MimeType> = {} extends I
-  ? <A extends I = I>(
-      args?: A
-    ) => Output<O, Exact<I, A> extends never ? A : {}, F, M>
-  : <A extends I>(args: A) => Output<O, A, F, M>;
+type SdkFunction<O, I, F, A extends MimeType> = {} extends I
+  ? <X extends I = I>(
+      args?: X
+    ) => Output<O, Exact<I, X> extends never ? X : {}, F, A>
+  : <X extends I>(args: X) => Output<O, X, F, A>;
 
 export type BaseFetch = (url: string, init: BaseInit) => Promise<BaseResponse>;
 
@@ -297,17 +297,21 @@ interface BaseResponse {
   text(): Promise<string>;
 }
 
+const DEFAULT_ACCEPT = 'application/json;q=1, text/*;q=0.5';
+
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends MimeType = typeof JSON_MIME_TYPE,
+  A extends MimeType = typeof DEFAULT_ACCEPT
 >(
   operations: OperationDefinitions<O>,
   url: string | URL,
-  opts?: CreateSdkOptionsFor<O, F, M>
-): SdkFor<O, F, M> {
+  opts?: CreateSdkOptionsFor<O, F, M, A>
+): SdkFor<O, F, M, A> {
   const realFetch: BaseFetch = (opts?.fetch as any) ?? fetch;
   const defaultContentType = opts?.defaultContentType ?? JSON_MIME_TYPE;
+  const defaultAccept = opts?.defaultAccept ?? DEFAULT_ACCEPT;
   const root = url.toString().replace(/\/+$/, '');
   const base: any = opts?.options ?? {};
   const baseHeaders = opts?.headers;
@@ -343,7 +347,7 @@ export function createSdkFor<
         }
       }
 
-      const accept = init?.headers?.['accept'] ?? defaultContentType;
+      const accept = init?.headers?.['accept'] ?? defaultAccept;
       const requestType = init?.headers?.['content-type'] ?? defaultContentType;
       const headers = {
         ...baseHeaders,
@@ -413,7 +417,8 @@ function formatPath(p: string, o: Record<string, unknown>): string {
 export interface CreateSdkOptionsFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends MimeType = typeof JSON_MIME_TYPE,
+  A extends MimeType = typeof DEFAULT_ACCEPT
 > {
   /** Global request headers, overridable in individual requests. */
   readonly headers?: RequestHeaders;
@@ -436,11 +441,11 @@ export interface CreateSdkOptionsFor<
     init: BaseInit<BodyInitFor<F>> & RequestOptions<F>
   ) => Promise<ResponseFor<F>>;
 
-  /**
-   * Default content-type used for request bodies and responses (sent as
-   * `accept` header in requests).
-   */
+  /** Default content-type used for request bodies. */
   readonly defaultContentType?: M;
+
+  /** Default accept header value. */
+  readonly defaultAccept?: A;
 
   /**
    * Unexpected response coercion. The default will ignore bodies of responses
