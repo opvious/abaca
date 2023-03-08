@@ -8,6 +8,7 @@ import {
   isStandardError,
   StandardError,
 } from '@opvious/stl-errors';
+import {noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
 import {default as ajv, ErrorObject} from 'ajv';
 import {
   extractOperationDefinitions,
@@ -27,7 +28,7 @@ import {
   TEXT_MIME_TYPE,
 } from 'yasdk-openapi/preamble';
 
-import {routerPath} from '../common.js';
+import {packageInfo, routerPath} from '../common.js';
 import {
   jsonDecoder,
   jsonEncoder,
@@ -142,6 +143,9 @@ export function createOperationsRouter<
   /** Handler implementations. */
   readonly handlers: KoaHandlersFor<O, S, M>;
 
+  /** Telemetry reporter. */
+  readonly telemetry?: Telemetry;
+
   /**
    * Defaults to `handlers` if `handlers`'s constructor has a defined name
    * different from `Object` and `undefined` otherwise.
@@ -149,7 +153,8 @@ export function createOperationsRouter<
   readonly handlerContext?: unknown;
 
   /**
-   * Fallback handler used when no implementation exists for a given operation.
+   * Fallback route handler used when no handler exists for a given operation.
+   * By default no route will be added in this case.
    */
   readonly fallback?: (ctx: DefaultOperationContext<S>) => Promise<void>;
 
@@ -168,11 +173,11 @@ export function createOperationsRouter<
    */
   readonly encoders?: KoaEncodersFor<O, S>;
 }): Router<S> {
-  const {doc} = args;
+  const {doc, fallback} = args;
+  const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
   const handlers: any = args.handlers;
   const handlerContext = args.handlerContext ?? defaultHandlerContext(handlers);
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
-  const fallback = args.fallback ?? defaultFallback;
 
   const decoders = ByMimeType.create<KoaDecoder<any, any> | undefined>(
     undefined
@@ -198,17 +203,28 @@ export function createOperationsRouter<
       if (!isStandardError(err, codes.InvalidRequest)) {
         throw err;
       }
+      tel.logger.info({err}, 'OpenAPI router request was invalid.');
       const {origin} = err.tags;
       ctx.status = origin.tags.status;
       ctx.set(ERROR_CODE_HEADER, origin.code);
-      if (ctx.accepts([JSON_MIME_TYPE, PLAIN_MIME_TYPE]) === JSON_MIME_TYPE) {
+      if (ctx.accepts([PLAIN_MIME_TYPE, JSON_MIME_TYPE]) === JSON_MIME_TYPE) {
         ctx.body = {message: err.message, code: origin.code, tags: origin.tags};
       } else {
         ctx.body = err.message;
       }
     }
   });
+
+  const handled = new Set<string>();
+  let unhandled = 0;
   for (const [oid, def] of Object.entries(defs)) {
+    const handler = handlers[oid];
+    if (!handler && !fallback) {
+      unhandled++;
+      continue;
+    }
+    handled.add(oid);
+
     const matcher = ResponseClauseMatcher.create(def.responses);
 
     assert(def.method !== 'trace', 'trace is not supported yet');
@@ -243,11 +259,12 @@ export function createOperationsRouter<
           throw errors.invalidRequest(requestErrors.missingBody());
         }
 
-        const handler = handlers[oid];
         if (!handler) {
+          assert(fallback, 'Missing fallback');
           await fallback(ctx);
           return;
         }
+
         const res = await handler.call(handlerContext, ctx);
         const status = typeof res == 'number' ? res : res.status ?? 200;
 
@@ -279,6 +296,12 @@ export function createOperationsRouter<
       }
     );
   }
+
+  tel.logger.info(
+    {data: {handled: [...handled], unhandled}},
+    'Created OpenAPI router for %s operation(s).',
+    handled.size
+  );
   return router;
 }
 
@@ -289,10 +312,6 @@ const fallbackEncoder: KoaEncoder<any, any> = (_data, ctx) => {
 function defaultHandlerContext(obj: any): unknown {
   const name = obj?.constructor?.name;
   return name == null || name === 'Object' ? undefined : obj;
-}
-
-async function defaultFallback(ctx: DefaultOperationContext): Promise<void> {
-  ctx.status = 501;
 }
 
 class Registry {

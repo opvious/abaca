@@ -36,8 +36,10 @@
   },
   "dependencies": {
     "@koa/router": "^10.1.1",
-    "@opvious/stl-errors": "^0.15.8",
-    "@opvious/stl-utils": "^0.15.8",
+    "@opentelemetry/api": "~1.3.0",
+    "@opvious/stl-errors": "^0.15.13",
+    "@opvious/stl-telemetry": "^0.15.13",
+    "@opvious/stl-utils": "^0.15.13",
     "ajv": "^8.12.0",
     "co-body": "^6.1.0",
     "http-proxy": "^1.18.1",
