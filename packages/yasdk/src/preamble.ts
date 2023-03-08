@@ -104,8 +104,9 @@ const defaultCoercer: Coercer<BaseFetch> = async (res, ctx) => {
   }
   throw new Error(
     `Unexpected ${ctx.method.toUpperCase()} ${ctx.path} response content ` +
-      `type ${mtype} for status ${res.status} (accepted: ${ctx.accepted}, ` +
-      `declared: ${ctx.declared ? [...ctx.declared] : '<unknown>'})`
+      `type ${mtype} for status ${res.status} (accepted: ` +
+      `[${[...ctx.accepted]}], declared: ` +
+      `${ctx.declared ? `[${[...ctx.declared]}]` : '<none>'})`
   );
 };
 
