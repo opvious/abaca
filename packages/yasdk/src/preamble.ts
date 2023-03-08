@@ -1,4 +1,5 @@
 import {
+  acceptedMimeTypes,
   AllBodyMimeTypes,
   AllResponseMimeTypes,
   AllResponsesMatchingMimeType,
@@ -8,6 +9,7 @@ import {
   Exact,
   Get,
   Has,
+  isResponseTypeValid,
   JSON_MIME_TYPE,
   Lookup,
   MimeType,
@@ -22,7 +24,6 @@ import {
   ResponseMimeTypes,
   ResponsesMatchingMimeType,
   ResponsesType,
-  splitMimeType,
   TEXT_MIME_TYPE,
   Values,
   ValuesMatchingMimeTypes,
@@ -78,28 +79,26 @@ const fallbackDecoder: Decoder<any> = (_res, ctx) => {
   throw new Error('Unsupported response content-type: ' + ctx.contentType);
 };
 
-export type Coercer<F> = (
+export type Coercer<F extends BaseFetch> = (
   res: ResponseFor<F>,
   ctx: CoercerContext
-) => MimeType | undefined;
+) => AsyncOrSync<MimeType | undefined>;
 
 export interface CoercerContext {
   readonly path: string;
   readonly method: string;
-  readonly contentType: MimeType | undefined;
-  readonly accepted: ReadonlyArray<MimeType>;
+  readonly received: MimeType | undefined;
+  readonly accepted: ReadonlySet<MimeType>;
   readonly declared: ReadonlySet<MimeType> | undefined; // undefined if implicit
 }
 
-const defaultCoercer: Coercer<BaseFetch> = (res, ctx) => {
-  const mtype = ctx.contentType;
+const defaultCoercer: Coercer<BaseFetch> = async (res, ctx) => {
+  const mtype = ctx.received;
   if (
-    (mtype === PLAIN_MIME_TYPE || mtype === JSON_MIME_TYPE || mtype == null) &&
-    ctx.declared == null
+    (mtype && ctx.declared == null) ||
+    (mtype === PLAIN_MIME_TYPE && !ctx.declared?.has(mtype))
   ) {
-    return mtype;
-  }
-  if (mtype === PLAIN_MIME_TYPE && !ctx.declared?.has(PLAIN_MIME_TYPE)) {
+    await res.text(); // Consume response body.
     return undefined;
   }
   throw new Error(
@@ -295,6 +294,7 @@ interface BaseResponse {
   readonly headers: {
     get(name: string): string | null | undefined;
   };
+  text(): Promise<string>;
 }
 
 export function createSdkFor<
@@ -374,31 +374,30 @@ export function createSdkFor<
         body,
       });
 
-      const accepted = splitMimeType(accept);
-      const received = res.headers.get('content-type')?.split(';')?.[0] ?? '';
-      const clause = clauseMatcher.getBest({
-        status: res.status,
-        accepted,
-        proposed: received,
-        coerce: (declared) =>
-          coercer(res, {
-            path: op.path,
-            method: op.method,
-            contentType: received || undefined,
-            declared,
-            accepted,
-          }),
-      });
+      let responseType =
+        res.headers.get('content-type')?.split(';')?.[0] || undefined;
+      const accepted = acceptedMimeTypes(accept);
+      const {code, declared} = clauseMatcher.getBest(res.status);
+      if (!isResponseTypeValid({value: responseType, declared, accepted})) {
+        responseType = await coercer(res, {
+          path: op.path,
+          method: op.method,
+          received: responseType,
+          declared,
+          accepted,
+        });
+      }
+
       let data;
-      if (clause.contentType) {
-        const decode = decoder ?? decoders.getBest(clause.contentType);
+      if (responseType) {
+        const decode = decoder ?? decoders.getBest(responseType);
         data = await decode(res, {
-          contentType: clause.contentType,
+          contentType: responseType,
           headers,
           options: init?.options,
         });
       }
-      return {code: clause.code, data, raw: res};
+      return {code, data, raw: res};
     };
   }
   return fetchers;
@@ -444,9 +443,8 @@ export interface CreateSdkOptionsFor<
   readonly defaultContentType?: M;
 
   /**
-   * Unexpected response coercion. The default will coerce undeclared
-   * `text/plain` responses to empty contents when none of the accepted headers
-   * are declared and throw an error otherwise.
+   * Unexpected response coercion. The default will ignore bodies of responses
+   * which do not have any declared content and throw an error otherwise.
    */
   readonly coercer?: Coercer<F>;
 }
