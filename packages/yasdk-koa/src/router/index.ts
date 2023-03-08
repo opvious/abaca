@@ -215,7 +215,7 @@ export function createOperationsRouter<
     }
   });
 
-  const handled = new Set<string>();
+  const handled: string[] = [];
   let unhandled = 0;
   for (const [oid, def] of Object.entries(defs)) {
     const handler = handlers[oid];
@@ -223,7 +223,7 @@ export function createOperationsRouter<
       unhandled++;
       continue;
     }
-    handled.add(oid);
+    handled.push(oid);
 
     const matcher = ResponseClauseMatcher.create(def.responses);
 
@@ -298,9 +298,9 @@ export function createOperationsRouter<
   }
 
   tel.logger.info(
-    {data: {handled: [...handled], unhandled}},
+    {data: {handled, unhandled}},
     'Created OpenAPI router for %s operation(s).',
-    handled.size
+    handled.length
   );
   return router;
 }
