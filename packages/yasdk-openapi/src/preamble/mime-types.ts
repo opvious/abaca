@@ -20,8 +20,13 @@ export const FALLBACK_MIME_TYPE = '*/*';
 export type MimeTypePrefixes<M extends MimeType> =
   M extends `${infer P}/${infer _S}` ? `${P}/*` : never;
 
-type SplitMimeTypes<G extends MimeType> = G extends `${infer G1}, ${infer G2}`
-  ? G1 | SplitMimeTypes<G2>
+export type SplitMimeTypes<G extends MimeType> =
+  G extends `${infer G1}, ${infer G2}`
+    ? ExtractMimeType<G1> | SplitMimeTypes<G2>
+    : ExtractMimeType<G>;
+
+type ExtractMimeType<G extends MimeType> = G extends `${infer M};${string}`
+  ? M
   : G;
 
 export type ValuesMatchingMimeTypes<O, G extends MimeType> = Values<{

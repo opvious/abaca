@@ -71,7 +71,10 @@ describe('pets', async () => {
     });
     expect(res1).toMatchObject({code: 201, data: 'ok'});
 
-    const res2 = await sdk.createPet({body: {name: 'n1', tag: 't2'}});
+    const res2 = await sdk.createPet({
+      body: {name: 'n1', tag: 't2'},
+      headers: {accept: 'application/json;q=1'},
+    });
     expect(res2).toMatchObject({
       code: 'default',
       raw: {status: 406},
