@@ -110,10 +110,13 @@ const [requestErrors] = errorFactories({
       message: 'This operation expects a body but none was found',
       tags: {status: 400},
     }),
-    unexpectedBody: {
-      message: 'This operation does not support requests with a body',
+    unexpectedBody: () => ({
+      message:
+        'This operation does not support requests with a body. Please make ' +
+        'sure that the request does not have a body or `content-type` ' +
+        'header.',
       tags: {status: 400},
-    },
+    }),
     unreadableBody: (cause: unknown) => ({
       message: 'Body could not be decoded: ' + errorMessage(cause),
       tags: {status: 400},
@@ -241,7 +244,12 @@ export function createOperationsRouter<
 
         const qtype = ctx.request.type;
         if (qtype) {
-          const decoder = decoders.getBest(qtype);
+          if (!def.body) {
+            throw errors.invalidRequest(requestErrors.unexpectedBody());
+          }
+          const decoder = def.body.types.includes(qtype)
+            ? decoders.getBest(qtype)
+            : undefined;
           if (!decoder) {
             throw errors.invalidRequest(
               requestErrors.unsupportedContentType(qtype)
