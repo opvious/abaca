@@ -335,7 +335,10 @@ export function createSdkFor<
       const {body: rawBody, encoder, decoder, ...input} = init ?? {};
       const params = input?.parameters ?? {};
 
-      const url = new URL(root + formatPath(op.path, params));
+      const url = new URL(
+        root + formatPath(op.path, params),
+        typeof document == 'undefined' ? undefined : document.baseURI
+      );
       const paramHeaders: any = {};
       for (const [name, val] of Object.entries<any>(params)) {
         switch (op.parameters[name]?.location) {
