@@ -3,7 +3,6 @@ import {assert} from '@opvious/stl-errors';
 import {instrumentsFor, noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
 import {ArrayMultimap, firstElement} from '@opvious/stl-utils/collections';
 import {MarkPresent} from '@opvious/stl-utils/objects';
-import events from 'events';
 import ProxyServer from 'http-proxy';
 import Koa from 'koa';
 import {
@@ -23,7 +22,11 @@ const instruments = instrumentsFor({
   },
 });
 
-/** Creates a proxy for OpenAPI operations. */
+/**
+ * Creates a proxy for OpenAPI operations. Note that the returned middleware
+ * returns immediately: it does not wait for the response to be proxied back.
+ * Instead it disables Koa response handling by setting `ctx.respond` to false.
+ */
 export function createOperationsProxy<
   D extends OpenapiDocument,
   U extends Record<string, ProxyServer.ServerOptions>
@@ -73,27 +76,35 @@ export function createOperationsProxy<
     mw = async (ctx): Promise<void> => {
       const oid = ctx._matchedRouteName;
       assert(typeof oid == 'string', 'Missing operation ID');
-      tel.logger.debug('Proxying operation %s... [upstream=%s]', oid, key);
+      tel.logger.info('Proxying operation %s... [upstream=%s]', oid, key);
+      ctx.respond = false; // Disable Koa response handling.
       const startMs = Date.now();
-      try {
-        server.web(ctx.req, ctx.res);
-        await events.once(ctx.res, 'close');
-      } finally {
-        const latency = Date.now() - startMs;
-        const {status} = ctx.response;
-        tel.logger.info(
-          'Proxied operation %s. [upstream=%s, status=%s, ms=%s]',
-          oid,
-          key,
-          status,
-          latency
-        );
-        metrics.operationProxyTime.record(latency, {
-          id: oid,
-          status,
-          upstream: key,
-        });
-      }
+      const {req, res} = ctx;
+      server.web(req, res);
+      res.once('close', () => {
+        if (res.writableFinished) {
+          const latency = Date.now() - startMs;
+          const status = res.statusCode;
+          tel.logger.info(
+            'Proxied operation %s. [upstream=%s, status=%s, ms=%s]',
+            oid,
+            key,
+            status,
+            latency
+          );
+          metrics.operationProxyTime.record(latency, {
+            id: oid,
+            status,
+            upstream: key,
+          });
+        } else {
+          tel.logger.warn(
+            'Interrupted while proxying operation %s. [upstream=%s]',
+            oid,
+            key
+          );
+        }
+      });
     };
     middlewares.set(key, mw);
     return mw;
