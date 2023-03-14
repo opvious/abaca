@@ -32,8 +32,8 @@ import {
 } from 'yasdk-openapi/preamble';
 
 type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
-    BodiesMatchingMimeType<O, G>,
+  readonly [K in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
+    BodiesMatchingMimeType<O, K>,
     F
   >;
 };
@@ -50,8 +50,8 @@ export interface EncoderContext<F> {
 }
 
 type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
-    AllResponsesMatchingMimeType<O, G>,
+  readonly [K in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
+    AllResponsesMatchingMimeType<O, K>,
     F
   >;
 };

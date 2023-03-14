@@ -1,12 +1,15 @@
+import {assert} from '@opvious/stl-errors';
+import {commaSeparated} from '@opvious/stl-utils/strings';
 import {Command} from 'commander';
 import {mkdir, readFile, writeFile} from 'fs/promises';
-import generateTypes from 'openapi-typescript';
+import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import path from 'path';
 import {
   extractOperationDefinitions,
   loadOpenapiDocument,
   OpenapiDocuments,
 } from 'yasdk-openapi';
+import {JSON_SEQ_MIME_TYPE} from 'yasdk-openapi/preamble';
 
 const COMMAND_NAME = 'yasdk';
 
@@ -19,27 +22,29 @@ export function mainCommand(): Command {
   return new Command()
     .name(COMMAND_NAME)
     .description('Generate typed OpenAPI SDK')
-    .requiredOption('-i, --input <path>', 'OpenAPI spec')
+    .requiredOption('-i, --input <path>', '3.0 or 3.1 OpenAPI spec')
     .requiredOption('-o, --output <path>', 'TypeScript output file')
+    .option(
+      '--streaming-content-types <types>',
+      'comma-separated list of content-types which contain streamed data',
+      JSON_SEQ_MIME_TYPE
+    )
     .action(async (opts) => {
       const doc = await loadOpenapiDocument(opts.input, {
         versions: ['3.0', '3.1'],
         resolveAllReferences: true,
       });
-      const [typesStr, preambleStr, valuesStr] = await Promise.all([
-        // We must clone the document since `openapi-typescript` will mutate it
-        // (for example to filter `x-` properties) and `doc` contains immutable
-        // nodes.
-        generateTypes(JSON.parse(JSON.stringify(doc)), {
-          commentHeader: '',
-          immutableTypes: true,
-        }),
+
+      const streamingTypes = commaSeparated(opts.streamingContentTypes);
+      const [preambleStr, typesStr, valuesStr] = await Promise.all([
         readFile(preambleUrl, 'utf8'),
+        generateTypes(doc, streamingTypes),
         generateValues(doc),
       ]);
       const out = [
         '// Do not edit, this file was auto-generated\n',
         preambleStr,
+        setupStreamingContentTypes(streamingTypes),
         typesStr
           .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
           .replace(/export /g, ''),
@@ -50,11 +55,83 @@ export function mainCommand(): Command {
     });
 }
 
-async function generateValues(
-  doc: OpenapiDocuments['3.0' | '3.1']
+function setupStreamingContentTypes(stypes: ReadonlyArray<string>): string {
+  return [
+    `const streamingContentTypes = ${JSON.stringify(stypes)} as const;`,
+    'type StreamingContentTypes = typeof streamingContentTypes[number];\n',
+  ].join('\n');
+}
+
+type OpenapiDocument = OpenapiDocuments['3.0' | '3.1'];
+
+async function generateTypes(
+  doc: OpenapiDocument,
+  stypes: ReadonlyArray<string>
 ): Promise<string> {
+  // We must clone the document since `openapi-typescript` will mutate it (for
+  // example to filter `x-` properties) and `doc` contains immutable nodes.
+  const cloned = JSON.parse(JSON.stringify(doc));
+
+  // postTransform can be called multiple times for a given path, we need to
+  // keep track of the last time it runs to correctly wrap it later on. This
+  // will require two passes.
+  const streamLevels = new Map<string, number>();
+  const nonStreaming = await generate((gen, opts) => {
+    const {path} = opts;
+    if (isStreamingPath(path, stypes)) {
+      streamLevels.set(path, opts.ctx.indentLv);
+    }
+    return gen;
+  });
+  if (!streamLevels.size) {
+    // No streaming content types, we can return directly.
+    return nonStreaming;
+  }
+  return generate((gen, opts) =>
+    streamLevels.get(opts.path) === opts.ctx.indentLv
+      ? `AsyncIterable<${gen}>`
+      : gen
+  );
+
+  function generate(tx: OpenAPITSOptions['postTransform']): Promise<string> {
+    return openapiTypescript(cloned, {
+      commentHeader: '',
+      immutableTypes: true,
+      postTransform: tx,
+    });
+  }
+}
+
+function isStreamingPath(p: string, stypes: ReadonlyArray<string>): boolean {
+  // TODO: Reduce chance of false positives.
+  const [anchor, p1, p2] = p.split('/');
+  assert(anchor === '#', 'Unexpected path', p);
+  switch (p1) {
+    case 'paths':
+      break;
+    case 'components':
+      switch (p2) {
+        case 'requestBodies':
+        case 'responses':
+          break;
+        default:
+          return false;
+      }
+      break;
+    default:
+      return false;
+  }
+  for (const stype of stypes) {
+    if (p.endsWith(stype)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function generateValues(doc: OpenapiDocument): Promise<string> {
   const ops = extractOperationDefinitions(doc);
-  let out = `const allOperations = ${JSON.stringify(ops, null, 2)} as const;`;
+  let out = `\nconst allOperations = ${JSON.stringify(ops, null, 2)} as const;`;
   out += SUFFIX;
   return out;
 }
@@ -72,6 +149,7 @@ export type {
   RequestOptions,
   ResponseCode,
   operations,
+  StreamingContentTypes,
 };
 
 export type types = components['schemas'];
@@ -110,7 +188,7 @@ export function createSdk<
 >(
   url: string | URL,
   opts?: CreateSdkOptions<F, M, A>
-): SdkFor<operations, F, M, A> {
+): Sdk<F, M, A> {
   return createSdkFor<operations, F, M, A>(allOperations, url, opts);
 }
 `;

@@ -15,6 +15,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Table"
+            application/json-seq:
+              schema:
+                $ref: "#/components/schemas/Row"
             application/csv:
               schema:
                 type: string
@@ -32,6 +35,9 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/Table"
+          application/json-seq:
+            schema:
+              $ref: "#/components/schemas/Row"
           application/csv:
             schema:
               type: string

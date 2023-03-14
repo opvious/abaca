@@ -1,6 +1,6 @@
 {
   "name": "yasdk",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "repository": "github:mtth/yasdk",
   "description": "Yet another TypesScript SDK generator",
   "keywords": [
@@ -31,8 +31,9 @@
   },
   "dependencies": {
     "@opvious/stl-errors": "^0.15.14",
+    "@opvious/stl-utils": "^0.15.14",
     "commander": "^10.0.0",
-    "openapi-typescript": "^6.1.0",
+    "openapi-typescript": "^6.2.0",
     "yasdk-openapi": "workspace:*"
   },
   "devDependencies": {

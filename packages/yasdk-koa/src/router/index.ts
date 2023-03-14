@@ -28,7 +28,12 @@ import {
   TEXT_MIME_TYPE,
 } from 'yasdk-openapi/preamble';
 
-import {packageInfo, routerPath} from '../common.js';
+import {
+  isAsyncIterable,
+  mapAsyncIterable,
+  packageInfo,
+  routerPath,
+} from '../common.js';
 import {
   jsonDecoder,
   jsonEncoder,
@@ -261,7 +266,14 @@ export function createOperationsRouter<
           } catch (err) {
             throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
-          registry.validateRequestBody(body, oid, qtype);
+          if (isAsyncIterable(body)) {
+            body = mapAsyncIterable(body, (b) => {
+              registry.validateRequestBody(b, oid, qtype);
+              return b;
+            });
+          } else {
+            registry.validateRequestBody(body, oid, qtype);
+          }
           Object.assign(ctx.request, {body});
         } else if (def.body?.required) {
           throw errors.invalidRequest(requestErrors.missingBody());
@@ -278,7 +290,7 @@ export function createOperationsRouter<
 
         const atype =
           typeof res == 'number' ? undefined : res.type ?? defaultType;
-        const data = typeof res == 'number' ? undefined : res.data;
+        let data = typeof res == 'number' ? undefined : res.data;
         const {code, declared} = matcher.getBest(status);
         if (!isResponseTypeValid({value: atype, declared, accepted})) {
           throw errors.unacceptableResponseType(oid, atype, accepted, declared);
@@ -294,7 +306,14 @@ export function createOperationsRouter<
           return;
         }
         ctx.type = atype;
-        registry.validateResponse(data, oid, atype, code);
+        if (isAsyncIterable(data)) {
+          data = mapAsyncIterable(data, (d) => {
+            registry.validateResponse(d, oid, atype, code);
+            return d;
+          });
+        } else {
+          registry.validateResponse(data, oid, atype, code);
+        }
         const encoder = encoders.getBest(atype);
         try {
           await encoder(data, ctx);

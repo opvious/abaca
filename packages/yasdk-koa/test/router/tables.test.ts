@@ -1,7 +1,9 @@
 import {assert, unreachable} from '@opvious/stl-errors';
 import http from 'http';
+import jsonSeq from 'json-text-sequence';
 import Koa from 'koa';
 import fetch from 'node-fetch';
+import stream from 'stream';
 
 import * as sut from '../../src/router/index.js';
 import {loadDocument, serverAddress, startApp} from '../helpers.js';
@@ -17,13 +19,42 @@ describe('tables', async () => {
     const router = sut.createOperationsRouter<operations>({
       doc,
       handlers: handler,
+      decoders: {
+        'application/json-seq': (ctx) => {
+          const decoder = new jsonSeq.Parser();
+          ctx.req.pipe(decoder);
+          return decoder;
+        },
+      },
+      encoders: {
+        'application/json-seq': (iter, ctx) => {
+          const encoder = new jsonSeq.Generator();
+          stream.Readable.from(iter).pipe(encoder);
+          ctx.body = encoder;
+        },
+      },
     });
 
     const app = new Koa<any, any>()
       .use(router.allowedMethods())
       .use(router.routes());
     server = await startApp(app);
-    sdk = createSdk(serverAddress(server), {fetch});
+    sdk = createSdk<typeof fetch>(serverAddress(server), {
+      fetch,
+      encoders: {
+        'application/json-seq': (iter) => {
+          const encoder = new jsonSeq.Generator();
+          return stream.Readable.from(iter).pipe(encoder);
+        },
+      },
+      decoders: {
+        'application/json-seq': (res) => {
+          const decoder = new jsonSeq.Parser();
+          res.body!.pipe(decoder);
+          return decoder;
+        },
+      },
+    });
   });
 
   beforeEach(() => {
@@ -44,7 +75,10 @@ describe('tables', async () => {
     });
     expect(createRes).toMatchObject({code: 201, raw: {status: 201}});
 
-    const getRes1 = await sdk.getTable({parameters: {id}});
+    const getRes1 = await sdk.getTable({
+      headers: {accept: 'application/json'},
+      parameters: {id},
+    });
     assert(getRes1.code === 200, '');
 
     const updateRes = await sdk.setTable({
@@ -76,6 +110,29 @@ describe('tables', async () => {
       raw: {status: 400},
     });
   });
+
+  test('set and get stream', async () => {
+    const id = 'id3';
+    const rows = [
+      ['a', '11'],
+      ['b', '222'],
+    ];
+
+    const createRes = await sdk.setTable({
+      parameters: {id},
+      headers: {'content-type': 'application/json-seq'},
+      body: toAsyncIterable(rows),
+    });
+    expect(createRes).toMatchObject({code: 201});
+
+    const getRes = await sdk.getTable({
+      headers: {accept: 'application/json-seq'},
+      parameters: {id},
+    });
+    assert(getRes.code === 200, '');
+    const got = await fromAsyncIterable(getRes.data);
+    expect(got).toEqual(rows);
+  });
 });
 
 type Contexts = sut.KoaContextsFor<operations>;
@@ -94,25 +151,37 @@ class Handler implements sut.KoaHandlersFor<operations> {
     if (!table) {
       return 404;
     }
-    switch (ctx.accepts(['application/json', 'text/csv'])) {
+    switch (
+      ctx.accepts(['application/json', 'application/json-seq', 'text/csv'])
+    ) {
       case 'application/json':
         return {data: table};
+      case 'application/json-seq':
+        return {
+          type: 'application/json-seq',
+          data: toAsyncIterable(table.rows),
+        };
       case 'text/csv':
         return {
-          data: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
           type: 'text/csv',
+          data: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
         };
       default:
         throw unreachable();
     }
   }
 
-  setTable(ctx: Contexts['setTable']): Values['setTable'] {
+  async setTable(ctx: Contexts['setTable']): Promise<Values['setTable']> {
     let table: types['Table'];
     switch (ctx.request.type) {
       case 'application/json':
         table = ctx.request.body;
         break;
+      case 'application/json-seq': {
+        const rows = await fromAsyncIterable(ctx.request.body);
+        table = {rows};
+        break;
+      }
       case 'text/csv':
         table = {rows: ctx.request.body.split('\n').map((r) => r.split(','))};
     }
@@ -121,4 +190,18 @@ class Handler implements sut.KoaHandlersFor<operations> {
     this.tables.set(id, table);
     return created ? 201 : 204;
   }
+}
+
+async function* toAsyncIterable<V>(arr: ReadonlyArray<V>): AsyncIterable<V> {
+  yield* arr;
+}
+
+async function fromAsyncIterable<V>(
+  iter: AsyncIterable<V>
+): Promise<ReadonlyArray<V>> {
+  const arr: V[] = [];
+  for await (const item of iter) {
+    arr.push(item);
+  }
+  return arr;
 }
