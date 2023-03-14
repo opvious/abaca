@@ -11,8 +11,8 @@ import {
 } from 'yasdk-openapi/preamble';
 
 export type KoaDecodersFor<O extends OperationTypes, S = {}> = {
-  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: KoaDecoder<
-    AllResponsesMatchingMimeType<O, G>,
+  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: KoaDecoder<
+    BodiesMatchingMimeType<O, G>,
     S
   >;
 };
@@ -22,8 +22,8 @@ export type KoaDecoder<B, S = {}> = (
 ) => AsyncOrSync<B>;
 
 export type KoaEncodersFor<O extends OperationTypes, S = {}> = {
-  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: KoaEncoder<
-    BodiesMatchingMimeType<O, G>,
+  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: KoaEncoder<
+    AllResponsesMatchingMimeType<O, G>,
     S
   >;
 };
