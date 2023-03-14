@@ -13,6 +13,7 @@ export type WithMimeTypeGlobs<M extends MimeType> =
   | '*/*';
 
 export const JSON_MIME_TYPE = 'application/json';
+export const JSON_SEQ_MIME_TYPE = 'application/json-seq';
 export const TEXT_MIME_TYPE = 'text/*';
 export const PLAIN_MIME_TYPE = 'text/plain';
 export const FALLBACK_MIME_TYPE = '*/*';

@@ -8,18 +8,13 @@ import {loadDocument, serverAddress, startApp} from '../helpers.js';
 import {createSdk, operations, Sdk, types} from '../pets-sdk.gen.js';
 
 describe('pets', async () => {
-  const handlers: sut.KoaHandlersFor<operations> = {};
   let doc: OpenapiDocument;
   let sdk: Sdk<typeof fetch>;
   let server: http.Server;
 
   async function resetHandlers(
-    obj: sut.KoaHandlersFor<operations>
+    handlers: sut.KoaHandlersFor<operations>
   ): Promise<void> {
-    for (const key of Object.keys(handlers)) {
-      delete handlers[key];
-    }
-    Object.assign(handlers, obj);
     const router = sut.createOperationsRouter<operations>({doc, handlers});
     const app = new Koa<any, any>()
       .use(router.allowedMethods())
