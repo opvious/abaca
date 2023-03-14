@@ -9,6 +9,10 @@ import {
   StandardError,
 } from '@opvious/stl-errors';
 import {noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
+import {
+  isAsyncIterable,
+  mapAsyncIterable,
+} from '@opvious/stl-utils/collections';
 import {default as ajv, ErrorObject} from 'ajv';
 import {
   extractOperationDefinitions,
@@ -28,12 +32,7 @@ import {
   TEXT_MIME_TYPE,
 } from 'yasdk-openapi/preamble';
 
-import {
-  isAsyncIterable,
-  mapAsyncIterable,
-  packageInfo,
-  routerPath,
-} from '../common.js';
+import {packageInfo, routerPath} from '../common.js';
 import {
   jsonDecoder,
   jsonEncoder,

@@ -1,4 +1,9 @@
 import {assert, unreachable} from '@opvious/stl-errors';
+import {
+  fromAsyncIterable,
+  mapAsyncIterable,
+  toAsyncIterable,
+} from '@opvious/stl-utils/collections';
 import http from 'http';
 import jsonSeq from 'json-text-sequence';
 import Koa from 'koa';
@@ -131,7 +136,7 @@ describe('tables', async () => {
     });
     assert(getRes.code === 200, '');
     const got = await fromAsyncIterable(getRes.data);
-    expect(got).toEqual(rows);
+    expect(got).toEqual(rows.map((r) => ({kind: 'row', row: r})));
   });
 });
 
@@ -159,7 +164,10 @@ class Handler implements sut.KoaHandlersFor<operations> {
       case 'application/json-seq':
         return {
           type: 'application/json-seq',
-          data: toAsyncIterable(table.rows),
+          data: mapAsyncIterable(toAsyncIterable(table.rows), (r) => ({
+            kind: 'row',
+            row: r,
+          })),
         };
       case 'text/csv':
         return {
@@ -190,18 +198,4 @@ class Handler implements sut.KoaHandlersFor<operations> {
     this.tables.set(id, table);
     return created ? 201 : 204;
   }
-}
-
-async function* toAsyncIterable<V>(arr: ReadonlyArray<V>): AsyncIterable<V> {
-  yield* arr;
-}
-
-async function fromAsyncIterable<V>(
-  iter: AsyncIterable<V>
-): Promise<ReadonlyArray<V>> {
-  const arr: V[] = [];
-  for await (const item of iter) {
-    arr.push(item);
-  }
-  return arr;
 }

@@ -17,8 +17,24 @@ paths:
                 $ref: "#/components/schemas/Table"
             application/json-seq:
               schema:
-                $ref: "#/components/schemas/Row"
-            application/csv:
+                oneOf:
+                  - type: object
+                    required: [kind, row]
+                    properties:
+                      kind:
+                        type: string
+                        enum: [row]
+                      row:
+                        $ref: "#/components/schemas/Row"
+                  - type: object
+                    required: [kind, error]
+                    properties:
+                      kind:
+                        type: string
+                        enum: [error]
+                      error:
+                        $ref: "#/components/schemas/Error"
+            text/csv:
               schema:
                 type: string
         '404':
@@ -38,7 +54,7 @@ paths:
           application/json-seq:
             schema:
               $ref: "#/components/schemas/Row"
-          application/csv:
+          text/csv:
             schema:
               type: string
       responses:
@@ -55,6 +71,16 @@ components:
       schema:
         type: string
   schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    Row:
+      type: array
+      items:
+        type: string
     Table:
       type: object
       required: [rows]
@@ -65,7 +91,3 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Row"
-    Row:
-      type: array
-      items:
-        type: string

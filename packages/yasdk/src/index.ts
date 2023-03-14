@@ -75,29 +75,32 @@ async function generateTypes(
   // postTransform can be called multiple times for a given path, we need to
   // keep track of the last time it runs to correctly wrap it later on. This
   // will require two passes.
-  const streamLevels = new Map<string, number>();
-  const nonStreaming = await generate((gen, opts) => {
-    const {path} = opts;
-    if (isStreamingPath(path, stypes)) {
-      streamLevels.set(path, opts.ctx.indentLv);
-    }
-    return gen;
+  const lastGenerated = new Map<string, string>();
+  const nonStreaming = await generate({
+    postTransform(gen, opts) {
+      const {path} = opts;
+      if (isStreamingPath(path, stypes)) {
+        lastGenerated.set(path, gen);
+      }
+      return gen;
+    },
   });
-  if (!streamLevels.size) {
+  if (!lastGenerated.size) {
     // No streaming content types, we can return directly.
     return nonStreaming;
   }
-  return generate((gen, opts) =>
-    streamLevels.get(opts.path) === opts.ctx.indentLv
-      ? `AsyncIterable<${gen}>`
-      : gen
-  );
+  return generate({
+    transform(_schema, opts) {
+      const gen = lastGenerated.get(opts.path);
+      return gen == null ? undefined : `AsyncIterable<${gen}>`;
+    },
+  });
 
-  function generate(tx: OpenAPITSOptions['postTransform']): Promise<string> {
+  function generate(opts: OpenAPITSOptions): Promise<string> {
     return openapiTypescript(cloned, {
       commentHeader: '',
       immutableTypes: true,
-      postTransform: tx,
+      ...opts,
     });
   }
 }
