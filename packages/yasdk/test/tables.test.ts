@@ -6,10 +6,10 @@ import koaBody from 'koa-body';
 import fetch from 'node-fetch';
 
 import {startApp} from './helpers';
-import {createSdk, Sdk, types} from './tables-sdk.gen';
+import {createSdk, Schema,Sdk} from './tables-sdk.gen';
 
 describe('tables', () => {
-  let sdk: Sdk<typeof fetch>;
+  let sdk: Sdk<typeof fetch, 'application/json', 'application/json'>;
   let app: Koa<any, any>;
   let server: http.Server;
 
@@ -22,8 +22,7 @@ describe('tables', () => {
     sdk = createSdk(
       typeof addr == 'string' ? addr : `http://localhost:${addr.port}`,
       {
-        decoders: {'application/csv': (res) => res.text()},
-        encoders: {'application/csv': (body) => body},
+        defaultAccept: 'application/json',
         fetch,
       }
     );
@@ -48,7 +47,7 @@ describe('tables', () => {
   test('upload CSV', async () => {
     await sdk.setTable({
       parameters: {id: 'id2'},
-      headers: {'content-type': 'application/csv'},
+      headers: {'content-type': 'text/csv'},
       body: 'r1\nr2',
     });
   });
@@ -57,7 +56,7 @@ describe('tables', () => {
     const res = await sdk.getTable({parameters: {id: 'id3'}});
     switch (res.code) {
       case 200:
-        expect<types['Table']>(res.data).toEqual([]);
+        expect<Schema<'Table'>>(res.data).toEqual([]);
         break;
       case 404:
         expect<undefined>(res.data).toBeUndefined();
@@ -68,7 +67,7 @@ describe('tables', () => {
   test('fetch CSV', async () => {
     const res = await sdk.getTable({
       parameters: {id: 'id4'},
-      headers: {accept: 'application/csv'},
+      headers: {accept: 'text/csv'},
     });
     switch (res.code) {
       case 200:
@@ -87,7 +86,7 @@ describe('tables', () => {
     });
     switch (res.code) {
       case 200:
-        expect<types['Table'] | string>(res.data).toEqual('');
+        expect<Schema<'Table'> | string>(res.data).toEqual('');
         break;
       case 404:
         expect<undefined>(res.data).toBeUndefined();
@@ -98,11 +97,11 @@ describe('tables', () => {
   test('fetch any with list', async () => {
     const res = await sdk.getTable({
       parameters: {id: 'id5'},
-      headers: {accept: 'application/json, application/csv'},
+      headers: {accept: 'application/json, text/csv'},
     });
     switch (res.code) {
       case 200:
-        expect<types['Table'] | string>(res.data).toEqual('');
+        expect<Schema<'Table'> | string>(res.data).toEqual('');
         break;
       case 404:
         expect<undefined>(res.data).toBeUndefined();
@@ -117,7 +116,7 @@ describe('tables', () => {
     });
     switch (res.code) {
       case 200:
-        expect<types['Table']>(res.data).toEqual('');
+        expect<Schema<'Table'>>(res.data).toEqual('');
         break;
       case 404:
         expect<undefined>(res.data).toBeUndefined();
@@ -127,7 +126,7 @@ describe('tables', () => {
 });
 
 function newRouter(): Router {
-  const tables = new Map<string, types['Table']>();
+  const tables = new Map<string, Schema<'Table'>>();
   return new Router()
     .use(koaBody())
     .get('/tables/:id', (ctx) => {
@@ -136,11 +135,11 @@ function newRouter(): Router {
         ctx.status = 404;
         return;
       }
-      switch (ctx.accepts(['application/json', 'application/csv'])) {
+      switch (ctx.accepts(['application/json', 'text/csv'])) {
         case 'application/json':
           ctx.body = table;
           break;
-        case 'application/csv':
+        case 'text/csv':
           ctx.body = table.rows.map((r) => r.join(',')).join('\n');
           break;
         default:
@@ -148,12 +147,12 @@ function newRouter(): Router {
       }
     })
     .put('/tables/:id', (ctx) => {
-      let table: types['Table'] | undefined;
+      let table: Schema<'Table'> | undefined;
       switch (ctx.type) {
         case 'application/json':
           table = ctx.request.body;
           break;
-        case 'application/csv':
+        case 'text/csv':
           table = ctx.request.body.split('\n').map((r) => r.split(','));
           break;
       }

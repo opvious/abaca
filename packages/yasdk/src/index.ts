@@ -157,6 +157,8 @@ export type {
 
 export type types = components['schemas'];
 
+export type Schema<K extends keyof types> = types[K];
+
 export type RequestBody<
   K extends keyof operations,
   M extends MimeType = typeof JSON_MIME_TYPE

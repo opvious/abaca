@@ -15,25 +15,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Table"
-            application/json-seq:
-              schema:
-                oneOf:
-                  - type: object
-                    required: [kind, row]
-                    properties:
-                      kind:
-                        type: string
-                        enum: [row]
-                      row:
-                        $ref: "#/components/schemas/Row"
-                  - type: object
-                    required: [kind, error]
-                    properties:
-                      kind:
-                        type: string
-                        enum: [error]
-                      error:
-                        $ref: "#/components/schemas/Error"
             text/csv:
               schema:
                 type: string
@@ -51,9 +32,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/Table"
-          application/json-seq:
-            schema:
-              $ref: "#/components/schemas/Row"
           text/csv:
             schema:
               type: string
