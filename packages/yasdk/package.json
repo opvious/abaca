@@ -1,6 +1,6 @@
 {
   "name": "yasdk",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "repository": "github:mtth/yasdk",
   "description": "Yet another TypesScript SDK generator",
   "keywords": [
@@ -40,9 +40,8 @@
     "@koa/router": "^10.1.1",
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
-    "@types/node-fetch": "^2.6.2",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^3.3.1"
   }
 }
