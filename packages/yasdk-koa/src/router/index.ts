@@ -14,6 +14,7 @@ import {
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
 import {default as ajv, ErrorObject} from 'ajv';
+import stream from 'stream';
 import {
   extractOperationDefinitions,
   OpenapiDocument,
@@ -428,6 +429,12 @@ class Registry {
     const key = schemaKey(oid, bodySchemaSuffix(type, code));
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing response schema', key);
+    if (
+      (validate.schema as any).type === 'string' &&
+      (Buffer.isBuffer(data) || data instanceof stream.Readable)
+    ) {
+      return; // Let binary data through.
+    }
     if (!validate(data)) {
       throw errors.invalidResponseData([...check.isPresent(validate.errors)]);
     }
