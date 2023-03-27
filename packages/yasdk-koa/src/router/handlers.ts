@@ -1,4 +1,5 @@
 import Koa from 'koa';
+import stream from 'stream';
 import {
   AsyncOrSync,
   Get,
@@ -122,7 +123,9 @@ type NonEmptyData<R extends ResponsesType, M extends MimeType> = Values<{
 
 type DataForCode<C, D, X, M> = Values<{
   [K in keyof D]: {
-    readonly data: D[K];
+    readonly data:
+      | D[K]
+      | (D[K] extends string ? Buffer | stream.Readable : never);
   } & WithType<K, M> &
     WithStatus<StatusesMatching<C, X>>;
 }>;

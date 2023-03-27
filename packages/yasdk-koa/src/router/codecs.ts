@@ -42,5 +42,5 @@ export const jsonEncoder: KoaEncoder<any> = (data, ctx) => {
 export const textDecoder: KoaDecoder<any> = (ctx) => coBody.text(ctx.req);
 
 export const textEncoder: KoaEncoder<any> = (data, ctx) => {
-  ctx.body = '' + data;
+  ctx.body = data;
 };
