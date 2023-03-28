@@ -1,5 +1,6 @@
 import * as coBody from 'co-body';
 import Koa from 'koa';
+import stream from 'stream';
 import {
   AllBodyMimeTypes,
   AllResponseMimeTypes,
@@ -29,7 +30,7 @@ export type KoaEncodersFor<O extends OperationTypes, S = {}> = {
 };
 
 export type KoaEncoder<D, S = {}> = (
-  data: D,
+  data: D | (D extends string ? Buffer | stream.Readable : never),
   ctx: Koa.ParameterizedContext<S>
 ) => AsyncOrSync<void>;
 

@@ -306,7 +306,7 @@ export function createOperationsRouter<
           return;
         }
         ctx.type = atype;
-        if (isAsyncIterable(data)) {
+        if (isAsyncIterable(data) && !(data instanceof stream.Readable)) {
           data = mapAsyncIterable(data, (d) => {
             registry.validateResponse(d, oid, atype, code);
             return d;
