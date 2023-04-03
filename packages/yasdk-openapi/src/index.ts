@@ -15,7 +15,7 @@ export {
   OperationHookEnv,
   OperationHookTarget,
 } from './load.js';
-export {ReferenceResolver} from './resolve.js';
+export {ReferenceResolver, ResolutionIssue} from './resolve.js';
 export {
   assertValue,
   InvalidValueError,

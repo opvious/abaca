@@ -40,6 +40,7 @@ function formatErrors(errs: ReadonlyArray<ErrorObject>): string {
   return errs.map((e) => `path $${e.instancePath} ${e.message}`).join(', ');
 }
 
+/** Asserts that a value satisfies the provided validator. */
 export function assertValue<V>(
   pred: ValidationPredicate<V>,
   val: unknown,
@@ -61,7 +62,6 @@ export function assertValue<V>(
  *      names: ['Outline', 'Summary'],
  *    });
  *    validators.isOutline(arg);
- *    validators.assertOutline(arg, status?:);
  */
 export function schemaEnforcer<S>(doc: OpenapiDocument): SchemaEnforcer<S> {
   return RealSchemaEnforcer.create(doc);
