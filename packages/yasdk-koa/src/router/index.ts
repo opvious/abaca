@@ -17,6 +17,8 @@ import {default as ajv, ErrorObject} from 'ajv';
 import stream from 'stream';
 import {
   extractOperationDefinitions,
+  InvalidValueError,
+  invalidValueError,
   OpenapiDocument,
   OperationHookEnv,
 } from 'yasdk-openapi';
@@ -64,9 +66,10 @@ const [errors, codes] = errorFactories({
       message: 'Invalid request: ' + origin.message,
       tags: {origin},
     }),
-    invalidResponseData: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid response data: ' + formatValidationErrors(errors),
-      tags: {errors},
+    invalidResponseData: (cause: InvalidValueError) => ({
+      message: 'Invalid response data: ' + cause.message,
+      tags: cause.tags,
+      cause,
     }),
     unacceptableResponseType: (
       oid: string,
@@ -103,9 +106,10 @@ const [requestErrors] = errorFactories({
       message: `Parameter ${name} is required but was missing`,
       tags: {status: 400},
     }),
-    invalidParameters: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid parameters: ' + formatValidationErrors(errors),
-      tags: {status: 400, errors},
+    invalidParameters: (cause: InvalidValueError) => ({
+      message: 'Invalid parameters: ' + cause.message,
+      tags: {status: 400, ...cause.tags},
+      cause,
     }),
     unsupportedContentType: (type: string) => ({
       message: `Content-type ${type} is not supported`,
@@ -127,9 +131,10 @@ const [requestErrors] = errorFactories({
       tags: {status: 400},
       cause,
     }),
-    invalidBody: (errors: ReadonlyArray<ErrorObject>) => ({
-      message: 'Invalid body: ' + formatValidationErrors(errors),
-      tags: {status: 400, errors},
+    invalidBody: (cause: InvalidValueError) => ({
+      message: 'Invalid body: ' + cause.message,
+      tags: {status: 400, ...cause.tags},
+      cause,
     }),
   },
   prefix: 'ERR_REQUEST_',
@@ -405,7 +410,8 @@ class Registry {
       }
     }
     if (errs.length) {
-      throw errors.invalidRequest(requestErrors.invalidParameters(errs));
+      const cause = invalidValueError(errs);
+      throw errors.invalidRequest(requestErrors.invalidParameters(cause));
     }
   }
 
@@ -414,9 +420,8 @@ class Registry {
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     if (!validate(body)) {
-      throw errors.invalidRequest(
-        requestErrors.invalidBody([...check.isPresent(validate.errors)])
-      );
+      const cause = invalidValueError(validate.errors, body);
+      throw errors.invalidRequest(requestErrors.invalidBody(cause));
     }
   }
 
@@ -436,7 +441,8 @@ class Registry {
       return; // Let binary data through.
     }
     if (!validate(data)) {
-      throw errors.invalidResponseData([...check.isPresent(validate.errors)]);
+      const cause = invalidValueError(validate.errors, data);
+      throw errors.invalidResponseData(cause);
     }
   }
 }
@@ -447,8 +453,4 @@ function schemaKey(oid: string, suffix: string): string {
 
 function bodySchemaSuffix(type: MimeType, code?: ResponseCode): string {
   return code == null ? type : `${type}@${code}`;
-}
-
-function formatValidationErrors(errs: ReadonlyArray<ErrorObject>): string {
-  return errs.map((e) => `path $${e.instancePath} ${e.message}`).join(', ');
 }

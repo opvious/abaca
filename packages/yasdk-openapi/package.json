@@ -34,9 +34,10 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.15.61",
-    "@opvious/stl-utils": "^0.15.61",
+    "@opvious/stl-errors": "^0.15.75",
+    "@opvious/stl-utils": "^0.15.75",
     "@stoplight/json-ref-resolver": "^3.1.5",
+    "ajv": "^8.12.0",
     "openapi-schema-validator": "^12.1.0",
     "openapi-types": "^12.1.0",
     "yaml": "^2.2.1"

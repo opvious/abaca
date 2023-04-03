@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import {OpenapiDocument} from 'yasdk-openapi';
 
 import * as sut from '../../src/router/index.js';
-import {loadDocument, serverAddress, startApp} from '../helpers.js';
+import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
 import {createSdk, operations, Sdk, types} from '../pets-sdk.gen.js';
 
 describe('pets', async () => {
@@ -24,7 +24,7 @@ describe('pets', async () => {
   }
 
   beforeAll(async () => {
-    doc = await loadDocument('pets.openapi.yaml');
+    doc = await loadResourceDocument('pets.openapi.yaml');
   });
 
   afterEach(() => {

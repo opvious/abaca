@@ -18,7 +18,7 @@ import {
 } from './preamble/operations.js';
 import {resolveAll} from './resolve.js';
 
-const [errors] = errorFactories({
+const [errors, codes] = errorFactories({
   definitions: {
     invalidSchema: (issues: ReadonlyArray<ValidationIssue>) => ({
       message:
@@ -31,7 +31,10 @@ const [errors] = errorFactories({
       tags: {got, want},
     }),
   },
+  prefix: 'ERR_OPENAPI_',
 });
+
+export const loadErrorCodes = codes;
 
 type ValidationIssue = OpenAPISchemaValidatorResult['errors'][number];
 
@@ -42,7 +45,7 @@ function formatValidationIssue(i: ValidationIssue): string {
 const SchemaValidator = validation.default ?? validation; // Hack.
 
 /** Reads and validates an OpenAPI schema from a path. */
-export async function loadOpenapiDocument<V extends OpenapiVersion>(
+export async function loadDocument<V extends OpenapiVersion>(
   /** File path or URL. */
   fp: string | URL,
   opts?: {

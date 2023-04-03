@@ -11,7 +11,7 @@ import fetch from 'node-fetch';
 import stream from 'stream';
 
 import * as sut from '../../src/router/index.js';
-import {loadDocument, serverAddress, startApp} from '../helpers.js';
+import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
 import {createSdk, operations, Sdk, types} from '../tables-sdk.gen.js';
 
 describe('tables', async () => {
@@ -20,7 +20,7 @@ describe('tables', async () => {
   let server: http.Server;
 
   beforeAll(async () => {
-    const doc = await loadDocument('tables.openapi.yaml');
+    const doc = await loadResourceDocument('tables.openapi.yaml');
     const router = sut.createOperationsRouter<operations>({
       doc,
       handlers: handler,

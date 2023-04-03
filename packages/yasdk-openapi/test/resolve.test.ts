@@ -1,15 +1,15 @@
 import {fail} from '@opvious/stl-errors';
 
-import {loadOpenapiDocument} from '../src/load.js';
+import {loadDocument} from '../src/load.js';
 import * as sut from '../src/resolve.js';
 import {resourceUrl} from './helpers.js';
 
 describe('resolve references', () => {
-  let resolver: sut.RefResolver;
+  let resolver: sut.ReferenceResolver;
 
   beforeAll(async () => {
-    const doc = await loadOpenapiDocument(resourceUrl('pets.openapi.yaml'));
-    resolver = sut.RefResolver.create(doc);
+    const doc = await loadDocument(resourceUrl('pets.openapi.yaml'));
+    resolver = sut.ReferenceResolver.create(doc);
   });
 
   test('ok', async () => {
@@ -22,7 +22,9 @@ describe('resolve references', () => {
       await resolver.resolve('#/missing');
       fail();
     } catch (err) {
-      expect(err).toMatchObject({code: 'ERR_UNRESOLVABLE_REFERENCE'});
+      expect(err).toMatchObject({
+        code: sut.resolveErrorCodes.UnresolvableReference,
+      });
     }
   });
 });

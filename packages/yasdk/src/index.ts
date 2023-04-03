@@ -6,7 +6,7 @@ import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import path from 'path';
 import {
   extractOperationDefinitions,
-  loadOpenapiDocument,
+  loadDocument,
   OpenapiDocuments,
 } from 'yasdk-openapi';
 import {JSON_SEQ_MIME_TYPE} from 'yasdk-openapi/preamble';
@@ -30,7 +30,7 @@ export function mainCommand(): Command {
       JSON_SEQ_MIME_TYPE
     )
     .action(async (opts) => {
-      const doc = await loadOpenapiDocument(opts.input, {
+      const doc = await loadDocument(opts.input, {
         versions: ['3.0', '3.1'],
         resolveAllReferences: true,
       });
@@ -155,9 +155,11 @@ export type {
   StreamingContentTypes,
 };
 
-export type types = components['schemas'];
+export type Schemas = components['schemas'];
 
-export type Schema<K extends keyof types> = types[K];
+export type types = Schemas;
+
+export type Schema<K extends keyof Schemas> = Schemas[K];
 
 export type RequestBody<
   K extends keyof operations,
