@@ -3,29 +3,35 @@ import {Resolver} from '@stoplight/json-ref-resolver';
 
 import {OpenapiDocument} from './load.js';
 
-const [errors] = errorFactories({
+const [errors, codes] = errorFactories({
   definitions: {
-    unresolvableReference: (ref: string, issues: ReadonlyArray<Issue>) => ({
+    unresolvableReference: (
+      ref: string,
+      issues: ReadonlyArray<ResolutionIssue>
+    ) => ({
       message:
         `Reference ${ref} could not be resolved: ` +
         issues.map(formatIssue).join(', '),
       tags: {ref, issues},
     }),
-    unresolvable: (issues: ReadonlyArray<Issue>) => ({
+    unresolvable: (issues: ReadonlyArray<ResolutionIssue>) => ({
       message:
         'Input could not be fully dereferenced: ' +
         issues.map(formatIssue).join(', '),
       tags: {issues},
     }),
   },
+  prefix: 'ERR_OPENAPI_',
 });
 
-interface Issue {
+export const resolveErrorCodes = codes;
+
+export interface ResolutionIssue {
   readonly message: string;
   readonly path: ReadonlyArray<number | string>;
 }
 
-function formatIssue(i: Issue): string {
+function formatIssue(i: ResolutionIssue): string {
   return `[$${i.path.join('.')}] ${i.message}`;
 }
 
@@ -39,12 +45,12 @@ export async function resolveAll<V>(arg: V): Promise<V> {
   return res.result;
 }
 
-export class RefResolver {
+export class ReferenceResolver {
   private readonly resolver = new Resolver();
   private constructor(private readonly doc: OpenapiDocument) {}
 
-  static create(doc: OpenapiDocument): RefResolver {
-    return new RefResolver(doc);
+  static create(doc: OpenapiDocument): ReferenceResolver {
+    return new ReferenceResolver(doc);
   }
 
   async resolve<V = unknown>(ref: string): Promise<V> {

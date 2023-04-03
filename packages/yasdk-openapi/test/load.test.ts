@@ -9,34 +9,34 @@ describe('load OpenAPI document', () => {
       'petstore.openapi.json',
       'tables.openapi.yaml',
     ])('%s', async (name) => {
-      await sut.loadOpenapiDocument(resourceUrl(name));
+      await sut.loadDocument(resourceUrl(name));
     });
   });
 
   test('unexpected version', async () => {
     try {
-      await sut.loadOpenapiDocument(resourceUrl('pets.openapi.yaml'), {
+      await sut.loadDocument(resourceUrl('pets.openapi.yaml'), {
         versions: ['2.0'],
       });
       fail();
     } catch (err) {
-      expect(err).toMatchObject({code: 'ERR_UNEXPECTED_VERSION'});
+      expect(err).toMatchObject({code: sut.loadErrorCodes.UnexpectedVersion});
     }
   });
 
   test('invalid document', async () => {
     try {
-      await sut.loadOpenapiDocument(resourceUrl('invalid.openapi.yaml'));
+      await sut.loadDocument(resourceUrl('invalid.openapi.yaml'));
       fail();
     } catch (err) {
-      expect(err).toMatchObject({code: 'ERR_INVALID_SCHEMA'});
+      expect(err).toMatchObject({code: sut.loadErrorCodes.InvalidSchema});
     }
   });
 });
 
 describe('extract operation definitions', () => {
   test('null hook', async () => {
-    const doc = await sut.loadOpenapiDocument(resourceUrl('pets.openapi.yaml'));
+    const doc = await sut.loadDocument(resourceUrl('pets.openapi.yaml'));
     const defs = sut.extractOperationDefinitions(doc);
     expect(defs).toEqual({
       listPets: {

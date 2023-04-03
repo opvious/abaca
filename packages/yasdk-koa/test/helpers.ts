@@ -2,7 +2,7 @@ import {assert} from '@opvious/stl-errors';
 import events from 'events';
 import http from 'http';
 import Koa from 'koa';
-import {loadOpenapiDocument, OpenapiDocument} from 'yasdk-openapi';
+import {loadDocument, OpenapiDocument} from 'yasdk-openapi';
 
 export async function startApp(app: Koa<any, any>): Promise<http.Server> {
   const server = http.createServer(app.callback());
@@ -23,6 +23,6 @@ export function resourceUrl(name: string): URL {
   return new URL(`./resources/${name}`, import.meta.url);
 }
 
-export function loadDocument(name: string): Promise<OpenapiDocument> {
-  return loadOpenapiDocument(resourceUrl(name), {resolveAllReferences: true});
+export function loadResourceDocument(name: string): Promise<OpenapiDocument> {
+  return loadDocument(resourceUrl(name), {resolveAllReferences: true});
 }

@@ -1,6 +1,6 @@
 {
   "name": "@opvious/yasdk-packages",
-  "version": "0.2.22",
+  "version": "0.2.23",
   "private": true,
   "repository": "github:mtth/yasdk",
   "author": "Matthieu Monsch <mtth@apache.org>",
@@ -13,9 +13,9 @@
     "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in packages/*; do cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; done"
   },
   "devDependencies": {
-    "@opvious/eslint-plugin": "^0.1.21",
-    "@opvious/prettier-typescript": "^0.1.21",
-    "@opvious/tsconfig": "^0.1.21",
+    "@opvious/eslint-plugin": "^0.1.22",
+    "@opvious/prettier-typescript": "^0.1.22",
+    "@opvious/tsconfig": "^0.1.22",
     "@types/node": "^18.8.5",
     "@vitest/coverage-c8": "^0.28.5",
     "eslint": "^8.12.0",
