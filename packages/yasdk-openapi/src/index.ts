@@ -17,11 +17,11 @@ export {
 } from './load.js';
 export {ReferenceResolver} from './resolve.js';
 export {
+  assertValue,
   InvalidValueError,
   invalidValueError,
   SchemaEnforcer,
   schemaEnforcer,
-  ValidationAssertion,
   ValidationPredicate,
   ValidatorsFor,
 } from './validate.js';

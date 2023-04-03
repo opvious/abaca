@@ -40,6 +40,18 @@ function formatErrors(errs: ReadonlyArray<ErrorObject>): string {
   return errs.map((e) => `path $${e.instancePath} ${e.message}`).join(', ');
 }
 
+export function assertValue<V>(
+  pred: ValidationPredicate<V>,
+  val: unknown,
+  status?: ErrorStatus
+): asserts val is V {
+  if (pred(val)) {
+    return;
+  }
+  const err = invalidValueError(pred.errors, val);
+  throw status == null ? err : statusError(status, err);
+}
+
 /**
  * Creates a new schema validator factory.
  *
@@ -59,31 +71,17 @@ export function schemaEnforcer<S>(doc: OpenapiDocument): SchemaEnforcer<S> {
 export interface SchemaEnforcer<S> {
   validators<N extends keyof S & string>(args: {
     readonly names: ReadonlyArray<N>;
-  }): ValidatorsFor<Pick<S, N>>;
+  }): Promise<ValidatorsFor<Pick<S, N>>>;
 }
 
 /** Schema validators. */
 export type ValidatorsFor<S> = {
   readonly [K in keyof S & string as `is${K}`]: ValidationPredicate<S[K]>;
-} & {
-  readonly [K in keyof S & string as `assert${K}`]: ValidationAssertion<S[K]>;
 };
 
-export type ValidationPredicate<V> = (arg: unknown) => arg is V;
-
-export type ValidationAssertion<V> = (
-  arg: unknown,
-  status?: ErrorStatus
-) => asserts arg is V;
-
-function asserting<V>(pred: ValidateFunction<V>): ValidationAssertion<V> {
-  return (arg: unknown, status?: ErrorStatus) => {
-    if (pred(arg)) {
-      return;
-    }
-    const err = invalidValueError(pred.errors, arg);
-    throw status == null ? err : statusError(status, err);
-  };
+export interface ValidationPredicate<V> {
+  (arg: unknown): arg is V;
+  readonly errors?: ReadonlyArray<ErrorObject> | null;
 }
 
 class RealSchemaEnforcer<S> implements SchemaEnforcer<S> {
@@ -96,22 +94,20 @@ class RealSchemaEnforcer<S> implements SchemaEnforcer<S> {
     return new RealSchemaEnforcer(new Ajv(), ReferenceResolver.create(doc));
   }
 
-  validators<N extends keyof S & string>(args: {
+  async validators<N extends keyof S & string>(args: {
     readonly names: ReadonlyArray<N>;
-  }): ValidatorsFor<Pick<S, N>> {
+  }): Promise<ValidatorsFor<Pick<S, N>>> {
     const validators: any = {};
     for (const name of args.names) {
-      const validate = this.validator(name);
+      const validate = await this.validator(name);
       validators['is' + name] = validate;
-      validators['assert' + name] = asserting(validate);
     }
     return validators;
   }
 
-  private validator<N extends keyof S & string>(
-    name: N
-  ): ValidateFunction<S[N]> {
-    const schema = this.resolver.resolve('#/components/schemas/' + name);
+  private async validator(name: string): Promise<ValidateFunction> {
+    const key = '#/components/schemas/' + name;
+    const schema: any = await this.resolver.resolve(key);
     return this.ajv.compile(schema);
   }
 }
