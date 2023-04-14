@@ -1,6 +1,8 @@
-import {enclosingPackageInfo} from '@opvious/stl-telemetry';
+import __inlinable from 'inlinable';
 
-export const packageInfo = enclosingPackageInfo(import.meta.url);
+export const packageInfo = __inlinable((ctx) =>
+  ctx.enclosing(import.meta.url).metadata()
+);
 
 /** Translates an OpenAPI path to a koa-router compatible one. */
 export function routerPath(p: string): string {
