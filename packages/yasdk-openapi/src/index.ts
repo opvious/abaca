@@ -14,6 +14,7 @@ export {
   OpenapiVersion,
   OperationHookEnv,
   OperationHookTarget,
+  parseDocument,
 } from './load.js';
 export {ReferenceResolver, ResolutionIssue} from './resolve.js';
 export {
