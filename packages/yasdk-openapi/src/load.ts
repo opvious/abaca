@@ -1,4 +1,4 @@
-import {assert, errorFactories, unexpected} from '@opvious/stl-errors';
+import {assert, errorFactories} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {readFile} from 'fs/promises';
@@ -7,7 +7,6 @@ import {
   OpenAPISchemaValidatorResult,
 } from 'openapi-schema-validator';
 import {OpenAPIV2, OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
-import path from 'path';
 import YAML from 'yaml';
 
 import {
@@ -48,36 +47,19 @@ const SchemaValidator = validation.default ?? validation; // Hack.
 export async function loadDocument<V extends OpenapiVersion>(
   /** File path or URL. */
   fp: string | URL,
-  opts?: LoadDocumentOptions<V>
+  opts?: ParseDocumentOptions<V>
 ): Promise<OpenapiDocuments[V]> {
-  const {reviver, ...rest} = opts ?? {};
   const str = await readFile(fp, 'utf8');
-  let obj;
-  const ext = path.extname('' + fp);
-  switch (ext) {
-    case '.json':
-      obj = ifPresent(reviver, (r) => JSON.parse(str, r)) ?? JSON.parse(str);
-      break;
-    case '.yml':
-    case '.yaml':
-      obj = ifPresent(reviver, (r) => YAML.parse(str, r)) ?? YAML.parse(str);
-      break;
-    default:
-      throw unexpected(ext);
-  }
-  return parseDocument(obj, rest);
-}
-
-export interface LoadDocumentOptions<V extends OpenapiVersion>
-  extends ParseDocumentOptions<V> {
-  /** Custom decoding reviver. */
-  readonly reviver?: (k: unknown, v: unknown) => unknown;
+  return parseDocument(str, opts);
 }
 
 export async function parseDocument<V extends OpenapiVersion>(
-  obj: any,
+  str: string,
   opts?: ParseDocumentOptions<V>
 ): Promise<OpenapiDocuments[V]> {
+  const obj =
+    ifPresent(opts?.reviver, (r) => YAML.parse(str, r)) ?? YAML.parse(str);
+
   const version =
     typeof obj?.openapi == 'string'
       ? obj.openapi.trim().slice(0, 3)
@@ -101,6 +83,8 @@ export interface ParseDocumentOptions<V extends OpenapiVersion> {
   readonly versions?: ReadonlyArray<V>;
   /** Resolve all inline references. */
   readonly resolveAllReferences?: boolean;
+  /** Custom decoding reviver. */
+  readonly reviver?: (k: unknown, v: unknown) => unknown;
 }
 
 export interface OpenapiDocuments {

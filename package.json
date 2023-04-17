@@ -1,6 +1,6 @@
 {
   "name": "@opvious/yasdk-packages",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "private": true,
   "repository": "github:mtth/yasdk",
   "author": "Matthieu Monsch <mtth@apache.org>",
