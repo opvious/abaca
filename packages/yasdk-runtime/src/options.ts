@@ -25,14 +25,14 @@ export interface CreateSdkOptionsFor<
    */
   readonly options?: RequestOptions<F>;
 
+  /** Underlying fetch method. */
+  readonly fetch?: FetchOption<F>;
+
   /** Global request body encoders. */
   readonly encoders?: EncodersFor<O, F>;
 
   /** Global response decoders. */
   readonly decoders?: DecodersFor<O, F>;
-
-  /** Underlying fetch method. */
-  readonly fetch?: Fetch<F>;
 
   /** Default content-type used for request bodies. */
   readonly defaultContentType?: M;
@@ -65,7 +65,7 @@ export interface BaseResponse {
 
 export type BaseFetch = (url: string, init: BaseInit) => Promise<BaseResponse>;
 
-export type Fetch<F extends BaseFetch = typeof fetch> = (
+export type FetchOption<F extends BaseFetch = typeof fetch> = (
   url: string,
   init: BaseInit<BodyInitFor<F>> & RequestOptions<F>
 ) => Promise<ResponseFor<F>>;
