@@ -9,7 +9,7 @@ import {
   BodiesMatchingMimeType,
   OperationTypes,
   WithMimeTypeGlobs,
-} from 'yasdk-openapi/preamble';
+} from 'yasdk-runtime';
 
 export type KoaDecodersFor<O extends OperationTypes, S = {}> = {
   readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: KoaDecoder<

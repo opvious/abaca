@@ -33,7 +33,7 @@ import {
   ResponseClauseMatcher,
   ResponseCode,
   TEXT_MIME_TYPE,
-} from 'yasdk-openapi/preamble';
+} from 'yasdk-runtime';
 
 import {packageInfo, routerPath} from '../common.js';
 import {
