@@ -20,7 +20,8 @@ main() {
       "$preamble_imports/options.ts" \
       "$preamble_contents" \
     | sed -E \
-      -e '/^import \{/,/^\} from/d' \
+      -e '/^import \{$/,/^\} from/d' \
+      -e '/^import /d' \
       -e 's/^export //g' \
       >"$dst"
 }
