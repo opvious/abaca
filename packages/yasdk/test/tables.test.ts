@@ -6,7 +6,7 @@ import koaBody from 'koa-body';
 import fetch from 'node-fetch';
 
 import {startApp} from './helpers';
-import {createSdk, Schema,Sdk} from './tables-sdk.gen';
+import {createSdk, Schema, Sdk} from './tables-sdk.gen';
 
 describe('tables', () => {
   let sdk: Sdk<typeof fetch, 'application/json', 'application/json'>;

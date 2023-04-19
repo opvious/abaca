@@ -1,6 +1,6 @@
 {
   "name": "yasdk-openapi",
-  "version": "0.2.26",
+  "version": "0.2.27",
   "repository": "github:mtth/yasdk",
   "description": "YASDK OpenAPI utilities",
   "keywords": [

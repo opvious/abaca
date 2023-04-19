@@ -1,11 +1,12 @@
 import {
   acceptedMimeTypes,
-  AllBodyMimeTypes,
-  AllResponseMimeTypes,
-  AllResponsesMatchingMimeType,
-  AsyncOrSync,
-  BodiesMatchingMimeType,
+  BaseFetch,
   ByMimeType,
+  Coercer,
+  CreateSdkOptionsFor,
+  Decoder,
+  DEFAULT_ACCEPT,
+  Encoder,
   Exact,
   Get,
   Has,
@@ -19,8 +20,11 @@ import {
   OperationTypes,
   ParametersType,
   PLAIN_MIME_TYPE,
+  RequestHeaders,
+  RequestOptions,
   ResponseClauseMatcher,
   ResponseCode,
+  ResponseFor,
   ResponseMimeTypes,
   ResponsesMatchingMimeType,
   ResponsesType,
@@ -30,42 +34,6 @@ import {
   ValuesMatchingMimeTypes,
   WithMimeTypeGlobs,
 } from 'yasdk-runtime';
-
-type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [K in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
-    BodiesMatchingMimeType<O, K>,
-    F
-  >;
-};
-
-export type Encoder<B, F extends BaseFetch = typeof fetch> = (
-  body: B,
-  ctx: EncoderContext<F>
-) => AsyncOrSync<BodyInitFor<F>>;
-
-export interface EncoderContext<F> {
-  readonly contentType: string;
-  readonly headers: RequestHeaders;
-  readonly options?: RequestOptions<F>;
-}
-
-type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [K in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
-    AllResponsesMatchingMimeType<O, K>,
-    F
-  >;
-};
-
-export type Decoder<R, F extends BaseFetch = typeof fetch> = (
-  res: ResponseFor<F>,
-  ctx: DecoderContext<F>
-) => AsyncOrSync<R>;
-
-export interface DecoderContext<F> {
-  readonly contentType: string;
-  readonly headers: RequestHeaders;
-  readonly options?: RequestOptions<F>;
-}
 
 const jsonEncoder: Encoder<any> = (body) => JSON.stringify(body);
 const jsonDecoder: Decoder<any> = (res) => res.json();
@@ -79,19 +47,6 @@ const fallbackEncoder: Encoder<any> = (_body, ctx) => {
 const fallbackDecoder: Decoder<any> = (_res, ctx) => {
   throw new Error('Unsupported response content-type: ' + ctx.contentType);
 };
-
-export type Coercer<F extends BaseFetch> = (
-  res: ResponseFor<F>,
-  ctx: CoercerContext
-) => AsyncOrSync<MimeType | undefined>;
-
-export interface CoercerContext {
-  readonly path: string;
-  readonly method: string;
-  readonly received: MimeType | undefined;
-  readonly accepted: ReadonlySet<MimeType>;
-  readonly declared: ReadonlySet<MimeType> | undefined; // undefined if implicit
-}
 
 const defaultCoercer: Coercer<BaseFetch> = async (res, ctx) => {
   const mtype = ctx.received;
@@ -110,16 +65,6 @@ const defaultCoercer: Coercer<BaseFetch> = async (res, ctx) => {
   );
 };
 
-type RequestInitFor<F> = F extends (url: any, init?: infer R) => any
-  ? R
-  : never;
-
-type BodyInitFor<F> = Lookup<RequestInitFor<F>, 'body'>;
-
-type ResponseFor<F> = F extends (url: any, init?: any) => Promise<infer R>
-  ? R
-  : never;
-
 type Input<
   O,
   F extends BaseFetch,
@@ -136,13 +81,6 @@ interface CommonInput<F> {
   readonly headers?: RequestHeaders;
   readonly options?: RequestOptions<F>;
 }
-
-type RequestHeaders = Record<string, string>;
-
-export type RequestOptions<F> = Omit<
-  RequestInitFor<F>,
-  'body' | 'headers' | 'method'
->;
 
 type MaybeBodyInput<B, F extends BaseFetch, M> = undefined extends B
   ? {}
@@ -282,24 +220,6 @@ type SdkFunction<O, I, F, A extends MimeType> = {} extends I
     ) => Output<O, Exact<I, X> extends never ? X : {}, F, A>
   : <X extends I>(args: X) => Output<O, X, F, A>;
 
-export type BaseFetch = (url: string, init: BaseInit) => Promise<BaseResponse>;
-
-interface BaseInit<B = any> {
-  readonly body?: B;
-  readonly headers: RequestHeaders;
-  readonly method: string;
-}
-
-interface BaseResponse {
-  readonly status: number;
-  readonly headers: {
-    get(name: string): string | null | undefined;
-  };
-  text(): Promise<string>;
-}
-
-const DEFAULT_ACCEPT = 'application/json;q=1, text/*;q=0.5';
-
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
@@ -416,46 +336,6 @@ function formatPath(p: string, o: Record<string, unknown>): string {
     const r = o[s.slice(1, -1)];
     return r == null ? s : '' + r;
   });
-}
-
-export interface CreateSdkOptionsFor<
-  O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
-> {
-  /** Global request headers, overridable in individual requests. */
-  readonly headers?: RequestHeaders;
-
-  /**
-   * Other global request options. These can similarly be overriden in
-   * individual fetch calls.
-   */
-  readonly options?: RequestOptions<F>;
-
-  /** Global request body encoders. */
-  readonly encoders?: EncodersFor<O, F>;
-
-  /** Global response decoders. */
-  readonly decoders?: DecodersFor<O, F>;
-
-  /** Underlying fetch method. */
-  readonly fetch?: (
-    url: string,
-    init: BaseInit<BodyInitFor<F>> & RequestOptions<F>
-  ) => Promise<ResponseFor<F>>;
-
-  /** Default content-type used for request bodies. */
-  readonly defaultContentType?: M;
-
-  /** Default accept header value. */
-  readonly defaultAccept?: A;
-
-  /**
-   * Unexpected response coercion. The default will ignore bodies of responses
-   * which do not have any declared content and throw an error otherwise.
-   */
-  readonly coercer?: Coercer<F>;
 }
 
 export type RequestBodyFor<
