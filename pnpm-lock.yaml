@@ -121,6 +121,7 @@ importers:
       openapi-schema-validator: ^12.1.0
       openapi-types: ^12.1.0
       yaml: ^2.2.1
+      yasdk-runtime: workspace:*
     dependencies:
       '@opvious/stl-errors': 0.17.6
       '@opvious/stl-utils': 0.17.6
@@ -129,6 +130,7 @@ importers:
       openapi-schema-validator: 12.1.0
       openapi-types: 12.1.0
       yaml: 2.2.1
+      yasdk-runtime: link:../yasdk-runtime
 
   packages/yasdk-runtime:
     specifiers: {}

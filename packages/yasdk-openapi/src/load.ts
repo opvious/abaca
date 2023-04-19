@@ -8,13 +8,13 @@ import {
 } from 'openapi-schema-validator';
 import {OpenAPIV2, OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import YAML from 'yaml';
-
 import {
   MimeType,
   OperationDefinition,
   ParameterDefinition,
   ResponseCode,
-} from './preamble/operations.js';
+} from 'yasdk-runtime';
+
 import {resolveAll} from './resolve.js';
 
 const [errors, codes] = errorFactories({

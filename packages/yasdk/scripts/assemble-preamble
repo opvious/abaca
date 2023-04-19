@@ -7,7 +7,7 @@ shopt -s nullglob
 
 __dirname="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-preamble_imports="$__dirname/../../yasdk-openapi/src/preamble"
+preamble_imports="$__dirname/../../yasdk-runtime/src"
 
 preamble_contents="$__dirname/../src/preamble.ts"
 
