@@ -1,6 +1,6 @@
 {
   "name": "yasdk-koa",
-  "version": "0.2.27",
+  "version": "0.2.28",
   "repository": "github:mtth/yasdk",
   "description": "YASDK OpenAPI utilities",
   "keywords": [
