@@ -29,7 +29,7 @@ import {
   Values,
   ValuesMatchingMimeTypes,
   WithMimeTypeGlobs,
-} from 'yasdk-openapi/preamble';
+} from 'yasdk-runtime';
 
 type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
   readonly [K in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<

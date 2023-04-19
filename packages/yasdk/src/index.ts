@@ -9,7 +9,7 @@ import {
   loadDocument,
   OpenapiDocuments,
 } from 'yasdk-openapi';
-import {JSON_SEQ_MIME_TYPE} from 'yasdk-openapi/preamble';
+import {JSON_SEQ_MIME_TYPE} from 'yasdk-runtime';
 
 const COMMAND_NAME = 'yasdk';
 

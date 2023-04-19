@@ -10,7 +10,7 @@ import {
   OperationTypes,
   ResponsesType,
   Values,
-} from 'yasdk-openapi/preamble';
+} from 'yasdk-runtime';
 
 export type KoaHandlersFor<
   O extends OperationTypes<keyof O & string> = DefaultOperationTypes,

@@ -1,6 +1,6 @@
 {
   "name": "@opvious/yasdk-packages",
-  "version": "0.2.25",
+  "version": "0.2.26",
   "private": true,
   "repository": "github:mtth/yasdk",
   "author": "Matthieu Monsch <mtth@apache.org>",
@@ -10,7 +10,7 @@
     "clean": "pnpm -r -F !. run clean && rm -rf node_modules out",
     "fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && pnpm run lint --fix",
     "lint": "eslint 'packages/*/{src,test}/**/*.{ts,tsx}'",
-    "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in packages/*; do cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; done"
+    "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in packages/*; do if [ -d \"$p/out/coverage\" ]; then cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; fi; done"
   },
   "devDependencies": {
     "@opvious/eslint-plugin": "^0.1.22",

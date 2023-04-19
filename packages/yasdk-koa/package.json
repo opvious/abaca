@@ -1,6 +1,6 @@
 {
   "name": "yasdk-koa",
-  "version": "0.2.25",
+  "version": "0.2.26",
   "repository": "github:mtth/yasdk",
   "description": "YASDK OpenAPI utilities",
   "keywords": [
@@ -39,7 +39,8 @@
     "koa-compose": "^4.1.0",
     "openapi-types": "^12.1.0",
     "yaml": "^2.2.1",
-    "yasdk-openapi": "workspace:*"
+    "yasdk-openapi": "workspace:*",
+    "yasdk-runtime": "workspace:*"
   },
   "devDependencies": {
     "@types/co-body": "^6.1.0",
