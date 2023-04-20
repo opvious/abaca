@@ -142,15 +142,6 @@ async function generateValues(doc: OpenapiDocument): Promise<string> {
 const SUFFIX = `
 
 export type {
-  BaseFetch,
-  Coercer,
-  CoercerContext,
-  Decoder,
-  DecoderContext,
-  Encoder,
-  EncoderContext,
-  RequestOptions,
-  ResponseCode,
   operations,
   StreamingContentTypes,
 };

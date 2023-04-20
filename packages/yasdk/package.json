@@ -1,6 +1,6 @@
 {
   "name": "yasdk",
-  "version": "0.2.28",
+  "version": "0.2.29",
   "repository": "github:mtth/yasdk",
   "description": "Yet another TypesScript SDK generator",
   "keywords": [
