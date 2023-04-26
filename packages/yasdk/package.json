@@ -30,8 +30,8 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.17.6",
-    "@opvious/stl-utils": "^0.17.6",
+    "@opvious/stl-errors": "^0.17.16",
+    "@opvious/stl-utils": "^0.17.16",
     "commander": "^10.0.0",
     "openapi-typescript": "^6.2.0",
     "yasdk-openapi": "workspace:*",

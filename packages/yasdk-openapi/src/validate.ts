@@ -7,7 +7,7 @@ import {
 } from '@opvious/stl-errors';
 import {default as ajv, ErrorObject, ValidateFunction} from 'ajv';
 
-import {OpenapiDocument} from './load.js';
+import {OpenapiDocument} from './parse.js';
 import {ReferenceResolver} from './resolve.js';
 
 type Ajv = ajv.default;
@@ -23,7 +23,7 @@ const [errors, codes] = errorFactories({
   prefix: 'ERR_OPENAPI_',
 });
 
-export const validateErrorCodes = codes;
+export const errorCodes = codes;
 
 /** Throws if errors is null or empty. */
 export function invalidValueError(

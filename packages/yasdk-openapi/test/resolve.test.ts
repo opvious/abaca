@@ -1,6 +1,6 @@
 import {fail} from '@opvious/stl-errors';
 
-import {loadDocument} from '../src/load.js';
+import {loadDocument} from '../src/parse.js';
 import * as sut from '../src/resolve.js';
 import {resourceUrl} from './helpers.js';
 
@@ -22,9 +22,7 @@ describe('resolve references', () => {
       await resolver.resolve('#/missing');
       fail();
     } catch (err) {
-      expect(err).toMatchObject({
-        code: sut.resolveErrorCodes.UnresolvableReference,
-      });
+      expect(err).toMatchObject({code: sut.errorCodes.UnresolvableReference});
     }
   });
 });

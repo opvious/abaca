@@ -1,9 +1,3 @@
-import {mergeErrorCodes} from '@opvious/stl-errors';
-
-import {loadErrorCodes} from './load.js';
-import {resolveErrorCodes} from './resolve.js';
-import {validateErrorCodes} from './validate.js';
-
 export {
   allOperationMethods,
   extractOperationDefinitions,
@@ -15,7 +9,7 @@ export {
   OperationHookEnv,
   OperationHookTarget,
   parseDocument,
-} from './load.js';
+} from './parse.js';
 export {ReferenceResolver, ResolutionIssue} from './resolve.js';
 export {
   assertValue,
@@ -26,9 +20,3 @@ export {
   ValidationPredicate,
   ValidatorsFor,
 } from './validate.js';
-
-export const errorCodes = mergeErrorCodes({
-  ...loadErrorCodes,
-  ...resolveErrorCodes,
-  ...validateErrorCodes,
-});

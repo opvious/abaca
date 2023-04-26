@@ -33,7 +33,7 @@ const [errors, codes] = errorFactories({
   prefix: 'ERR_OPENAPI_',
 });
 
-export const loadErrorCodes = codes;
+export const errorCodes = codes;
 
 type ValidationIssue = OpenAPISchemaValidatorResult['errors'][number];
 

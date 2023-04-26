@@ -1,6 +1,6 @@
 import {fail} from '@opvious/stl-errors';
 
-import * as sut from '../src/load.js';
+import * as sut from '../src/parse.js';
 
 describe('load OpenAPI document', () => {
   describe('valid', () => {
@@ -20,7 +20,7 @@ describe('load OpenAPI document', () => {
       });
       fail();
     } catch (err) {
-      expect(err).toMatchObject({code: sut.loadErrorCodes.UnexpectedVersion});
+      expect(err).toMatchObject({code: sut.errorCodes.UnexpectedVersion});
     }
   });
 
@@ -29,7 +29,7 @@ describe('load OpenAPI document', () => {
       await sut.loadDocument(resourceUrl('invalid.openapi.yaml'));
       fail();
     } catch (err) {
-      expect(err).toMatchObject({code: sut.loadErrorCodes.InvalidSchema});
+      expect(err).toMatchObject({code: sut.errorCodes.InvalidSchema});
     }
   });
 });

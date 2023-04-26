@@ -6,7 +6,6 @@ import {
   errorFactories,
   errorMessage,
   isStandardError,
-  StandardError,
 } from '@opvious/stl-errors';
 import {noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
 import {
@@ -51,6 +50,7 @@ import {
   DefaultOperationTypes,
   KoaHandlersFor,
 } from './handlers.js';
+import {codes,errors} from './index.errors.js';
 
 export {KoaDecoder, KoaEncoder} from './codecs.js';
 export {
@@ -59,41 +59,6 @@ export {
   KoaHandlersFor,
   KoaValuesFor,
 } from './handlers.js';
-
-const [errors, codes] = errorFactories({
-  definitions: {
-    invalidRequest: (origin: RequestError) => ({
-      message: 'Invalid request: ' + origin.message,
-      tags: {origin},
-    }),
-    invalidResponseData: (cause: InvalidValueError) => ({
-      message: 'Invalid response data: ' + cause.message,
-      tags: cause.tags,
-      cause,
-    }),
-    unacceptableResponseType: (
-      oid: string,
-      type: string,
-      accepted: Iterable<string>,
-      declared: Iterable<string> | undefined
-    ) => ({
-      message:
-        `Response type ${type} does not belong to the set of acceptable ` +
-        `values for operation ${oid} (accepted=[${[...accepted].join(', ')}]` +
-        `, declared=[${[...(declared ?? [])].join(', ')}])`,
-    }),
-    unexpectedResponseBody: {
-      message: 'This response should not have a body',
-    },
-    unwritableResponseType: (type: string) => ({
-      message: `Response type ${type} does not have a matching encoder`,
-    }),
-  },
-});
-
-export const errorCodes = codes;
-
-type RequestError = StandardError<{readonly status: number}>;
 
 const [requestErrors] = errorFactories({
   definitions: {

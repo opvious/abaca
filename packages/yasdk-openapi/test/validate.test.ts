@@ -1,6 +1,6 @@
 import {fail} from '@opvious/stl-errors';
 
-import {loadDocument} from '../src/load.js';
+import {loadDocument} from '../src/parse.js';
 import * as sut from '../src/validate.js';
 import {resourceUrl} from './helpers.js';
 
@@ -37,7 +37,7 @@ describe('schema enforcer', () => {
       sut.assertValue(isPet, {id: 2});
       fail();
     } catch (err) {
-      expect(err).toMatchObject({code: sut.validateErrorCodes.InvalidValue});
+      expect(err).toMatchObject({code: sut.errorCodes.InvalidValue});
     }
   });
 });
