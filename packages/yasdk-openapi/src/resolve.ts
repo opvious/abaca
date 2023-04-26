@@ -1,7 +1,7 @@
 import {errorFactories} from '@opvious/stl-errors';
 import {Resolver} from '@stoplight/json-ref-resolver';
 
-import {OpenapiDocument} from './load.js';
+import {OpenapiDocument} from './parse.js';
 
 const [errors, codes] = errorFactories({
   definitions: {
@@ -24,7 +24,7 @@ const [errors, codes] = errorFactories({
   prefix: 'ERR_OPENAPI_',
 });
 
-export const resolveErrorCodes = codes;
+export const errorCodes = codes;
 
 export interface ResolutionIssue {
   readonly message: string;
