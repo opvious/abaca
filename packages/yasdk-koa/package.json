@@ -14,8 +14,10 @@
   "files": [
     "lib/"
   ],
-  "exports": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": "./lib/index.js",
+    "./errors": "./lib/index.errors.js"
+  },
   "scripts": {
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",

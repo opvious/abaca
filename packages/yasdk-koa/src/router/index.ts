@@ -50,7 +50,7 @@ import {
   DefaultOperationTypes,
   KoaHandlersFor,
 } from './handlers.js';
-import {codes,errors} from './index.errors.js';
+import {codes, errors} from './index.errors.js';
 
 export {KoaDecoder, KoaEncoder} from './codecs.js';
 export {
