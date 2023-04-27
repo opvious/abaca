@@ -1,13 +1,11 @@
 import {assert, errorFactories} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
-import {readFile} from 'fs/promises';
 import {
   default as validation,
   OpenAPISchemaValidatorResult,
 } from 'openapi-schema-validator';
 import {OpenAPIV2, OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
-import YAML from 'yaml';
 import {
   MimeType,
   OperationDefinition,
@@ -15,7 +13,12 @@ import {
   ResponseCode,
 } from 'yasdk-runtime';
 
-import {resolveAll} from './resolve.js';
+import {
+  OpenapiDocument,
+  OpenapiDocuments,
+  OpenapiVersion,
+  openapiVersions,
+} from './common.js';
 
 const [errors, codes] = errorFactories({
   definitions: {
@@ -43,61 +46,32 @@ function formatValidationIssue(i: ValidationIssue): string {
 
 const SchemaValidator = validation.default ?? validation; // Hack.
 
-/** Reads and validates an OpenAPI schema from a path. */
-export async function loadDocument<V extends OpenapiVersion>(
-  /** File path or URL. */
-  fp: string | URL,
-  opts?: ParseDocumentOptions<V>
-): Promise<OpenapiDocuments[V]> {
-  const str = await readFile(fp, 'utf8');
-  return parseDocument(str, opts);
-}
+/** Checks that the input argument is a valid OpenAPI document. */
+export function assertIsOpenapiDocument<V extends OpenapiVersion>(
+  arg: unknown,
+  opts?: {
+    /** Acceptable document versions. */
+    readonly versions?: ReadonlyArray<V>;
+  }
+): asserts arg is OpenapiDocuments[V] {
+  // TODO: Check that it is fully resolved (potentially gated by an option).
 
-export async function parseDocument<V extends OpenapiVersion>(
-  str: string,
-  opts?: ParseDocumentOptions<V>
-): Promise<OpenapiDocuments[V]> {
-  const obj =
-    ifPresent(opts?.reviver, (r) => YAML.parse(str, r)) ?? YAML.parse(str);
-
+  const schema: any = arg;
   const version =
-    typeof obj?.openapi == 'string'
-      ? obj.openapi.trim().slice(0, 3)
-      : obj.swagger;
-  const allowed = opts?.versions ?? allVersions;
+    typeof schema?.openapi == 'string'
+      ? schema.openapi.trim().slice(0, 3)
+      : schema.swagger;
+  const allowed = opts?.versions ?? openapiVersions;
   if (!allowed.includes(version)) {
     throw errors.unexpectedVersion(version, allowed);
   }
-
   const validator = new SchemaValidator({version});
-  const validated = validator.validate(obj);
+  const validated = validator.validate(schema);
   if (validated.errors.length) {
     throw errors.invalidSchema(validated.errors);
   }
-
-  return opts?.resolveAllReferences ? resolveAll(obj) : obj;
+  return schema;
 }
-
-export interface ParseDocumentOptions<V extends OpenapiVersion> {
-  /** Acceptable document versions. */
-  readonly versions?: ReadonlyArray<V>;
-  /** Resolve all inline references. */
-  readonly resolveAllReferences?: boolean;
-  /** Custom decoding reviver. */
-  readonly reviver?: (k: unknown, v: unknown) => unknown;
-}
-
-export interface OpenapiDocuments {
-  '2.0': OpenAPIV2.Document;
-  '3.0': OpenAPIV3.Document;
-  '3.1': OpenAPIV3_1.Document;
-}
-
-export type OpenapiVersion = keyof OpenapiDocuments;
-
-export type OpenapiDocument = OpenapiDocuments[OpenapiVersion];
-
-const allVersions = ['2.0', '3.0', '3.1'] as const;
 
 export type OpenapiOperation<D extends OpenapiDocument> =
   D extends OpenapiDocuments['2.0']

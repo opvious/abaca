@@ -1,0 +1,9 @@
+$id: resource://root/vehicle.yaml
+anyOf:
+  - $ref: '#/$defs/Bus'
+  - $ref: '#/$defs/Car'
+$defs:
+  Bus:
+    type: string
+  Car:
+    type: number

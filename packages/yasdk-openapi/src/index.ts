@@ -1,16 +1,13 @@
+export {OpenapiDocument, OpenapiDocuments, OpenapiVersion} from './common.js';
 export {
   allOperationMethods,
+  assertIsOpenapiDocument,
   extractOperationDefinitions,
-  loadDocument,
-  OpenapiDocument,
-  OpenapiDocuments,
   OpenapiOperation,
-  OpenapiVersion,
   OperationHookEnv,
   OperationHookTarget,
-  parseDocument,
 } from './parse.js';
-export {ReferenceResolver, ResolutionIssue} from './resolve.js';
+export * from './resolvable/index.js';
 export {
   assertValue,
   InvalidValueError,

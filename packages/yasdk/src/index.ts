@@ -1,12 +1,14 @@
 import {assert} from '@opvious/stl-errors';
+import {ResourceLoader} from '@opvious/stl-utils/files';
 import {commaSeparated} from '@opvious/stl-utils/strings';
 import {Command} from 'commander';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import path from 'path';
 import {
+  assertIsOpenapiDocument,
   extractOperationDefinitions,
-  loadDocument,
+  loadResolvableResource,
   OpenapiDocuments,
 } from 'yasdk-openapi';
 import {JSON_SEQ_MIME_TYPE} from 'yasdk-runtime';
@@ -24,16 +26,18 @@ export function mainCommand(): Command {
     .description('Generate typed OpenAPI SDK')
     .requiredOption('-i, --input <path>', '3.0 or 3.1 OpenAPI spec')
     .requiredOption('-o, --output <path>', 'TypeScript output file')
+    .option('-r, --root <path>', 'loader root path, defaults to CWD')
     .option(
       '--streaming-content-types <types>',
       'comma-separated list of content-types which contain streamed data',
       JSON_SEQ_MIME_TYPE
     )
     .action(async (opts) => {
-      const doc = await loadDocument(opts.input, {
-        versions: ['3.0', '3.1'],
-        resolveAllReferences: true,
-      });
+      const {resolved: doc} = await loadResolvableResource(
+        path.resolve(opts.input),
+        {loader: ResourceLoader.create({root: opts.root ?? process.cwd()})}
+      );
+      assertIsOpenapiDocument(doc, {versions: ['3.0', '3.1']});
 
       const streamingTypes = commaSeparated(opts.streamingContentTypes);
       const [preambleStr, typesStr, valuesStr] = await Promise.all([

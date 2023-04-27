@@ -1,8 +1,11 @@
 import {fail} from '@opvious/stl-errors';
+import {ResourceLoader} from '@opvious/stl-utils/files';
 
-import {loadDocument} from '../src/parse.js';
+import {assertIsOpenapiDocument} from '../src/parse.js';
+import {loadResolvableResource} from '../src/resolvable/index.js';
 import * as sut from '../src/validate.js';
-import {resourceUrl} from './helpers.js';
+
+const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
 
 interface Schemas {
   Pet: {
@@ -15,22 +18,21 @@ describe('schema enforcer', () => {
   let enforcer: sut.SchemaEnforcer<Schemas>;
 
   beforeAll(async () => {
-    const doc = await loadDocument(resourceUrl('pets.openapi.yaml'));
-    enforcer = sut.schemaEnforcer(doc);
+    const {resolved} = await loadResolvableResource('pets.openapi.yaml', {
+      loader,
+    });
+    assertIsOpenapiDocument(resolved);
+    enforcer = sut.schemaEnforcer(resolved);
   });
 
-  test('predicate', async () => {
-    const vals = await enforcer.validators({
-      names: ['Pet'],
-    });
+  test('predicate', () => {
+    const vals = enforcer.validators({names: ['Pet']});
     expect(vals.isPet({id: 1, name: 'n'})).toBe(true);
     expect(vals.isPet({id: 1})).toBe(false);
   });
 
-  test('assertion', async () => {
-    const {isPet} = await enforcer.validators({
-      names: ['Pet'],
-    });
+  test('assertion', () => {
+    const {isPet} = enforcer.validators({names: ['Pet']});
     const arg: unknown = {id: 1, name: 'n'};
     sut.assertValue(isPet, arg);
     try {

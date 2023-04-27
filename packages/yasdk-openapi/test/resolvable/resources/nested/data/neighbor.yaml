@@ -1,0 +1,5 @@
+$id: resource://root-package/neighbor.yaml
+type: object
+properties:
+  child:
+    $ref: resource://child1/schema.yaml
