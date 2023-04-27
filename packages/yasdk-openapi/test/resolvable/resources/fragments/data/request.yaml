@@ -1,0 +1,7 @@
+$id: resource://root/request.yaml
+components:
+  schemas:
+    Bus:
+      $ref: resource://root/vehicle.yaml#/$defs/Bus
+    Car:
+      $ref: resource://root/vehicle.yaml#/$defs/Car

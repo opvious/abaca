@@ -7,8 +7,7 @@ import {
 } from '@opvious/stl-errors';
 import {default as ajv, ErrorObject, ValidateFunction} from 'ajv';
 
-import {OpenapiDocument} from './parse.js';
-import {ReferenceResolver} from './resolve.js';
+import {OpenapiDocument} from './common.js';
 
 type Ajv = ajv.default;
 const Ajv = ajv.default ?? ajv;
@@ -71,7 +70,7 @@ export function schemaEnforcer<S>(doc: OpenapiDocument): SchemaEnforcer<S> {
 export interface SchemaEnforcer<S> {
   validators<N extends keyof S & string>(args: {
     readonly names: ReadonlyArray<N>;
-  }): Promise<ValidatorsFor<Pick<S, N>>>;
+  }): ValidatorsFor<Pick<S, N>>;
 }
 
 /** Schema validators. */
@@ -86,28 +85,27 @@ export interface ValidationPredicate<V> {
 
 class RealSchemaEnforcer<S> implements SchemaEnforcer<S> {
   private constructor(
-    private readonly ajv: Ajv,
-    private readonly resolver: ReferenceResolver
+    private readonly document: OpenapiDocument,
+    private readonly ajv: Ajv
   ) {}
 
   static create<S>(doc: OpenapiDocument): SchemaEnforcer<S> {
-    return new RealSchemaEnforcer(new Ajv(), ReferenceResolver.create(doc));
+    return new RealSchemaEnforcer(doc, new Ajv());
   }
 
-  async validators<N extends keyof S & string>(args: {
+  validators<N extends keyof S & string>(args: {
     readonly names: ReadonlyArray<N>;
-  }): Promise<ValidatorsFor<Pick<S, N>>> {
+  }): ValidatorsFor<Pick<S, N>> {
     const validators: any = {};
     for (const name of args.names) {
-      const validate = await this.validator(name);
+      const validate = this.validator(name);
       validators['is' + name] = validate;
     }
     return validators;
   }
 
-  private async validator(name: string): Promise<ValidateFunction> {
-    const key = '#/components/schemas/' + name;
-    const schema: any = await this.resolver.resolve(key);
+  private validator(name: string): ValidateFunction {
+    const schema = (this.document as any).components.schemas[name];
     return this.ajv.compile(schema);
   }
 }

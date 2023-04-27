@@ -1,6 +1,10 @@
 import {fail} from '@opvious/stl-errors';
+import {ResourceLoader} from '@opvious/stl-utils/files';
+import YAML from 'yaml';
 
 import * as sut from '../src/parse.js';
+
+const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
 
 describe('load OpenAPI document', () => {
   describe('valid', () => {
@@ -9,15 +13,15 @@ describe('load OpenAPI document', () => {
       'petstore.openapi.json',
       'tables.openapi.yaml',
     ])('%s', async (name) => {
-      await sut.loadDocument(resourceUrl(name));
+      const {contents} = await loader.load(name);
+      sut.assertIsOpenapiDocument(YAML.parse(contents));
     });
   });
 
   test('unexpected version', async () => {
+    const {contents} = await loader.load('pets.openapi.yaml');
     try {
-      await sut.loadDocument(resourceUrl('pets.openapi.yaml'), {
-        versions: ['2.0'],
-      });
+      sut.assertIsOpenapiDocument(YAML.parse(contents), {versions: ['2.0']});
       fail();
     } catch (err) {
       expect(err).toMatchObject({code: sut.errorCodes.UnexpectedVersion});
@@ -25,8 +29,9 @@ describe('load OpenAPI document', () => {
   });
 
   test('invalid document', async () => {
+    const {contents} = await loader.load('invalid.openapi.yaml');
     try {
-      await sut.loadDocument(resourceUrl('invalid.openapi.yaml'));
+      sut.assertIsOpenapiDocument(YAML.parse(contents));
       fail();
     } catch (err) {
       expect(err).toMatchObject({code: sut.errorCodes.InvalidSchema});
@@ -36,7 +41,8 @@ describe('load OpenAPI document', () => {
 
 describe('extract operation definitions', () => {
   test('null hook', async () => {
-    const doc = await sut.loadDocument(resourceUrl('pets.openapi.yaml'));
+    const {contents} = await loader.load('pets.openapi.yaml');
+    const doc = YAML.parse(contents);
     const defs = sut.extractOperationDefinitions(doc);
     expect(defs).toEqual({
       listPets: {
@@ -95,7 +101,3 @@ describe('extract operation definitions', () => {
     });
   });
 });
-
-function resourceUrl(name: string): URL {
-  return new URL(`./resources/${name}`, import.meta.url);
-}

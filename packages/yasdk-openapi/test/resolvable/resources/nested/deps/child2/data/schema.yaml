@@ -1,0 +1,5 @@
+$id: resource://child2/schema.yaml
+type: object
+properties:
+  nested:
+    $ref: resource://child1/schema.yaml

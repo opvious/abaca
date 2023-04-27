@@ -1,0 +1,9 @@
+$id: resource://root-package/root.yaml
+components:
+  schemas:
+    Neighbor:
+      $ref: resource://root-package/neighbor.yaml
+    Child1:
+      $ref: resource://child1/schema.yaml
+    Child2:
+      $ref: resource://child2/schema.yaml
