@@ -82,7 +82,7 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
 /** Default file name for OpenAPI documents. */
 export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
 
-/** Convenience method for loading an OpenAPI specification. */
+/** Convenience method for loading a fully-resolved OpenAPI specification. */
 export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
   readonly path?: PosixPath;
   readonly loader?: ResourceLoader;
@@ -96,7 +96,8 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
 
 /**
  * Convenience method for combining resolvables forming an OpenAPI specification
- * into a (fully resolved) document.
+ * into a (fully resolved) document. These resolvables should be created with
+ * `loadResolvableResource`.
  */
 export function assembleOpenapiDocument<V extends OpenapiVersion>(
   resolvables: ReadonlyArray<Resolvable>,
