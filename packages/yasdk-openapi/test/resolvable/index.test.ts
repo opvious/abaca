@@ -37,6 +37,7 @@ describe.each<[string, string, unknown]>([
       },
     },
   ],
+  ['simple', 'openapi.yaml', {openapi: '3.0.0', paths: {}}],
 ])('%s', (folder, root, want) => {
   let loaded: sut.LoadedResolvableResource;
 
