@@ -12,7 +12,12 @@ import {errors} from './index.errors.js';
 export async function loadResolvableResource(
   pp: PosixPath,
   opts?: {
+    /** Custom resource loader. */
     readonly loader?: ResourceLoader;
+    /**
+     * Remove all keys starting with `$` in the final output. This can be useful
+     * when parsing OpenAPI schemas which do not accept them.
+     */
     readonly stripDollarKeys?: boolean;
   }
 ): Promise<LoadedResolvableResource> {
@@ -79,7 +84,9 @@ export async function loadResolvableResource(
     YAML.visit(doc.contents, {
       Pair: (_, pair) => {
         const key = (pair.key as any)?.value;
-        return key.startsWith('$') ? YAML.visit.REMOVE : undefined;
+        return typeof key == 'string' && key.startsWith('$')
+          ? YAML.visit.REMOVE
+          : undefined;
       },
     });
   }
