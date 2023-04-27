@@ -52,9 +52,10 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   opts?: {
     /** Acceptable document versions. */
     readonly versions?: ReadonlyArray<V>;
-    // TODO: Add option to check that it is fully resolved.
   }
 ): asserts arg is OpenapiDocuments[V] {
+  // TODO: Check that it is fully resolved (potentially gated by an option).
+
   const schema: any = arg;
   const version =
     typeof schema?.openapi == 'string'
