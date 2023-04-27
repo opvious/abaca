@@ -13,15 +13,17 @@ describe('load OpenAPI document', () => {
       'petstore.openapi.json',
       'tables.openapi.yaml',
     ])('%s', async (name) => {
-      const {contents} = await loader.load(name);
-      sut.assertIsOpenapiDocument(YAML.parse(contents));
+      await sut.loadOpenapiDocument({path: name, loader});
     });
   });
 
   test('unexpected version', async () => {
-    const {contents} = await loader.load('pets.openapi.yaml');
     try {
-      sut.assertIsOpenapiDocument(YAML.parse(contents), {versions: ['2.0']});
+      await sut.loadOpenapiDocument({
+        path: 'pets.openapi.yaml',
+        loader,
+        versions: ['2.0'],
+      });
       fail();
     } catch (err) {
       expect(err).toMatchObject({code: sut.errorCodes.UnexpectedVersion});
@@ -29,9 +31,8 @@ describe('load OpenAPI document', () => {
   });
 
   test('invalid document', async () => {
-    const {contents} = await loader.load('invalid.openapi.yaml');
     try {
-      sut.assertIsOpenapiDocument(YAML.parse(contents));
+      await sut.loadOpenapiDocument({path: 'invalid.openapi.yaml', loader});
       fail();
     } catch (err) {
       expect(err).toMatchObject({code: sut.errorCodes.InvalidSchema});

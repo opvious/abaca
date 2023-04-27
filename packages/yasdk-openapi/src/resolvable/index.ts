@@ -1,8 +1,5 @@
 import {assert} from '@opvious/stl-errors';
-import {
-  PosixPath,
-  ResourceLoader,
-} from '@opvious/stl-utils/files';
+import {PosixPath, ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {Resolver} from '@stoplight/json-ref-resolver';
 import derefSync from 'json-schema-deref-sync';
