@@ -1,4 +1,5 @@
 import {assert, errorFactories} from '@opvious/stl-errors';
+import {PosixPath, ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {
@@ -19,6 +20,11 @@ import {
   OpenapiVersion,
   openapiVersions,
 } from './common.js';
+import {
+  combineResolvables,
+  loadResolvableResource,
+  Resolvable,
+} from './resolvable/index.js';
 
 const [errors, codes] = errorFactories({
   definitions: {
@@ -71,6 +77,37 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
     throw errors.invalidSchema(validated.errors);
   }
   return schema;
+}
+
+/** Default file name for OpenAPI documents. */
+export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
+
+/** Convenience method for loading a fully-resolved OpenAPI specification. */
+export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
+  readonly path?: PosixPath;
+  readonly loader?: ResourceLoader;
+  readonly versions?: ReadonlyArray<V>;
+}): Promise<OpenapiDocuments[V]> {
+  const pp = opts?.path ?? OPENAPI_DOCUMENT_FILE;
+  const {resolved} = await loadResolvableResource(pp, {loader: opts?.loader});
+  assertIsOpenapiDocument(resolved, {versions: opts?.versions});
+  return resolved;
+}
+
+/**
+ * Convenience method for combining resolvables forming an OpenAPI specification
+ * into a (fully resolved) document. These resolvables should be created with
+ * `loadResolvableResource`.
+ */
+export function assembleOpenapiDocument<V extends OpenapiVersion>(
+  resolvables: ReadonlyArray<Resolvable>,
+  opts?: {
+    readonly versions?: ReadonlyArray<V>;
+  }
+): OpenapiDocuments[V] {
+  const combined = combineResolvables(resolvables);
+  assertIsOpenapiDocument(combined, {versions: opts?.versions});
+  return combined;
 }
 
 export type OpenapiOperation<D extends OpenapiDocument> =

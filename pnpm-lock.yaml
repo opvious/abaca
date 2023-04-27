@@ -44,17 +44,20 @@ importers:
   packages/yasdk:
     dependencies:
       '@opvious/stl-errors':
-        specifier: ^0.17.22
-        version: 0.17.22
+        specifier: ^0.17.23
+        version: 0.17.23
       '@opvious/stl-utils':
-        specifier: ^0.17.22
-        version: 0.17.22
+        specifier: ^0.17.23
+        version: 0.17.23
       commander:
         specifier: ^10.0.0
         version: 10.0.0
       openapi-typescript:
         specifier: ^6.2.0
         version: 6.2.0
+      yaml:
+        specifier: ^2.2.1
+        version: 2.2.1
       yasdk-openapi:
         specifier: workspace:*
         version: link:../yasdk-openapi
@@ -90,14 +93,14 @@ importers:
         specifier: ~1.3.0
         version: 1.3.0
       '@opvious/stl-errors':
-        specifier: ^0.17.22
-        version: 0.17.22
+        specifier: ^0.17.23
+        version: 0.17.23
       '@opvious/stl-telemetry':
-        specifier: ^0.17.22
-        version: 0.17.22(@opentelemetry/api@1.3.0)
+        specifier: ^0.17.23
+        version: 0.17.23(@opentelemetry/api@1.3.0)
       '@opvious/stl-utils':
-        specifier: ^0.17.22
-        version: 0.17.22
+        specifier: ^0.17.23
+        version: 0.17.23
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -160,11 +163,11 @@ importers:
   packages/yasdk-openapi:
     dependencies:
       '@opvious/stl-errors':
-        specifier: ^0.17.22
-        version: 0.17.22
+        specifier: ^0.17.23
+        version: 0.17.23
       '@opvious/stl-utils':
-        specifier: ^0.17.22
-        version: 0.17.22
+        specifier: ^0.17.23
+        version: 0.17.23
       '@stoplight/json-ref-resolver':
         specifier: ^3.1.5
         version: 3.1.5
@@ -193,6 +196,9 @@ importers:
       '@types/urijs':
         specifier: ^1.19.19
         version: 1.19.19
+      ts-essentials:
+        specifier: ^9.3.0
+        version: 9.3.0(typescript@4.9.5)
 
   packages/yasdk-runtime: {}
 
@@ -534,21 +540,21 @@ packages:
       upper-case-first: 2.0.2
     dev: true
 
-  /@opvious/stl-errors@0.17.22:
-    resolution: {integrity: sha512-yKZT5LeEPyU8B8ATCNISEXPopxwA5f+0rqZcHeemQvfr5R73DtCF+6Hq4ReR4552vgZFIEP7W8Vs6pFeYXMTkQ==, tarball: https://npm.pkg.github.com/download/@opvious/stl-errors/0.17.22/1ed329759679662dd30ca5ec59a980af493a0858}
+  /@opvious/stl-errors@0.17.23:
+    resolution: {integrity: sha512-1UrVSsTawDy9YmgteGqtckb8hxQhaOb0CFw5yX3ecPdqHEbw7j/KqTgN0PM81gGudVOVc0gdD4ctJiBScHIRFA==, tarball: https://npm.pkg.github.com/download/@opvious/stl-errors/0.17.23/ea44a38f9530acacbb5e6c44d6d8781d254792a3}
     dependencies:
       change-case: 4.1.2
       upper-case-first: 2.0.2
     dev: false
 
-  /@opvious/stl-telemetry@0.17.22(@opentelemetry/api@1.3.0):
-    resolution: {integrity: sha512-b2Bfv7s4rFjVAXQVNG80kBCODuojQMB72SE/lm9s+JmWl2/kh1C3N3wioZWnQe9QucvvtZPP0kdcp7wmTvtGCQ==, tarball: https://npm.pkg.github.com/download/@opvious/stl-telemetry/0.17.22/eb766825d766bab8eff068739e3a397deb2bb2d0}
+  /@opvious/stl-telemetry@0.17.23(@opentelemetry/api@1.3.0):
+    resolution: {integrity: sha512-iW9x1WQW1DfCmhjGVNDyZB0tKpV8S270XLOqVCV/kLtcL9U3botWu8nbUh6TBnaTm+HWuhnEA4MlK6BjlvzvZw==, tarball: https://npm.pkg.github.com/download/@opvious/stl-telemetry/0.17.23/e052462acabfaa8b32dbe24ac119747d7aaaba9c}
     peerDependencies:
       '@opentelemetry/api': ~1.3.0
     dependencies:
       '@opentelemetry/api': 1.3.0
-      '@opvious/stl-errors': 0.17.22
-      '@opvious/stl-utils': 0.17.22
+      '@opvious/stl-errors': 0.17.23
+      '@opvious/stl-utils': 0.17.23
       pino: 8.11.0
       pino-std-serializers: 6.2.0
     dev: false
@@ -564,10 +570,10 @@ packages:
       upper-case-first: 2.0.2
     dev: true
 
-  /@opvious/stl-utils@0.17.22:
-    resolution: {integrity: sha512-0bjGDaQUALIHi1otJygkzLZ9ekW9lebqg7rM3ewkwyFzc2F/A01MESlv8fTVciEVPsk3S3IIbSf2hjg89SX8WA==, tarball: https://npm.pkg.github.com/download/@opvious/stl-utils/0.17.22/67f599a78a6e52c590d71e2ea4e76b85fbb30732}
+  /@opvious/stl-utils@0.17.23:
+    resolution: {integrity: sha512-J+JbgKOFWv8+GZJ52LSzgqmXmgcqyiu1utW7hj0m5ZeQfas2OHJ0+q7PgcxWxWjmlz1c4phQaNabyrkU7LOKiA==, tarball: https://npm.pkg.github.com/download/@opvious/stl-utils/0.17.23/1ab97d0e64a943a299502a985c5253ff219f2c0f}
     dependencies:
-      '@opvious/stl-errors': 0.17.22
+      '@opvious/stl-errors': 0.17.23
       change-case: 4.1.2
       fast-deep-equal: 3.1.3
       picomatch: 2.3.1
