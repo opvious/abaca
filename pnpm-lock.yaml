@@ -74,6 +74,9 @@ importers:
       '@types/koa__router':
         specifier: ^8.0.11
         version: 8.0.11
+      inlinable:
+        specifier: ^0.1.11
+        version: 0.1.11
       koa:
         specifier: ^2.13.1
         version: 2.14.1

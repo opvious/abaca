@@ -1,5 +1,6 @@
 import {Command} from 'commander';
 
+import {packageInfo} from './common.js';
 import {generateCommand} from './generate.js';
 import {resolveCommand} from './resolve.js';
 
@@ -10,5 +11,6 @@ export function mainCommand(): Command {
     .name(COMMAND_NAME)
     .description('YASDK CLI')
     .addCommand(generateCommand())
-    .addCommand(resolveCommand());
+    .addCommand(resolveCommand())
+    .version('' + packageInfo.version);
 }

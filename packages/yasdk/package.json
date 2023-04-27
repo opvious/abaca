@@ -1,6 +1,6 @@
 {
   "name": "yasdk",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": "github:mtth/yasdk",
   "description": "Yet another TypesScript SDK generator",
   "keywords": [
@@ -11,6 +11,7 @@
   "type": "module",
   "files": [
     "bin/",
+    "lib/command/",
     "lib/index.d.ts",
     "lib/index.js",
     "resources/preamble/index.gen.ts"
@@ -25,7 +26,7 @@
     "gen-test-pets": "./bin/yasdk.js g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-tables": "./bin/yasdk.js g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
-    "prepare": "pnpm run gen-preamble && pnpm run build",
+    "prepare": "pnpm run gen-preamble && pnpm run build && inlinable replace",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
   },
@@ -42,6 +43,7 @@
     "@koa/router": "^10.1.1",
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
+    "inlinable": "^0.1.11",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
     "node-fetch": "^3.3.1"
