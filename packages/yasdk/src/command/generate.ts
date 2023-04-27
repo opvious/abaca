@@ -2,9 +2,10 @@ import {assert} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
 import {commaSeparated} from '@opvious/stl-utils/strings';
 import {Command} from 'commander';
-import {mkdir, readFile, writeFile} from 'fs/promises';
+import { readFile} from 'fs/promises';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import path from 'path';
+import YAML from 'YAML';
 import {
   extractOperationDefinitions,
   loadOpenapiDocument,
@@ -12,7 +13,7 @@ import {
 } from 'yasdk-openapi';
 import {JSON_SEQ_MIME_TYPE} from 'yasdk-runtime';
 
-import {supportedVersions} from './common.js';
+import {supportedVersions, writeOutput} from './common.js';
 
 const preambleUrl = new URL(
   '../../resources/preamble/index.gen.ts',
@@ -26,16 +27,20 @@ export function generateCommand(): Command {
     .description('Generate typed OpenAPI SDK')
     .argument('<path>', 'path to OpenAPI document (v3.0 or v3.1)')
     .option('-o, --output <path>', 'output file path (default: stdin)')
-    .option('-r, --root <path>', 'loader root path (default: CWD)')
     .option(
-      '--streaming-content-types <types>',
+      '-d, --document-output <path>',
+      'also output consolidated document at the given path'
+    )
+    .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
+    .option(
+      '-t, --streaming-content-types <types>',
       'comma-separated list of content-types which contain streamed data',
       JSON_SEQ_MIME_TYPE
     )
     .action(async (pp, opts) => {
       const doc = await loadOpenapiDocument({
         path: path.resolve(pp),
-        loader: ResourceLoader.create({root: opts.root}),
+        loader: ResourceLoader.create({root: opts.loaderRoot}),
         versions: supportedVersions,
       });
 
@@ -54,9 +59,11 @@ export function generateCommand(): Command {
           .replace(/export /g, ''),
         valuesStr,
       ].join('\n');
+      if (opts.documentOutput) {
+        await writeOutput(opts.documentOutput, YAML.stringify(doc));
+      }
       if (opts.output) {
-        await mkdir(path.dirname(opts.output), {recursive: true});
-        await writeFile(opts.output, out, 'utf8');
+        await writeOutput(opts.output, out);
       } else {
         console.log(out);
       }
