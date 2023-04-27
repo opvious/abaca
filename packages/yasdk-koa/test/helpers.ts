@@ -3,11 +3,7 @@ import {ResourceLoader} from '@opvious/stl-utils/files';
 import events from 'events';
 import http from 'http';
 import Koa from 'koa';
-import {
-  assertIsOpenapiDocument,
-  loadResolvableResource,
-  OpenapiDocument,
-} from 'yasdk-openapi';
+import {loadOpenapiDocument, OpenapiDocument} from 'yasdk-openapi';
 
 export async function startApp(app: Koa<any, any>): Promise<http.Server> {
   const server = http.createServer(app.callback());
@@ -26,10 +22,6 @@ export function serverAddress(server: http.Server): string {
 
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
 
-export async function loadResourceDocument(
-  name: string
-): Promise<OpenapiDocument> {
-  const {resolved} = await loadResolvableResource(name, {loader});
-  assertIsOpenapiDocument(resolved);
-  return resolved;
+export function loadResourceDocument(name: string): Promise<OpenapiDocument> {
+  return loadOpenapiDocument({path: name, loader});
 }

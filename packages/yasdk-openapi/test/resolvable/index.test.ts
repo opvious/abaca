@@ -48,7 +48,7 @@ describe.each<[string, string, unknown]>([
   });
 
   test('loads resolvable resource', async () => {
-    expect(loaded.resolved).toEqual(want);
+    expect(loaded.resolved.toJS()).toEqual(want);
   });
 
   test('combines resolvables', () => {

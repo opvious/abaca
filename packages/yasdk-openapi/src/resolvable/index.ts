@@ -9,12 +9,13 @@ import YAML from 'yaml';
 import {errors} from './index.errors.js';
 
 /** Loads and fully resolves a schema. Only `resource:` refs are supported. */
-export async function loadResolvableResource<V = unknown>(
+export async function loadResolvableResource(
   pp: PosixPath,
   opts?: {
     readonly loader?: ResourceLoader;
+    readonly stripDollarKeys?: boolean;
   }
-): Promise<LoadedResolvableResource<V>> {
+): Promise<LoadedResolvableResource> {
   const loader = opts?.loader ?? ResourceLoader.create({root: process.cwd()});
 
   const {url: rootUrl, contents} = await loader.load(pp);
@@ -73,13 +74,22 @@ export async function loadResolvableResource<V = unknown>(
   if (resolved.errors.length) {
     throw errors.unresolvableResource(rootUrl, resolved.errors);
   }
-  return {resolved: resolved.result, resolvables};
+  const doc = new YAML.Document(resolved.result);
+  if (opts?.stripDollarKeys) {
+    YAML.visit(doc.contents, {
+      Pair: (_, pair) => {
+        const key = (pair.key as any)?.value;
+        return key.startsWith('$') ? YAML.visit.REMOVE : undefined;
+      },
+    });
+  }
+  return {resolved: doc, resolvables};
 }
 
 /** A resolved resource which may contain references to other resources. */
-export interface LoadedResolvableResource<V = unknown> {
+export interface LoadedResolvableResource {
   /** The assembled and fully resolved root value. */
-  readonly resolved: V;
+  readonly resolved: YAML.Document;
 
   /**
    * All resources which were referenced (directly or indirectly) by the root
