@@ -89,9 +89,13 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
   readonly versions?: ReadonlyArray<V>;
 }): Promise<OpenapiDocuments[V]> {
   const pp = opts?.path ?? OPENAPI_DOCUMENT_FILE;
-  const {resolved} = await loadResolvableResource(pp, {loader: opts?.loader});
-  assertIsOpenapiDocument(resolved, {versions: opts?.versions});
-  return resolved;
+  const {resolved} = await loadResolvableResource(pp, {
+    loader: opts?.loader,
+    stripDollarKeys: true,
+  });
+  const doc = resolved.toJS();
+  assertIsOpenapiDocument(doc, {versions: opts?.versions});
+  return doc;
 }
 
 /**

@@ -1,8 +1,7 @@
 import {fail} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
 
-import {assertIsOpenapiDocument} from '../src/parse.js';
-import {loadResolvableResource} from '../src/resolvable/index.js';
+import {loadOpenapiDocument} from '../src/parse.js';
 import * as sut from '../src/validate.js';
 
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
@@ -18,11 +17,8 @@ describe('schema enforcer', () => {
   let enforcer: sut.SchemaEnforcer<Schemas>;
 
   beforeAll(async () => {
-    const {resolved} = await loadResolvableResource('pets.openapi.yaml', {
-      loader,
-    });
-    assertIsOpenapiDocument(resolved);
-    enforcer = sut.schemaEnforcer(resolved);
+    const doc = await loadOpenapiDocument({path: 'pets.openapi.yaml', loader});
+    enforcer = sut.schemaEnforcer(doc);
   });
 
   test('predicate', () => {
