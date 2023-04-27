@@ -2,10 +2,10 @@ import {assert} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
 import {commaSeparated} from '@opvious/stl-utils/strings';
 import {Command} from 'commander';
-import { readFile} from 'fs/promises';
+import {readFile} from 'fs/promises';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import path from 'path';
-import YAML from 'YAML';
+import YAML from 'yaml';
 import {
   extractOperationDefinitions,
   loadOpenapiDocument,

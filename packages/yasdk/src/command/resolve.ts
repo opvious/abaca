@@ -19,10 +19,11 @@ export function resolveCommand(): Command {
       const {resolved} = await loadResolvableResource(path.resolve(pp), {
         loader: ResourceLoader.create({root: opts.loaderRoot}),
       });
+      const doc = resolved.toJS();
       if (!opts.skipValidation) {
-        assertIsOpenapiDocument(resolved, {versions: supportedVersions});
+        assertIsOpenapiDocument(doc, {versions: supportedVersions});
       }
-      const out = YAML.stringify(resolved);
+      const out = YAML.stringify(doc);
       if (opts.output) {
         await writeOutput(opts.output, out);
       } else {
