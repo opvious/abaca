@@ -11,8 +11,8 @@ export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
 
 /**
  * Loads a fully-resolved OpenAPI specification. Top-level references can use
- * the `embed=schemas` search parameter to have all `$defs` in the referenced
- * resource embedded as schemas. All keys starting with `$` are also stripped.
+ * the `embed=*` search parameter to have all `$defs` in the referenced resource
+ * embedded as schemas. All keys starting with `$` are also stripped.
  */
 export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
   readonly path?: PosixPath;
@@ -41,7 +41,6 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
           case QueryKey.EMBED: {
             assert(!r.parents.length, 'Nested embedding: %s', r.url);
             assert(doc.get('$defs'), 'No definitions to embed in %s', r.url);
-            assert(val === 'schemas', 'Unsupported embedding value: %s', val);
             embeddings.set(id, val);
             break;
           }
@@ -69,7 +68,7 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
       if (embedding) {
         const node = path[path.length - 1];
         assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
-        embedder.embed(node, embedding);
+        embedder.embedSchemas(node, embedding);
       }
     },
   });
@@ -91,20 +90,34 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
 class Embedder {
   constructor(private readonly document: YAML.Document) {}
 
-  embed(src: YAML.YAMLMap, key: string): void {
+  embedSchemas(src: YAML.YAMLMap, filter: string): void {
     const doc = this.document;
     const defs = src.get('$defs');
     assert(YAML.isMap(defs), 'Unexpected definitions: %j', defs);
+
+    const pred = embeddingPredicate(filter);
     for (const pair of defs.items) {
       const name = (pair.key as any)?.value;
       assert(typeof name, 'Unexpected embedded definition name in %j', pair);
+      if (!pred(name)) {
+        continue;
+      }
+
       const def = pair.value;
       assert(YAML.isAlias(def), 'Unexpected embedded definition: %j', def);
-      const dst = ['components', key, name];
+      const dst = ['components', 'schemas', name];
       assert(!doc.hasIn(dst), 'Embedding name collision: %j', pair);
       doc.setIn(dst, def);
     }
   }
+}
+
+function embeddingPredicate(filter: string): (name: string) => boolean {
+  if (filter === '*') {
+    return (n) => !n.startsWith('_');
+  }
+  const names = new Set(filter.split(','));
+  return (n) => names.has(n);
 }
 
 enum QueryKey {

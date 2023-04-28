@@ -19,7 +19,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: resource://embedded/schemas/table.yaml?embed=schemas
+                $ref: resource://embedded/schemas/table.yaml?embed=*
             text/csv:
               schema:
                 type: string
