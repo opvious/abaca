@@ -351,8 +351,10 @@ export type RequestParametersFor<O extends OperationType> = Lookup<
   Lookup<O['parameters'], 'query', {}> &
   Lookup<O['parameters'], 'headers', {}>;
 
+type Iterated<V> = V extends AsyncIterable<infer I> ? I : V;
+
 export type ResponseDataFor<
   O extends OperationType,
   C extends keyof O['responses'],
   M extends MimeType = typeof JSON_MIME_TYPE
-> = Get<Lookup<O['responses'][C], 'content'>, M>;
+> = Iterated<Get<Lookup<O['responses'][C], 'content'>, M>>;
