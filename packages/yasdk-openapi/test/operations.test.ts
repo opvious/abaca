@@ -1,44 +1,9 @@
-import {fail} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
 import YAML from 'yaml';
 
-import * as sut from '../src/parse.js';
+import * as sut from '../src/operations.js';
 
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
-
-describe('load OpenAPI document', () => {
-  describe('valid', () => {
-    test.each([
-      'pets.openapi.yaml',
-      'petstore.openapi.json',
-      'tables.openapi.yaml',
-    ])('%s', async (name) => {
-      await sut.loadOpenapiDocument({path: name, loader});
-    });
-  });
-
-  test('unexpected version', async () => {
-    try {
-      await sut.loadOpenapiDocument({
-        path: 'pets.openapi.yaml',
-        loader,
-        versions: ['2.0'],
-      });
-      fail();
-    } catch (err) {
-      expect(err).toMatchObject({code: sut.errorCodes.UnexpectedVersion});
-    }
-  });
-
-  test('invalid document', async () => {
-    try {
-      await sut.loadOpenapiDocument({path: 'invalid.openapi.yaml', loader});
-      fail();
-    } catch (err) {
-      expect(err).toMatchObject({code: sut.errorCodes.InvalidSchema});
-    }
-  });
-});
 
 describe('extract operation definitions', () => {
   test('null hook', async () => {

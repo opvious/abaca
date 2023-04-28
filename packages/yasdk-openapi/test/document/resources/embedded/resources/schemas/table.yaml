@@ -1,0 +1,15 @@
+$id: resource://embedded/schemas/table.yaml
+type: object
+required: [rows]
+properties:
+  header:
+    $ref: "#/$defs/Row"
+  rows:
+    type: array
+    items:
+      $ref: "#/$defs/Row"
+$defs:
+  Row:
+    type: array
+    items:
+      type: string

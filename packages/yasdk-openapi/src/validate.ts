@@ -7,7 +7,7 @@ import {
 } from '@opvious/stl-errors';
 import {default as ajv, ErrorObject, ValidateFunction} from 'ajv';
 
-import {OpenapiDocument} from './common.js';
+import {OpenapiDocument} from './document/index.js';
 
 type Ajv = ajv.default;
 const Ajv = ajv.default ?? ajv;

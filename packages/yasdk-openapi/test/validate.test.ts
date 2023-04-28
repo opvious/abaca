@@ -1,7 +1,7 @@
 import {fail} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
 
-import {loadOpenapiDocument} from '../src/parse.js';
+import {loadOpenapiDocument} from '../src/document/index.js';
 import * as sut from '../src/validate.js';
 
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');

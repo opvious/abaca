@@ -16,14 +16,13 @@ export function resolveCommand(): Command {
     .option('-s, --skip-validation', 'skip schema validation')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .action(async (pp, opts) => {
-      const {resolved} = await loadResolvableResource(path.resolve(pp), {
+      const resolved = await loadResolvableResource(path.resolve(pp), {
         loader: ResourceLoader.create({root: opts.loaderRoot}),
       });
-      const doc = resolved.toJS();
       if (!opts.skipValidation) {
-        assertIsOpenapiDocument(doc, {versions: supportedVersions});
+        assertIsOpenapiDocument(resolved, {versions: supportedVersions});
       }
-      const out = YAML.stringify(doc);
+      const out = YAML.stringify(resolved);
       if (opts.output) {
         await writeOutput(opts.output, out);
       } else {
