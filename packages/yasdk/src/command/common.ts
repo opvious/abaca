@@ -1,4 +1,4 @@
-import {FilePath} from '@opvious/stl-utils/files';
+import {LocalPath} from '@opvious/stl-utils/files';
 import {mkdir, writeFile} from 'fs/promises';
 import __inlinable from 'inlinable';
 import path from 'path';
@@ -10,7 +10,7 @@ export const packageInfo = __inlinable((ctx) =>
 export const supportedVersions = ['3.0', '3.1'] as const;
 
 /** Writes output to path, creating parent folders as necessary. */
-export async function writeOutput(fp: FilePath, str: string): Promise<void> {
-  await mkdir(path.dirname(fp), {recursive: true});
-  await writeFile(fp, str, 'utf8');
+export async function writeOutput(lp: LocalPath, str: string): Promise<void> {
+  await mkdir(path.dirname(lp), {recursive: true});
+  await writeFile(lp, str, 'utf8');
 }
