@@ -1,14 +1,14 @@
 import {errorFactories, errorMessage} from '@opvious/stl-errors';
-import {FileUrl} from '@opvious/stl-utils/files';
+import {LocalUrl} from '@opvious/stl-utils/files';
 
 export const [errors, codes] = errorFactories({
   definitions: {
-    missingResolvableId: (url: FileUrl) => ({
+    missingResolvableId: (url: LocalUrl) => ({
       message: `Resource ${url} references another but does not have an ID`,
       tags: {url},
     }),
     unresolvableResource: (
-      url: FileUrl,
+      url: LocalUrl,
       issues: ReadonlyArray<ResolutionIssue>
     ) => ({
       message:

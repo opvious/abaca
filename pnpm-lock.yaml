@@ -44,11 +44,11 @@ importers:
   packages/yasdk:
     dependencies:
       '@opvious/stl-errors':
-        specifier: ^0.17.24
-        version: 0.17.24
+        specifier: ^0.17.27
+        version: 0.17.27
       '@opvious/stl-utils':
-        specifier: ^0.17.24
-        version: 0.17.24
+        specifier: ^0.17.27
+        version: 0.17.27
       commander:
         specifier: ^10.0.0
         version: 10.0.0
@@ -96,14 +96,14 @@ importers:
         specifier: ~1.3.0
         version: 1.3.0
       '@opvious/stl-errors':
-        specifier: ^0.17.24
-        version: 0.17.24
+        specifier: ^0.17.27
+        version: 0.17.27
       '@opvious/stl-telemetry':
-        specifier: ^0.17.24
-        version: 0.17.24(@opentelemetry/api@1.3.0)
+        specifier: ^0.17.27
+        version: 0.17.27(@opentelemetry/api@1.3.0)
       '@opvious/stl-utils':
-        specifier: ^0.17.24
-        version: 0.17.24
+        specifier: ^0.17.27
+        version: 0.17.27
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -166,11 +166,11 @@ importers:
   packages/yasdk-openapi:
     dependencies:
       '@opvious/stl-errors':
-        specifier: ^0.17.24
-        version: 0.17.24
+        specifier: ^0.17.27
+        version: 0.17.27
       '@opvious/stl-utils':
-        specifier: ^0.17.24
-        version: 0.17.24
+        specifier: ^0.17.27
+        version: 0.17.27
       '@stoplight/json-ref-resolver':
         specifier: ^3.1.5
         version: 3.1.5
@@ -198,7 +198,7 @@ importers:
         version: 1.19.19
       ts-essentials:
         specifier: ^9.3.0
-        version: 9.3.0(typescript@4.9.5)
+        version: 9.3.0(typescript@5.0.4)
 
   packages/yasdk-runtime: {}
 
@@ -540,21 +540,21 @@ packages:
       upper-case-first: 2.0.2
     dev: true
 
-  /@opvious/stl-errors@0.17.24:
-    resolution: {integrity: sha512-Tdj+oS8mtrmne82mxOSX+K4cUJBVe59EWCGG4sE01mcfXnEyipIDl4rcYX7FKbICqKcE3c98ZQ336MoNHDsUUw==, tarball: https://npm.pkg.github.com/download/@opvious/stl-errors/0.17.24/ef5bd0d9dd09cc7643ba5e87503e46fc447a1485}
+  /@opvious/stl-errors@0.17.27:
+    resolution: {integrity: sha512-gvgbkCEU3+H9IIYU50ns1jIwzRojH0gJ7LGxBGnFW9+sENv7ZbH3RU8i3vcP4/eakdGufpM4Te1URYJx/tKhMA==, tarball: https://npm.pkg.github.com/download/@opvious/stl-errors/0.17.27/d11202d90985d680808365fad251860f388f94a6}
     dependencies:
       change-case: 4.1.2
       upper-case-first: 2.0.2
     dev: false
 
-  /@opvious/stl-telemetry@0.17.24(@opentelemetry/api@1.3.0):
-    resolution: {integrity: sha512-1ilOA5ycmIItoEj+RVYpD8x/bIWSKz/YGC9ldD9YJbYxMsRYphUO9Cz9KP/a2184Vz9f2KIbQTPh1ZGLHgIh1g==, tarball: https://npm.pkg.github.com/download/@opvious/stl-telemetry/0.17.24/756b76b8f19d790268ea3cebba6fbd5a1a935091}
+  /@opvious/stl-telemetry@0.17.27(@opentelemetry/api@1.3.0):
+    resolution: {integrity: sha512-8buW04cZqUNeFviWavKgwwDRbgBKddVZ4nhkNLvJr1QAL89fb6pg2gaIa+mCndwcIQkuXKdT87ZRAkol13XlOg==, tarball: https://npm.pkg.github.com/download/@opvious/stl-telemetry/0.17.27/cdf3160a7af17e36170f146af857608c9d08c8d0}
     peerDependencies:
       '@opentelemetry/api': ~1.3.0
     dependencies:
       '@opentelemetry/api': 1.3.0
-      '@opvious/stl-errors': 0.17.24
-      '@opvious/stl-utils': 0.17.24
+      '@opvious/stl-errors': 0.17.27
+      '@opvious/stl-utils': 0.17.27
       pino: 8.11.0
       pino-std-serializers: 6.2.0
     dev: false
@@ -570,10 +570,10 @@ packages:
       upper-case-first: 2.0.2
     dev: true
 
-  /@opvious/stl-utils@0.17.24:
-    resolution: {integrity: sha512-brSDaxP/HlIiKaEsQVhbTiIVoHdDcKMwN5FcH+vT9IvBtK6wTbt1BHnUmeNJJ1+msYD0hUdrDgaOI3i7gvycXw==, tarball: https://npm.pkg.github.com/download/@opvious/stl-utils/0.17.24/bf71460a2d12772cff630edbb997a1638bc1561b}
+  /@opvious/stl-utils@0.17.27:
+    resolution: {integrity: sha512-cid7e9391A0eok+i1/hjidfwdh/VNbq+UU53NS/b+fw76C9Ax2w+wA31vQDOC29A8ZQSeqg4TIIlh0Xwu1NSfQ==, tarball: https://npm.pkg.github.com/download/@opvious/stl-utils/0.17.27/d3c1469e5bad395474e9f3d698f90cc5bc24655c}
     dependencies:
-      '@opvious/stl-errors': 0.17.24
+      '@opvious/stl-errors': 0.17.27
       change-case: 4.1.2
       fast-deep-equal: 3.1.3
       inlinable-runtime: 0.1.11
@@ -3373,6 +3373,14 @@ packages:
       typescript: 4.9.5
     dev: true
 
+  /ts-essentials@9.3.0(typescript@5.0.4):
+    resolution: {integrity: sha512-XeiCboEyBG8UqXZtXl59bWEi4ZgOqRsogFDI6WDGIF1LmzbYiAkIwjkXN6zZWWl4re/lsOqMlYfe8KA0XiiEPw==}
+    peerDependencies:
+      typescript: '>=4.1.0'
+    dependencies:
+      typescript: 5.0.4
+    dev: true
+
   /tslib@1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
     dev: true
@@ -3427,6 +3435,12 @@ packages:
   /typescript@4.9.5:
     resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
     engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: true
+
+  /typescript@5.0.4:
+    resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
+    engines: {node: '>=12.20'}
     hasBin: true
     dev: true
 

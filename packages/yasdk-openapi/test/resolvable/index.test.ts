@@ -1,10 +1,10 @@
-import {filePath, ResourceLoader} from '@opvious/stl-utils/files';
+import {localPath, ResourceLoader} from '@opvious/stl-utils/files';
 import path from 'path';
 
 import * as sut from '../../src/resolvable/index.js';
 
 const loader = ResourceLoader.create({
-  root: path.dirname(filePath(import.meta.url)),
+  root: path.dirname(localPath(import.meta.url)),
   dependenciesFolder: 'deps',
   resourcesFolder: 'data',
 });
