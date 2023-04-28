@@ -45,10 +45,9 @@ export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
 
 /**
  * Loads a fully-resolved OpenAPI specification. Top-level references can use
- * the `embed=*` search parameter to call all `$defs` in the referenced resource
- * to be embedded as schemas.
- *
- * All keys starting with `$` are stripped.
+ * the `embed=schemas` search parameter to call all `$defs` in the referenced
+ * resource to be embedded as schemas. All keys starting with `$` are also
+ * stripped.
  */
 export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
   readonly path?: PosixPath;
@@ -61,20 +60,22 @@ export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
   const embeddings = new Map<string, string>();
   const resolved = await loadResolvableResource(pp, {
     loader: opts?.loader,
-    onResolvedResource: (r) => {
+    onResolvedReference: (r) => {
       const doc = r.document;
 
+      // Generate a unique ID for this reference so we can locate it later.
       const url = new URL(r.url);
       url.search = '';
       url.searchParams.set(QueryKey.REFNO, '' + refno++);
       const id = '' + url;
+      doc.set('$id', id);
 
+      // Apply any parameters.
       for (const [key, val] of r.url.searchParams) {
         switch (key) {
           case QueryKey.EMBED: {
             assert(!r.parents.length, 'Nested embedding: %s', r.url);
             assert(doc.get('$defs'), 'No definitions to embed in %s', r.url);
-            doc.set('$id', id);
             assert(val === 'schemas', 'Unsupported embedding value: %s', val);
             embeddings.set(id, val);
             break;
@@ -142,6 +143,9 @@ class Embedder {
 }
 
 enum QueryKey {
+  /** Flag a reference for embedding. */
   EMBED = 'embed',
-  REFNO = '_refno',
+
+  /** Special internal value used make references unique. */
+  REFNO = '_',
 }

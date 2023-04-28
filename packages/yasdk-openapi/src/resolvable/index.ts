@@ -15,7 +15,7 @@ export async function loadResolvableResource<V = unknown>(
     readonly loader?: ResourceLoader;
 
     /** Optional function called each time a referenced resource is resolved. */
-    readonly onResolvedResource?: (r: ResolvedResource) => void;
+    readonly onResolvedReference?: (r: ResolvedResource) => void;
   }
 ): Promise<V> {
   const loader = opts?.loader ?? ResourceLoader.create({root: process.cwd()});
@@ -78,7 +78,7 @@ export async function loadResolvableResource<V = unknown>(
       const n = +check.isNumeric(target.searchParams.get(QueryKey.SEQNO));
       const ru = refUrls.get(n);
       assert(ru, 'Missing resource URL');
-      opts?.onResolvedResource?.({url: ru, document: doc, parents});
+      opts?.onResolvedReference?.({url: ru, document: doc, parents});
       refUrls.delete(n);
 
       return {result: doc.toJS()};
