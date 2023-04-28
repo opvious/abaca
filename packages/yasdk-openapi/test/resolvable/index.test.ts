@@ -17,9 +17,30 @@ describe.each<[string, string, unknown]>([
       $id: 'resource://root-package/root.yaml',
       components: {
         schemas: {
-          Neighbor: {type: 'object', properties: {child: {type: 'number'}}},
-          Child1: {type: 'number'},
-          Child2: {type: 'object', properties: {nested: {type: 'string'}}},
+          Neighbor: {
+            $id: 'resource://root-package/neighbor.yaml',
+            type: 'object',
+            properties: {
+              child: {
+                $id: 'resource://child1/schema.yaml',
+                type: 'number',
+              },
+            },
+          },
+          Child1: {
+            $id: 'resource://child1/schema.yaml',
+            type: 'number',
+          },
+          Child2: {
+            $id: 'resource://child2/schema.yaml',
+            type: 'object',
+            properties: {
+              nested: {
+                $id: 'resource://child1/schema.yaml',
+                type: 'string',
+              },
+            },
+          },
         },
       },
     },
@@ -39,19 +60,10 @@ describe.each<[string, string, unknown]>([
   ],
   ['simple', 'openapi.yaml', {openapi: '3.0.0', paths: {}}],
 ])('%s', (folder, root, want) => {
-  let loaded: sut.LoadedResolvableResource;
-
-  beforeAll(async () => {
-    loaded = await sut.loadResolvableResource(root, {
+  test('loads resolvable resource', async () => {
+    const got = await sut.loadResolvableResource(root, {
       loader: loader.scoped('resources/' + folder),
     });
-  });
-
-  test('loads resolvable resource', async () => {
-    expect(loaded.resolved.toJS()).toEqual(want);
-  });
-
-  test('combines resolvables', () => {
-    expect(sut.combineResolvables(loaded.resolvables)).toEqual(want);
+    expect(got).toEqual(want);
   });
 });

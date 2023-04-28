@@ -1,0 +1,28 @@
+$id: resource://embedded/openapi.yaml
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: Data tables service
+paths:
+  /tables/{id}:
+    get:
+      operationId: getTable
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A matching table was found
+          content:
+            application/json:
+              schema:
+                $ref: resource://embedded/schemas/table.yaml?embed=schemas
+            text/csv:
+              schema:
+                type: string
+        '404':
+          description: Table not found
+components: {}
