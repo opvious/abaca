@@ -23,13 +23,27 @@ describe.each<[string, string, unknown]>([
             properties: {
               child: {
                 $id: 'resource://child1/schema.yaml',
-                type: 'number',
+                type: 'object',
+                required: [],
+                properties: {
+                  other: {
+                    $id: 'resource://child1/other.yaml',
+                    type: 'number',
+                  },
+                },
               },
             },
           },
           Child1: {
             $id: 'resource://child1/schema.yaml',
-            type: 'number',
+            type: 'object',
+            required: [],
+            properties: {
+              other: {
+                $id: 'resource://child1/other.yaml',
+                type: 'number',
+              },
+            },
           },
           Child2: {
             $id: 'resource://child2/schema.yaml',

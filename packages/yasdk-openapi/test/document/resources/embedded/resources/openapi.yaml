@@ -25,4 +25,3 @@ paths:
                 type: string
         '404':
           description: Table not found
-components: {}

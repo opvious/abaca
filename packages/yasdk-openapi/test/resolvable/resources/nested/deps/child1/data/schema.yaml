@@ -1,2 +1,6 @@
 $id: resource://child1/schema.yaml
-type: number
+type: object
+required: []
+properties:
+  other:
+    $ref: other.yaml

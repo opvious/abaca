@@ -42,19 +42,24 @@ export async function loadResolvableResource<V = unknown>(
     transformRef: (p) => {
       const {ref, uri} = p;
       const base = resourceUrl(uri);
+      const parents = base?.searchParams.getAll(QueryKey.PARENT) ?? [];
+      if (base) {
+        base.search = '';
+      }
+
       const target = ifPresent(ref, (r) => resourceUrl(r, base));
       if (target == null) {
         return ref;
       }
-      assert(base, 'Unexpected base URI:', uri);
+      assert(base, 'Unexpected or missing base URI:', uri);
 
       const n = seqno++;
       refUrls.set(n, new URL(target));
       target.search = '';
       target.searchParams.set(QueryKey.SEQNO, '' + n);
 
-      for (const dep of base.searchParams.getAll(QueryKey.PARENT)) {
-        target.searchParams.append(QueryKey.PARENT, dep);
+      for (const p of parents) {
+        target.searchParams.append(QueryKey.PARENT, p);
       }
       const name = packageName(target);
       if (name !== packageName(base)) {
@@ -65,7 +70,7 @@ export async function loadResolvableResource<V = unknown>(
     parseResolveResult: async (p) => {
       assert(p.result === resourceSymbol, 'Unexpected resolution: %j', p);
       const target = resourceUrl(p.targetAuthority);
-      assert(target, 'Unexpected target URI:', target);
+      assert(target, 'Unexpected target URI:', p.targetAuthority);
 
       let scoped = loader;
       const parents = target.searchParams.getAll(QueryKey.PARENT);
@@ -132,9 +137,14 @@ function parseReferenceContents(
 const resourceSymbol = Symbol('resolvableResource');
 
 function resourceUrl(u: unknown, base?: ResourceUrl): ResourceUrl | undefined {
+  assert(!base?.search && !base?.hash, 'Unexpected base: %s', base);
+  const s = '' + u; // Convert URI to string
+  if (s.startsWith('#')) {
+    return undefined; // Use default local pointer logic
+  }
   let ret;
   try {
-    ret = new URL('' + u);
+    ret = new URL(s, base);
   } catch (_err) {
     return undefined;
   }
