@@ -2,7 +2,7 @@ $id: resource://root-package/root.yaml
 components:
   schemas:
     Neighbor:
-      $ref: resource://root-package/neighbor.yaml
+      $ref: resource:///neighbor.yaml
     Child1:
       $ref: resource://child1/schema.yaml
     Child2:

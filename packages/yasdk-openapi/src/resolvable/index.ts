@@ -41,11 +41,11 @@ export async function loadResolvableResource<V = unknown>(
     },
     transformRef: (p) => {
       const {ref, uri} = p;
-      const target = ifPresent(ref, resourceUrl);
+      const base = resourceUrl(uri);
+      const target = ifPresent(ref, (r) => resourceUrl(r, base));
       if (target == null) {
         return ref;
       }
-      const base = resourceUrl(uri);
       assert(base, 'Unexpected base URI:', uri);
 
       const n = seqno++;
@@ -131,14 +131,21 @@ function parseReferenceContents(
 // Sentinel used to detect resource references
 const resourceSymbol = Symbol('resolvableResource');
 
-function resourceUrl(u: unknown): ResourceUrl | undefined {
+function resourceUrl(u: unknown, base?: ResourceUrl): ResourceUrl | undefined {
   let ret;
   try {
     ret = new URL('' + u);
   } catch (_err) {
     return undefined;
   }
-  return ret.protocol === RESOURCE_PROTOCOL ? ret : undefined;
+  if (ret.protocol !== RESOURCE_PROTOCOL) {
+    return undefined;
+  }
+  if (!ret.hostname && base) {
+    ret.hostname = base.hostname;
+    ret.username = base.username;
+  }
+  return ret;
 }
 
 function packageName(ru: ResourceUrl): string {
