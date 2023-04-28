@@ -11,8 +11,8 @@ export {
   assertValue,
   InvalidValueError,
   invalidValueError,
+  openapiSchemaEnforcer,
   SchemaEnforcer,
-  schemaEnforcer,
   ValidationPredicate,
   ValidatorsFor,
 } from './validate.js';

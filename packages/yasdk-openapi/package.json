@@ -1,6 +1,6 @@
 {
   "name": "yasdk-openapi",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "repository": "github:mtth/yasdk",
   "description": "YASDK OpenAPI utilities",
   "keywords": [
@@ -30,7 +30,6 @@
     "@opvious/stl-utils": "^0.17.24",
     "@stoplight/json-ref-resolver": "^3.1.5",
     "ajv": "^8.12.0",
-    "json-schema-deref-sync": "^0.14.0",
     "openapi-schema-validator": "^12.1.0",
     "openapi-types": "^12.1.0",
     "urijs": "^1.19.11",

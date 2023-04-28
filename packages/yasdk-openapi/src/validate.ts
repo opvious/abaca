@@ -24,50 +24,26 @@ const [errors, codes] = errorFactories({
 
 export const errorCodes = codes;
 
-/** Throws if errors is null or empty. */
-export function invalidValueError(
-  errs: ReadonlyArray<ErrorObject> | null | undefined,
-  val?: unknown
-): InvalidValueError {
-  assert(errs?.length, 'Missing validation errors');
-  return errors.invalidValue(errs, val);
-}
-
-export type InvalidValueError = StandardErrorForCode<typeof codes.InvalidValue>;
-
-function formatErrors(errs: ReadonlyArray<ErrorObject>): string {
-  return errs.map((e) => `path $${e.instancePath} ${e.message}`).join(', ');
-}
-
-/** Asserts that a value satisfies the provided validator. */
-export function assertValue<V>(
-  pred: ValidationPredicate<V>,
-  val: unknown,
-  status?: ErrorStatus
-): asserts val is V {
-  if (pred(val)) {
-    return;
-  }
-  const err = invalidValueError(pred.errors, val);
-  throw status == null ? err : statusError(status, err);
-}
-
 /**
  * Creates a new schema validator factory.
  *
  * Sample usage:
  *
- *    const validators = schemaEnforcer<Schemas>(doc).validators({
+ *    const schemaEnforcer = openapiSchemaEnforcer<Schemas>(doc);
+ *    const validators = schemaEnforcer.validators({
  *      names: ['Outline', 'Summary'],
  *    });
  *    validators.isOutline(arg);
  */
-export function schemaEnforcer<S>(doc: OpenapiDocument): SchemaEnforcer<S> {
+export function openapiSchemaEnforcer<S>(
+  doc: OpenapiDocument
+): SchemaEnforcer<S> {
   return RealSchemaEnforcer.create(doc);
 }
 
 /** Schema validator factory. */
 export interface SchemaEnforcer<S> {
+  /** Creates validators for the requested type names */
   validators<N extends keyof S & string>(args: {
     readonly names: ReadonlyArray<N>;
   }): ValidatorsFor<Pick<S, N>>;
@@ -108,4 +84,32 @@ class RealSchemaEnforcer<S> implements SchemaEnforcer<S> {
     const schema = (this.document as any).components.schemas[name];
     return this.ajv.compile(schema);
   }
+}
+
+/** Throws if errors is null or empty. */
+export function invalidValueError(
+  errs: ReadonlyArray<ErrorObject> | null | undefined,
+  val?: unknown
+): InvalidValueError {
+  assert(errs?.length, 'Missing validation errors');
+  return errors.invalidValue(errs, val);
+}
+
+export type InvalidValueError = StandardErrorForCode<typeof codes.InvalidValue>;
+
+function formatErrors(errs: ReadonlyArray<ErrorObject>): string {
+  return errs.map((e) => `path $${e.instancePath} ${e.message}`).join(', ');
+}
+
+/** Asserts that a value satisfies the provided validator. */
+export function assertValue<V>(
+  pred: ValidationPredicate<V>,
+  val: unknown,
+  status?: ErrorStatus
+): asserts val is V {
+  if (pred(val)) {
+    return;
+  }
+  const err = invalidValueError(pred.errors, val);
+  throw status == null ? err : statusError(status, err);
 }
