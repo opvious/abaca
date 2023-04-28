@@ -8,14 +8,14 @@ import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
 import {createSdk, operations, Sdk, types} from '../pets-sdk.gen.js';
 
 describe('pets', async () => {
-  let doc: OpenapiDocument;
+  let document: OpenapiDocument;
   let sdk: Sdk<typeof fetch>;
   let server: http.Server;
 
   async function resetHandlers(
     handlers: sut.KoaHandlersFor<operations>
   ): Promise<void> {
-    const router = sut.createOperationsRouter<operations>({doc, handlers});
+    const router = sut.createOperationsRouter<operations>({document, handlers});
     const app = new Koa<any, any>()
       .use(router.allowedMethods())
       .use(router.routes());
@@ -24,7 +24,7 @@ describe('pets', async () => {
   }
 
   beforeAll(async () => {
-    doc = await loadResourceDocument('pets.openapi.yaml');
+    document = await loadResourceDocument('pets.openapi.yaml');
   });
 
   afterEach(() => {

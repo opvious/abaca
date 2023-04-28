@@ -20,6 +20,7 @@ import {
   invalidValueError,
   OpenapiDocument,
   OperationHookEnv,
+  parseOpenapiDocument,
 } from 'yasdk-openapi';
 import {
   ByMimeType,
@@ -115,8 +116,8 @@ export function createOperationsRouter<
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 >(args: {
-  /** Fully resolved OpenAPI document. */
-  readonly doc: OpenapiDocument;
+  /** Fully resolved OpenAPI document or its YAML representation. */
+  readonly document: OpenapiDocument | string;
 
   /** Handler implementations. */
   readonly handlers: KoaHandlersFor<O, S, M>;
@@ -151,7 +152,7 @@ export function createOperationsRouter<
    */
   readonly encoders?: KoaEncodersFor<O, S>;
 }): Router<S> {
-  const {doc, fallback} = args;
+  const {document: doc, fallback} = args;
   const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
   const handlers: any = args.handlers;
   const handlerContext = args.handlerContext ?? defaultHandlerContext(handlers);
@@ -170,9 +171,10 @@ export function createOperationsRouter<
   encoders.addAll(args.encoders as any);
 
   const registry = new Registry();
-  const defs = extractOperationDefinitions(doc, (schema, env) => {
-    registry.register(schema, env);
-  });
+  const defs = extractOperationDefinitions(
+    typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
+    (schema, env) => void registry.register(schema, env)
+  );
 
   const router = new Router<any>().use(async (ctx, next) => {
     try {

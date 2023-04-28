@@ -32,7 +32,7 @@ export function createOperationsProxy<
   U extends Record<string, ProxyServer.ServerOptions>
 >(args: {
   /** OpenAPI document. */
-  readonly doc: D;
+  readonly document: D;
 
   /** Upstream server options. */
   readonly upstreams: U;
@@ -62,6 +62,9 @@ export function createOperationsProxy<
    */
   readonly proxyOptionsRequests?: boolean;
 }): Koa.Middleware {
+  const paths = args.document.paths;
+  assert(paths, 'No paths to proxy');
+
   const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
   const [metrics] = tel.metrics(instruments);
 
@@ -112,7 +115,7 @@ export function createOperationsProxy<
 
   const router = new Router<any, any>();
   const proxied = new ArrayMultimap<string, string>();
-  for (const [path, pathObj] of Object.entries<any>(args.doc.paths ?? {})) {
+  for (const [path, pathObj] of Object.entries<any>(paths)) {
     const opPath = routerPath(path);
     const keys = new Set<string>();
     for (const meth of allOperationMethods) {

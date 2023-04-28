@@ -15,16 +15,16 @@ describe('operation proxy', () => {
   let table: types['Table'] | undefined;
 
   beforeAll(async () => {
-    const doc = await loadResourceDocument('tables.openapi.yaml');
+    const document = await loadResourceDocument('tables.openapi.yaml');
 
     const readRouter = createOperationsRouter<operations>({
-      doc,
+      document,
       handlers: {getTable: () => (table ? {data: table} : 404)},
     });
     readServer = await startApp(new Koa().use(readRouter.routes()));
 
     const writeRouter = createOperationsRouter<operations>({
-      doc,
+      document,
       handlers: {
         setTable: (ctx) => {
           assert(ctx.request.type === 'application/json', 'Bad request type');
@@ -36,7 +36,7 @@ describe('operation proxy', () => {
     writeServer = await startApp(new Koa().use(writeRouter.routes()));
 
     const proxy = sut.createOperationsProxy({
-      doc,
+      document,
       upstreams: {
         read: {target: serverAddress(readServer)},
         write: {target: serverAddress(writeServer)},

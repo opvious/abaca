@@ -22,7 +22,7 @@ describe('tables', async () => {
   beforeAll(async () => {
     const doc = await loadResourceDocument('tables.openapi.yaml');
     const router = sut.createOperationsRouter<operations>({
-      doc,
+      document: doc,
       handlers: handler,
       decoders: {
         'application/json-seq': (ctx) => {
