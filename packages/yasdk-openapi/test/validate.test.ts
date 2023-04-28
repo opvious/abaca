@@ -18,7 +18,7 @@ describe('schema enforcer', () => {
 
   beforeAll(async () => {
     const doc = await loadOpenapiDocument({path: 'pets.openapi.yaml', loader});
-    enforcer = sut.schemaEnforcer(doc);
+    enforcer = sut.openapiSchemaEnforcer(doc);
   });
 
   test('predicate', () => {
