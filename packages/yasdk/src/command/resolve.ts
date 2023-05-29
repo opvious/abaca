@@ -1,10 +1,11 @@
 import {ResourceLoader} from '@opvious/stl-utils/files';
+import {ifPresent} from '@opvious/stl-utils/functions';
 import {Command} from 'commander';
 import path from 'path';
 import YAML from 'yaml';
 import {assertIsOpenapiDocument, loadResolvableResource} from 'yasdk-openapi';
 
-import {supportedVersions, writeOutput} from './common.js';
+import {overridingVersion, supportedVersions, writeOutput} from './common.js';
 
 export function resolveCommand(): Command {
   return new Command()
@@ -15,14 +16,17 @@ export function resolveCommand(): Command {
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option('-s, --skip-validation', 'skip schema validation')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
+    .option('-v, --document-version <version>', 'version override')
     .action(async (pp, opts) => {
-      const resolved = await loadResolvableResource(path.resolve(pp), {
+      const doc: any = await loadResolvableResource(path.resolve(pp), {
         loader: ResourceLoader.create({root: opts.loaderRoot}),
       });
       if (!opts.skipValidation) {
-        assertIsOpenapiDocument(resolved, {versions: supportedVersions});
+        assertIsOpenapiDocument(doc, {versions: supportedVersions});
       }
-      const out = YAML.stringify(resolved);
+      const out = YAML.stringify(
+        ifPresent(opts.documentVersion, (v) => overridingVersion(doc, v)) ?? doc
+      );
       if (opts.output) {
         await writeOutput(opts.output, out);
       } else {
