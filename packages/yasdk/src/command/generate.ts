@@ -13,7 +13,7 @@ import {
 } from 'yasdk-openapi';
 import {JSON_SEQ_MIME_TYPE} from 'yasdk-runtime';
 
-import {supportedVersions, writeOutput} from './common.js';
+import {overridingVersion, supportedVersions, writeOutput} from './common.js';
 
 const preambleUrl = new URL(
   '../../resources/preamble/index.gen.ts',
@@ -37,6 +37,7 @@ export function generateCommand(): Command {
       'comma-separated list of content-types which contain streamed data',
       JSON_SEQ_MIME_TYPE
     )
+    .option('-v, --document-version <version>', 'version override')
     .action(async (pp, opts) => {
       const doc = await loadOpenapiDocument({
         path: path.resolve(pp),
@@ -60,7 +61,11 @@ export function generateCommand(): Command {
         valuesStr,
       ].join('\n');
       if (opts.documentOutput) {
-        await writeOutput(opts.documentOutput, YAML.stringify(doc));
+        const version = opts.documentVersion;
+        await writeOutput(
+          opts.documentOutput,
+          YAML.stringify(version ? overridingVersion(doc, version) : doc)
+        );
       }
       if (opts.output) {
         await writeOutput(opts.output, out);
