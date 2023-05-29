@@ -1,5 +1,6 @@
 import {assert} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
+import {ifPresent} from '@opvious/stl-utils/functions';
 import {commaSeparated} from '@opvious/stl-utils/strings';
 import {Command} from 'commander';
 import {readFile} from 'fs/promises';
@@ -61,10 +62,12 @@ export function generateCommand(): Command {
         valuesStr,
       ].join('\n');
       if (opts.documentOutput) {
-        const version = opts.documentVersion;
         await writeOutput(
           opts.documentOutput,
-          YAML.stringify(version ? overridingVersion(doc, version) : doc)
+          YAML.stringify(
+            ifPresent(opts.documentVersion, (v) => overridingVersion(doc, v)) ??
+              doc
+          )
         );
       }
       if (opts.output) {

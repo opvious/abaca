@@ -1,4 +1,5 @@
 import {ResourceLoader} from '@opvious/stl-utils/files';
+import {ifPresent} from '@opvious/stl-utils/functions';
 import {Command} from 'commander';
 import path from 'path';
 import YAML from 'yaml';
@@ -23,9 +24,8 @@ export function resolveCommand(): Command {
       if (!opts.skipValidation) {
         assertIsOpenapiDocument(doc, {versions: supportedVersions});
       }
-      const version = opts.documentVersion;
       const out = YAML.stringify(
-        version ? overridingVersion(doc, version) : doc
+        ifPresent(opts.documentVersion, (v) => overridingVersion(doc, v)) ?? doc
       );
       if (opts.output) {
         await writeOutput(opts.output, out);
