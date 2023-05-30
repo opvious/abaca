@@ -22,6 +22,11 @@ const instruments = instrumentsFor({
   },
 });
 
+type ProxiedOperation<D extends OpenapiDocument> = MarkPresent<
+  OpenapiOperation<D>,
+  'operationId'
+>;
+
 /**
  * Creates a proxy for OpenAPI operations. Note that the returned middleware
  * returns immediately: it does not wait for the response to be proxied back.
@@ -42,7 +47,7 @@ export function createOperationsProxy<
    * Operations without an ID or with `trace` method are always skipped.
    */
   readonly dispatch: (
-    op: MarkPresent<OpenapiOperation<D>, 'operationId'>,
+    op: ProxiedOperation<D>,
     path: string
   ) => (keyof U & string) | undefined;
 
@@ -51,6 +56,15 @@ export function createOperationsProxy<
    * set up error handling.
    */
   readonly setup?: (server: ProxyServer, key: keyof U & string) => void;
+
+  /**
+   * Optional hook called just before a request is proxied. This can be used for
+   * example to throw an exception and abort handling.
+   */
+  readonly prepare?: (
+    ctx: Koa.Context,
+    op: ProxiedOperation<D>
+  ) => Promise<void>;
 
   /** Telemetry provider. */
   readonly telemetry?: Telemetry;
@@ -65,20 +79,29 @@ export function createOperationsProxy<
   const paths = args.document.paths;
   assert(paths, 'No paths to proxy');
 
+  const {setup, prepare, upstreams} = args;
   const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
   const [metrics] = tel.metrics(instruments);
 
+  const ops = new Map<string, ProxiedOperation<D>>();
   const middlewares = new Map<string, Koa.Middleware>();
   const middlewareFor = (key: string): Koa.Middleware => {
     let mw = middlewares.get(key);
     if (mw) {
       return mw;
     }
-    const server = ProxyServer.createProxy(args.upstreams[key]);
-    args.setup?.(server, key);
+    const server = ProxyServer.createProxy(upstreams[key]);
+    setup?.(server, key);
     mw = async (ctx): Promise<void> => {
       const oid = ctx._matchedRouteName;
       assert(typeof oid == 'string', 'Missing operation ID');
+
+      if (prepare) {
+        const op = ops.get(oid);
+        assert(op != null, 'Missing operation for %s', oid);
+        await prepare(ctx, op);
+      }
+
       tel.logger.info('Proxying operation %s... [upstream=%s]', oid, key);
       ctx.respond = false; // Disable Koa response handling.
       const startMs = Date.now();
@@ -128,6 +151,7 @@ export function createOperationsProxy<
       if (key == null) {
         continue;
       }
+      ops.set(oid, opObj);
       proxied.add(key, oid);
       keys.add(key);
       router[meth](oid, opPath, middlewareFor(key));

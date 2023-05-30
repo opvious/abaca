@@ -42,6 +42,9 @@ describe('operation proxy', () => {
         write: {target: serverAddress(writeServer)},
       },
       dispatch: (op) => (op.operationId === 'getTable' ? 'read' : 'write'),
+      prepare: async (ctx, op) => {
+        ctx.set('oid', op.operationId);
+      },
     });
     server = await startApp(new Koa().use(proxy));
     address = serverAddress(server);
@@ -54,11 +57,20 @@ describe('operation proxy', () => {
     writeServer.close();
   });
 
+  beforeEach(() => {
+    table = undefined;
+  });
+
   test('dispatches', async () => {
     const table: types['Table'] = {rows: [['a', 'one']]};
     const setRes = await sdk.setTable({parameters: {id: '1'}, body: table});
     expect(setRes).toMatchObject({code: 204});
     const getRes = await sdk.getTable({parameters: {id: '1'}});
     expect(getRes).toMatchObject({code: 200, data: table});
+  });
+
+  test('calls prepare', async () => {
+    const res = await sdk.getTable({parameters: {id: '100'}});
+    expect(res.raw.headers.get('oid')).toEqual('getTable');
   });
 });
