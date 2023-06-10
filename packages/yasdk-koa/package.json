@@ -25,7 +25,7 @@
     "gen-test-pets": "yasdk g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-tables": "yasdk g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
-    "prepare": "pnpm run build && inlinable replace",
+    "prepare": "pnpm run build && inlinable e",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src"
   },
