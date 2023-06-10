@@ -1,6 +1,6 @@
 {
   "name": "yasdk",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "repository": "github:mtth/yasdk",
   "description": "Yet another TypesScript SDK generator",
   "keywords": [
@@ -26,13 +26,13 @@
     "gen-test-pets": "./bin/yasdk.js g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-tables": "./bin/yasdk.js g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
-    "prepare": "pnpm run gen-preamble && pnpm run build && inlinable replace",
+    "prepare": "pnpm run gen-preamble && pnpm run build && inlinable e",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.18.3",
-    "@opvious/stl-utils": "^0.18.3",
+    "@opvious/stl-errors": "^0.20.6",
+    "@opvious/stl-utils": "^0.20.6",
     "commander": "^10.0.0",
     "openapi-typescript": "^6.2.0",
     "yaml": "^2.2.1",
@@ -43,7 +43,7 @@
     "@koa/router": "^10.1.1",
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
-    "inlinable": "^0.1.11",
+    "inlinable": "^0.2.3",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
     "node-fetch": "^3.3.1"
