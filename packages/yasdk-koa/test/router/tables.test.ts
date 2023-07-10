@@ -1,4 +1,10 @@
-import {assert, unreachable} from '@opvious/stl-errors';
+import {
+  assert,
+  extractStatusError,
+  failure,
+  statusProtocolCode,
+  unreachable,
+} from '@opvious/stl-errors';
 import {
   fromAsyncIterable,
   mapAsyncIterable,
@@ -41,6 +47,15 @@ describe('tables', async () => {
     });
 
     const app = new Koa<any, any>()
+      .use(async (ctx, next) => {
+        try {
+          await next();
+        } catch (err) {
+          const serr = extractStatusError(err);
+          ctx.status = statusProtocolCode('http', serr);
+          ctx.body = failure(serr);
+        }
+      })
       .use(router.allowedMethods())
       .use(router.routes());
     server = await startApp(app);
@@ -111,7 +126,7 @@ describe('tables', async () => {
     });
     expect(res).toMatchObject({
       code: 'default',
-      data: {code: 'ERR_REQUEST_INVALID_BODY'},
+      data: {error: {code: 'ERR_INVALID_REQUEST'}},
       raw: {status: 400},
     });
   });

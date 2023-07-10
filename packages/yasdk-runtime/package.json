@@ -1,6 +1,6 @@
 {
   "name": "yasdk-runtime",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "repository": "github:mtth/yasdk",
   "description": "YASDK runtime utilities",
   "keywords": [

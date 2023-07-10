@@ -3,9 +3,9 @@ import {InvalidValueError} from 'yasdk-openapi';
 
 export const [errors, codes] = errorFactories({
   definitions: {
-    invalidRequest: (origin: RequestError) => ({
-      message: 'Invalid request: ' + origin.message,
-      tags: {origin},
+    invalidRequest: (reason: RequestError) => ({
+      message: 'Invalid request: ' + reason.message,
+      tags: {reason},
     }),
     invalidResponseData: (cause: InvalidValueError) => ({
       message: 'Invalid response data: ' + cause.message,

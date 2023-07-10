@@ -15,7 +15,11 @@ describe('pets', async () => {
   async function resetHandlers(
     handlers: sut.KoaHandlersFor<operations>
   ): Promise<void> {
-    const router = sut.createOperationsRouter<operations>({document, handlers});
+    const router = sut.createOperationsRouter<operations>({
+      document,
+      handlers,
+      handleInvalidRequests: true,
+    });
     const app = new Koa<any, any>()
       .use(router.allowedMethods())
       .use(router.routes());
