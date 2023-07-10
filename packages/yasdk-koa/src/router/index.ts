@@ -6,6 +6,7 @@ import {
   errorFactories,
   errorMessage,
   isStandardError,
+  statusErrors,
 } from '@opvious/stl-errors';
 import {noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
 import {
@@ -29,7 +30,6 @@ import {
   MimeType,
   OperationDefinition,
   OperationTypes,
-  PLAIN_MIME_TYPE,
   ResponseClauseMatcher,
   ResponseCode,
   TEXT_MIME_TYPE,
@@ -108,9 +108,7 @@ const [requestErrors] = errorFactories({
 
 const Ajv = ajv.default ?? ajv;
 
-const ERROR_CODE_HEADER = 'error-code';
-
-/** Creates a type-safe router for operations defined in the document. */
+/** Creates a type-safe router for operations defined in the document */
 export function createOperationsRouter<
   O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
   S = {},
@@ -151,12 +149,20 @@ export function createOperationsRouter<
    * and `application/json` content-types.
    */
   readonly encoders?: KoaEncodersFor<O, S>;
+
+  /**
+   * Handle invalid request errors by returning plain text responses with
+   * appropriate status. By default these errors are rethrown with status
+   * `INVALID_ARGUMENT` and code `InvalidRequest`.
+   */
+  readonly handleInvalidRequests?: boolean;
 }): Router<S> {
   const {document: doc, fallback} = args;
   const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
   const handlers: any = args.handlers;
   const handlerContext = args.handlerContext ?? defaultHandlerContext(handlers);
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
+  const rethrow = !args.handleInvalidRequests;
 
   const decoders = ByMimeType.create<KoaDecoder<any, any> | undefined>(
     undefined
@@ -184,14 +190,14 @@ export function createOperationsRouter<
         throw err;
       }
       tel.logger.info({err}, 'OpenAPI router request was invalid.');
-      const {origin} = err.tags;
-      ctx.status = origin.tags.status;
-      ctx.set(ERROR_CODE_HEADER, origin.code);
-      if (ctx.accepts([PLAIN_MIME_TYPE, JSON_MIME_TYPE]) === JSON_MIME_TYPE) {
-        ctx.body = {message: err.message, code: origin.code, tags: origin.tags};
-      } else {
-        ctx.body = err.message;
+      const {status} = err.tags.reason.tags;
+      if (rethrow) {
+        throw statusErrors.invalidArgument(err, {
+          protocolCodes: {http: status},
+        });
       }
+      ctx.status = status;
+      ctx.body = err.message;
     }
   });
 
