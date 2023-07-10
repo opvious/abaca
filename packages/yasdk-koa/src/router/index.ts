@@ -189,13 +189,13 @@ export function createOperationsRouter<
       if (!isStandardError(err, codes.InvalidRequest)) {
         throw err;
       }
-      tel.logger.info({err}, 'OpenAPI router request was invalid.');
       const {status} = err.tags.reason.tags;
       if (rethrow) {
         throw statusErrors.invalidArgument(err, {
           protocolCodes: {http: status},
         });
       }
+      tel.logger.info({err}, 'OpenAPI router request was invalid.');
       ctx.status = status;
       ctx.body = err.message;
     }
