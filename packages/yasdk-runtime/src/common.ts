@@ -30,5 +30,5 @@ export type Exact<T, V> = T extends V
 export type Values<O> = O[keyof O];
 
 export type KeysOfValues<O> = Values<{
-  [K in keyof O]: keyof O[K];
+  [K in keyof O]: O[K] extends never ? never : keyof O[K];
 }>;
