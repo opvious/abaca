@@ -103,11 +103,9 @@ class Embedder {
         continue;
       }
 
-      const def = pair.value;
-      assert(YAML.isAlias(def), 'Unexpected embedded definition: %j', def);
       const dst = ['components', 'schemas', name];
       assert(!doc.hasIn(dst), 'Embedding name collision: %j', pair);
-      doc.setIn(dst, def);
+      doc.setIn(dst, pair.value);
     }
   }
 }
