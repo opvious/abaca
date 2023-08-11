@@ -1,13 +1,7 @@
 {
-  "extends": "@opvious/tsconfig",
+  "extends": "@opvious/tsconfig/tsconfig.vitest.json",
   "compilerOptions": {
-    "composite": true,
-    "module": "node16",
-    "noImplicitAny": false,
-    "noErrorTruncation": true,
-    "outDir": "../out/test",
-    "types": ["vitest/globals"],
-    "useUnknownInCatchVariables": false
+    "outDir": "../out/test"
   },
   "references": [
     {
