@@ -31,11 +31,11 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.21.37",
-    "@opvious/stl-utils": "^0.21.37",
+    "@opvious/stl-errors": "^0.21.38",
+    "@opvious/stl-utils": "^0.21.38",
     "commander": "^10.0.0",
     "openapi-typescript": "^6.2.0",
-    "yaml": "^2.2.1",
+    "yaml": "^2.3.1",
     "yasdk-openapi": "workspace:*",
     "yasdk-runtime": "workspace:*"
   },
