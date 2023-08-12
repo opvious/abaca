@@ -325,7 +325,11 @@ export function createSdkFor<
           options: init?.options,
         });
       }
-      return {code, data, raw: res};
+      const ret = {code, data};
+      // Add the raw response as non-enumerable property so that it doesn't get
+      // displayed in error messages.
+      Object.defineProperty(ret, 'raw', {value: res});
+      return ret;
     };
   }
   return fetchers;
