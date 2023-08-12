@@ -1,5 +1,5 @@
 import {errorFactories, StandardError} from '@opvious/stl-errors';
-import {InvalidValueError} from 'yasdk-openapi';
+import {IncompatibleValueError} from 'yasdk-openapi';
 
 export const [errors, codes] = errorFactories({
   definitions: {
@@ -7,7 +7,7 @@ export const [errors, codes] = errorFactories({
       message: 'Invalid request: ' + reason.message,
       tags: {reason},
     }),
-    invalidResponseData: (cause: InvalidValueError) => ({
+    invalidResponseData: (cause: IncompatibleValueError) => ({
       message: 'Invalid response data: ' + cause.message,
       tags: cause.tags,
       cause,

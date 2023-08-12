@@ -1,3 +1,12 @@
+export {
+  assertValue,
+  IncompatibleValueError,
+  incompatibleValueError,
+  SchemaCompatibilityChecker,
+  schemaCompatibilityChecker,
+  ValidationPredicate,
+  ValidatorsFor,
+} from './compatibility.js';
 export * from './document/index.js';
 export {
   allOperationMethods,
@@ -7,12 +16,3 @@ export {
   OperationHookTarget,
 } from './operations.js';
 export * from './resolvable/index.js';
-export {
-  assertValue,
-  InvalidValueError,
-  invalidValueError,
-  openapiSchemaEnforcer,
-  SchemaEnforcer,
-  ValidationPredicate,
-  ValidatorsFor,
-} from './validate.js';

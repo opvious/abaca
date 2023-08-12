@@ -1,9 +1,9 @@
 import {mergeErrorCodes} from '@opvious/stl-errors';
 
+import {errorCodes as compatibility} from './compatibility.js';
 import document, {DocumentValidationIssue} from './document/index.errors.js';
 import resolvable, {ResolutionIssue} from './resolvable/index.errors.js';
-import {errorCodes as validate} from './validate.js';
 
 export {DocumentValidationIssue, ResolutionIssue};
 
-export default mergeErrorCodes({...document, ...resolvable, ...validate});
+export default mergeErrorCodes({...document, ...resolvable, ...compatibility});
