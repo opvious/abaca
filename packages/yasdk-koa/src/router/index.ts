@@ -17,8 +17,8 @@ import {default as ajv, ErrorObject} from 'ajv';
 import stream from 'stream';
 import {
   extractOperationDefinitions,
-  InvalidValueError,
-  invalidValueError,
+  IncompatibleValueError,
+  incompatibleValueError,
   OpenapiDocument,
   OperationHookEnv,
   parseOpenapiDocument,
@@ -72,7 +72,7 @@ const [requestErrors] = errorFactories({
       message: `Parameter ${name} is required but was missing`,
       tags: {status: 400},
     }),
-    invalidParameters: (cause: InvalidValueError) => ({
+    invalidParameters: (cause: IncompatibleValueError) => ({
       message: 'Invalid parameters: ' + cause.message,
       tags: {status: 400, ...cause.tags},
       cause,
@@ -97,7 +97,7 @@ const [requestErrors] = errorFactories({
       tags: {status: 400},
       cause,
     }),
-    invalidBody: (cause: InvalidValueError) => ({
+    invalidBody: (cause: IncompatibleValueError) => ({
       message: 'Invalid body: ' + cause.message,
       tags: {status: 400, ...cause.tags},
       cause,
@@ -383,7 +383,7 @@ class Registry {
       }
     }
     if (errs.length) {
-      const cause = invalidValueError(errs);
+      const cause = incompatibleValueError(errs);
       throw errors.invalidRequest(requestErrors.invalidParameters(cause));
     }
   }
@@ -393,7 +393,7 @@ class Registry {
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     if (!validate(body)) {
-      const cause = invalidValueError(validate.errors, body);
+      const cause = incompatibleValueError(validate.errors, body);
       throw errors.invalidRequest(requestErrors.invalidBody(cause));
     }
   }
@@ -414,7 +414,7 @@ class Registry {
       return; // Let binary data through.
     }
     if (!validate(data)) {
-      const cause = invalidValueError(validate.errors, data);
+      const cause = incompatibleValueError(validate.errors, data);
       throw errors.invalidResponseData(cause);
     }
   }
