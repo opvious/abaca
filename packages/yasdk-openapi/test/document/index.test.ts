@@ -40,7 +40,7 @@ describe('load OpenAPI document', () => {
   });
 
   test('embeds definitions', async () => {
-    const doc = await sut.loadOpenapiDocument({
+    const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
       path: 'openapi.yaml',
       loader: loader.scoped('document/resources/embedded'),
       versions: ['3.0'],

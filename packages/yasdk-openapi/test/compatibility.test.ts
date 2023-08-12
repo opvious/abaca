@@ -1,7 +1,7 @@
 import {ResourceLoader} from '@opvious/stl-utils/files';
 
 import * as sut from '../src/compatibility.js';
-import {loadOpenapiDocument} from '../src/document/index.js';
+import {loadOpenapiDocument, OpenapiDocument} from '../src/document/index.js';
 
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
 
@@ -20,8 +20,11 @@ describe('schema compatibility predicates', () => {
   let predicates: sut.CompatibilityPredicatesFor<Schemas>;
 
   beforeAll(async () => {
-    const doc = await loadOpenapiDocument({path: 'pets.openapi.yaml', loader});
-    predicates = sut.schemaCompatibilityPredicates(doc);
+    const doc: OpenapiDocument<Schemas> = await loadOpenapiDocument({
+      path: 'pets.openapi.yaml',
+      loader,
+    });
+    predicates = sut.schemaCompatibilityPredicates({document: doc});
   });
 
   test('predicate', () => {

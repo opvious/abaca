@@ -29,14 +29,25 @@ function formatValidationIssue(i: DocumentValidationIssue): string {
   return `[${i.instancePath}] ${i.message}`;
 }
 
-export interface OpenapiDocuments {
-  '2.0': DeepReadonly<OpenAPIV2.Document>;
-  '3.0': DeepReadonly<OpenAPIV3.Document>;
-  '3.1': DeepReadonly<OpenAPIV3_1.Document>;
+const documentTag = 'yasdk-openapi:documentTag+v1';
+
+/**
+ * An error code with attached type information about the error's tags. This
+ * information can be picked up during retrieval (e.g. `isStandardError`) to
+ * make the type of matching error's tags as specific as possible.
+ */
+export type TaggedDocument<D, S> = DeepReadonly<D> & {
+  readonly [documentTag]: S;
+};
+
+export interface OpenapiDocuments<S = any> {
+  '2.0': TaggedDocument<OpenAPIV2.Document, S>;
+  '3.0': TaggedDocument<OpenAPIV3.Document, S>;
+  '3.1': TaggedDocument<OpenAPIV3_1.Document, S>;
 }
 
 export type OpenapiVersion = keyof OpenapiDocuments;
 
-export type OpenapiDocument = OpenapiDocuments[OpenapiVersion];
+export type OpenapiDocument<S = any> = OpenapiDocuments<S>[OpenapiVersion];
 
 export const openapiVersions = ['2.0', '3.0', '3.1'] as const;

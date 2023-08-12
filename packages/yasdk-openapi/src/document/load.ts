@@ -14,7 +14,9 @@ export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
  * the `embed=*` search parameter to have all `$defs` in the referenced resource
  * embedded as schemas. All keys starting with `$` are also stripped.
  */
-export async function loadOpenapiDocument<V extends OpenapiVersion>(opts?: {
+export async function loadOpenapiDocument<
+  V extends OpenapiVersion = OpenapiVersion
+>(opts?: {
   readonly path?: PosixPath;
   readonly loader?: ResourceLoader;
   readonly versions?: ReadonlyArray<V>;
