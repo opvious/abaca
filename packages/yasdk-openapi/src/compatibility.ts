@@ -29,32 +29,45 @@ export const errorCodes = codes;
  *
  * Sample usage:
  *
- *    const checker = schemaCompatibilityChecker<Schemas>(doc);
- *    const {isOutline, isSummary} = checker.validators('Outline', 'Summary');
- *
+ *    const {isOutline} = schemaCompatibilityPredicates<Schemas>(doc);
  *    isOutline(arg); // Predicate
  *    assertValue(isOutline, arg); // Assertion
  */
-export function schemaCompatibilityChecker<S>(
-  doc: OpenapiDocument
-): SchemaCompatibilityChecker<S> {
-  return RealSchemaCompatibilityChecker.create(doc);
+export function schemaCompatibilityPredicates<
+  S,
+  N extends keyof S & string = keyof S & string
+>(
+  doc: OpenapiDocument,
+  opts?: {
+    /**
+     * Schema names for which to generate predicates. By default all schemas are
+     * used.
+     */
+    readonly names?: ReadonlyArray<N>;
+  }
+): CompatibilityPredicatesFor<S, N> {
+  const checker = RealSchemaCompatibilityChecker.create<S>(doc);
+  const names: any =
+    opts?.names ?? Object.keys((doc as any).components.schemas);
+  return checker.predicates(names);
 }
 
 /** Schema validator factory. */
-export interface SchemaCompatibilityChecker<S> {
-  /** Creates validators for the requested type names */
-  validators<N extends keyof S & string>(
-    ...names: N[]
-  ): ValidatorsFor<Pick<S, N>>;
+interface SchemaCompatibilityChecker<S> {
+  /** Creates predicates for the requested type names */
+  predicates<N extends keyof S & string>(
+    // Use an array instead of varargs to allow better auto-complete (otherwise
+    // only names that have already been typed will be suggested.
+    names: ReadonlyArray<N>
+  ): CompatibilityPredicatesFor<S, N>;
 }
 
-/** Schema validators. */
-export type ValidatorsFor<S> = {
-  readonly [K in keyof S & string as `is${K}`]: ValidationPredicate<S[K]>;
+/** Schema predicates. */
+export type CompatibilityPredicatesFor<S, N extends keyof S = keyof S> = {
+  readonly [K in N & string as `is${K}`]: CompatibilityPredicate<S[K]>;
 };
 
-export interface ValidationPredicate<V> {
+export interface CompatibilityPredicate<V> {
   (arg: unknown): arg is V;
   readonly errors?: ReadonlyArray<ErrorObject> | null;
 }
@@ -71,15 +84,15 @@ class RealSchemaCompatibilityChecker<S>
     return new RealSchemaCompatibilityChecker(doc, new Ajv());
   }
 
-  validators<N extends keyof S & string>(
-    ...names: N[]
-  ): ValidatorsFor<Pick<S, N>> {
-    const validators: any = {};
+  predicates<N extends keyof S & string>(
+    names: ReadonlyArray<N>
+  ): CompatibilityPredicatesFor<S, N> {
+    const predicates: any = {};
     for (const name of names) {
       const validate = this.validator(name);
-      validators['is' + name] = validate;
+      predicates['is' + name] = validate;
     }
-    return validators;
+    return predicates;
   }
 
   private validator(name: string): ValidateFunction {
@@ -95,16 +108,32 @@ class RealSchemaCompatibilityChecker<S>
 }
 
 /**
- * Returns an `ERR_INCOMPATIBLE_VALUE` error, decorated with the input
- * validation errors. The validation errors must not be null or empty (they are
- * accepted as typed for ease of use).
+ * Returns an `ERR_INCOMPATIBLE_VALUE` error if the input predicate has any
+ * errors. The `value` option can be used to execute the predicate beforehand.
  */
 export function incompatibleValueError(
-  errs: ReadonlyArray<ErrorObject> | null | undefined,
-  val?: unknown
-): IncompatibleValueError {
-  assert(errs?.length, 'Empty errors');
-  return errors.incompatibleValue(errs, val);
+  fn: CompatibilityPredicate<unknown>,
+  opts?: {
+    /**
+     * Value to call the predicate with. If unspecified, errors from the
+     * predicate's last validation call will be used. This value will also be
+     * used to decorate any returned error.
+     */
+    readonly value?: unknown;
+    /**
+     * Do not call the predicate on the value. This is useful if you would like
+     * to include the value in the returned error and you known the predicate
+     * has already been called with it.
+     */
+    readonly skipValidation?: boolean;
+  }
+): IncompatibleValueError | undefined {
+  if (opts && !opts.skipValidation && 'value' in opts) {
+    fn(opts.value);
+  }
+  return fn.errors?.length
+    ? errors.incompatibleValue(fn.errors, opts?.value)
+    : undefined;
 }
 
 /** Schema mismatch error */
@@ -117,20 +146,20 @@ function formatErrors(errs: ReadonlyArray<ErrorObject>): string {
 }
 
 /**
- * Asserts that a value satisfies the provided validator, throwing
- * `ERR_INCOMPATIBLE_VALUE` if not.
+ * Asserts that a value satisfies the provided predicate, throwing
+ * `ERR_INCOMPATIBLE_VALUE` if not, optionally decorated with a status.
  */
-export function assertValue<V>(
-  pred: ValidationPredicate<V>,
+export function assertCompatible<V>(
   val: unknown,
+  pred: CompatibilityPredicate<V>,
   opts?: {
     /** Optional status for any thrown errors */
     readonly status?: ErrorStatus;
   }
 ): asserts val is V {
-  if (pred(val)) {
+  const err = incompatibleValueError(pred, {value: val});
+  if (!err) {
     return;
   }
-  const err = incompatibleValueError(pred.errors, val);
   throw ifPresent(opts?.status, (s) => statusError(s, err)) ?? err;
 }

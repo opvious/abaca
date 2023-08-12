@@ -1,11 +1,10 @@
 export {
-  assertValue,
+  assertCompatible,
+  CompatibilityPredicate,
+  CompatibilityPredicatesFor,
   IncompatibleValueError,
   incompatibleValueError,
-  SchemaCompatibilityChecker,
-  schemaCompatibilityChecker,
-  ValidationPredicate,
-  ValidatorsFor,
+  schemaCompatibilityPredicates,
 } from './compatibility.js';
 export * from './document/index.js';
 export {
