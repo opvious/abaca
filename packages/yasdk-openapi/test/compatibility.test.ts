@@ -1,4 +1,3 @@
-import {fail} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
 
 import * as sut from '../src/compatibility.js';
@@ -11,31 +10,36 @@ interface Schemas {
     readonly id: number;
     readonly name: string;
   };
+  PetInput: {
+    readonly name: string;
+    readonly tag?: string;
+  };
 }
 
-describe('schema compatibility checker', () => {
-  let checker: sut.SchemaCompatibilityChecker<Schemas>;
+describe('schema compatibility predicates', () => {
+  let predicates: sut.CompatibilityPredicatesFor<Schemas>;
 
   beforeAll(async () => {
     const doc = await loadOpenapiDocument({path: 'pets.openapi.yaml', loader});
-    checker = sut.schemaCompatibilityChecker(doc);
+    predicates = sut.schemaCompatibilityPredicates(doc);
   });
 
   test('predicate', () => {
-    const vals = checker.validators('Pet');
-    expect(vals.isPet({id: 1, name: 'n'})).toBe(true);
-    expect(vals.isPet({id: 1})).toBe(false);
+    expect(predicates.isPet({id: 1, name: 'n'})).toBe(true);
+    expect(predicates.isPet({id: 1})).toBe(false);
   });
 
-  test('assertion', () => {
-    const {isPet} = checker.validators('Pet');
+  test('assert compatible', () => {
     const arg: unknown = {id: 1, name: 'n'};
-    sut.assertValue(isPet, arg);
+    sut.assertCompatible(arg, predicates.isPet);
+  });
+
+  test('assert incompatible', () => {
     try {
-      sut.assertValue(isPet, {id: 2});
-      fail();
+      sut.assertCompatible({id: 2}, predicates.isPet);
     } catch (err) {
       expect(err).toMatchObject({code: sut.errorCodes.IncompatibleValue});
     }
+    expect.assertions(1);
   });
 });

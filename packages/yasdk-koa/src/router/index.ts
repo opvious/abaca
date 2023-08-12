@@ -2,7 +2,6 @@ import Router from '@koa/router';
 import {
   absurd,
   assert,
-  check,
   errorFactories,
   errorMessage,
   isStandardError,
@@ -13,7 +12,8 @@ import {
   isAsyncIterable,
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
-import {default as ajv, ErrorObject} from 'ajv';
+import {ifPresent} from '@opvious/stl-utils/functions';
+import {default as ajv} from 'ajv';
 import stream from 'stream';
 import {
   extractOperationDefinitions,
@@ -72,9 +72,9 @@ const [requestErrors] = errorFactories({
       message: `Parameter ${name} is required but was missing`,
       tags: {status: 400},
     }),
-    invalidParameters: (cause: IncompatibleValueError) => ({
-      message: 'Invalid parameters: ' + cause.message,
-      tags: {status: 400, ...cause.tags},
+    invalidParameter: (name: string, cause: IncompatibleValueError) => ({
+      message: `Invalid parameter ${name}: ` + cause.message,
+      tags: {status: 400, name, ...cause.tags},
       cause,
     }),
     unsupportedContentType: (type: string) => ({
@@ -350,7 +350,6 @@ class Registry {
     def: OperationDefinition
   ): void {
     const {parameters} = this;
-    const errs: ErrorObject[] = [];
     for (const [name, pdef] of Object.entries(def.parameters)) {
       let str: unknown;
       switch (pdef.location) {
@@ -376,15 +375,10 @@ class Registry {
       const validate = parameters.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
-      if (validate(obj)) {
-        Object.assign(ctx.params, obj);
-      } else {
-        errs.push(...check.isPresent(validate.errors));
-      }
-    }
-    if (errs.length) {
-      const cause = incompatibleValueError(errs);
-      throw errors.invalidRequest(requestErrors.invalidParameters(cause));
+      ifPresent(incompatibleValueError(validate, {value: obj}), (err) => {
+        throw errors.invalidRequest(requestErrors.invalidParameter(name, err));
+      });
+      Object.assign(ctx.params, obj);
     }
   }
 
@@ -392,10 +386,9 @@ class Registry {
     const key = schemaKey(oid, bodySchemaSuffix(type));
     const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing request body schema', key);
-    if (!validate(body)) {
-      const cause = incompatibleValueError(validate.errors, body);
-      throw errors.invalidRequest(requestErrors.invalidBody(cause));
-    }
+    ifPresent(incompatibleValueError(validate, {value: body}), (err) => {
+      throw errors.invalidRequest(requestErrors.invalidBody(err));
+    });
   }
 
   validateResponse(
@@ -413,10 +406,9 @@ class Registry {
     ) {
       return; // Let binary data through.
     }
-    if (!validate(data)) {
-      const cause = incompatibleValueError(validate.errors, data);
-      throw errors.invalidResponseData(cause);
-    }
+    ifPresent(incompatibleValueError(validate, {value: data}), (err) => {
+      throw errors.invalidResponseData(err);
+    });
   }
 }
 
