@@ -9,7 +9,7 @@ import {
 } from './common.js';
 
 /** Parses a document from a YAML (or JSON) string. */
-export function parseOpenapiDocument<V extends OpenapiVersion = OpenapiVersion>(
+export function parseOpenapiDocument<V extends OpenapiVersion>(
   arg: string,
   opts?: {
     /** Acceptable document versions. */
@@ -17,16 +17,14 @@ export function parseOpenapiDocument<V extends OpenapiVersion = OpenapiVersion>(
   }
 ): OpenapiDocuments[V] {
   const doc = YAML.parse(arg);
-  assertIsOpenapiDocument<V>(doc, opts);
+  assertIsOpenapiDocument(doc, opts);
   return doc;
 }
 
 const SchemaValidator = validation.default ?? validation; // Hack.
 
 /** Checks that the input argument is a valid OpenAPI document. */
-export function assertIsOpenapiDocument<
-  V extends OpenapiVersion = OpenapiVersion
->(
+export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   arg: unknown,
   opts?: {
     /** Acceptable document versions. */
