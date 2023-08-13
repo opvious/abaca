@@ -1,7 +1,7 @@
-<p align="center">
+<div align="center">
   <img src="resources/images/logo.png" width="200" stype="margin: 2em;"/>
   <em>Light on boilerplate, strong on type safety</em>
-</p>
+</div>
 
 ## Features
 
@@ -10,6 +10,14 @@
 + Supports custom `fetch` implementations, arbitrary content-types, and
   streaming
 + Provides Koa-compatible server routing and proxy utilities
+
+## Packages
+
++ [`abaca`](/packages/abaca), client SDK generator CLI
++ [`abaca-koa`](/packages/abaca-koa), server routing and proxying utilities
++ [`abaca-openapi`](/packages/abaca-openapi), OpenAPI utilities (specification
+  parsing, schema validation, etc.)
++ [`abaca-runtime`](/packages/abaca-runtime), shared functionality
 
 ## Developing
 
