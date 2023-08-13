@@ -29,25 +29,30 @@ function formatValidationIssue(i: DocumentValidationIssue): string {
   return `[${i.instancePath}] ${i.message}`;
 }
 
+/** All supported OpenAPI versions */
+export const openapiVersions = ['2.0', '3.0', '3.1'] as const;
+
+/** Available OpenAPI version type */
+export type OpenapiVersion = keyof OpenapiDocuments;
+
+// Not using a symbol for interoperability with compatible library versions.
 const documentTag = 'yasdk-openapi:documentTag+v1';
 
 /**
- * An error code with attached type information about the error's tags. This
- * information can be picked up during retrieval (e.g. `isStandardError`) to
- * make the type of matching error's tags as specific as possible.
+ * An OpenAPI document with optional (virtual) type information about its
+ * component schemas. This information can be picked up by other utilities, for
+ * example schema compatibility checks.
  */
 export type TaggedDocument<D, S> = DeepReadonly<D> & {
   readonly [documentTag]: S;
 };
 
+/** All supported OpenAPI document types, by version */
 export interface OpenapiDocuments<S = any> {
   '2.0': TaggedDocument<OpenAPIV2.Document, S>;
   '3.0': TaggedDocument<OpenAPIV3.Document, S>;
   '3.1': TaggedDocument<OpenAPIV3_1.Document, S>;
 }
 
-export type OpenapiVersion = keyof OpenapiDocuments;
-
+/** Version-generic OpenAPI document */
 export type OpenapiDocument<S = any> = OpenapiDocuments<S>[OpenapiVersion];
-
-export const openapiVersions = ['2.0', '3.0', '3.1'] as const;
