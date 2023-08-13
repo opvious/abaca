@@ -1,13 +1,13 @@
 {
   "name": "abaca-runtime",
-  "version": "0.4.2",
-  "repository": "github:mtth/abaca",
-  "description": "abaca runtime utilities",
+  "version": "0.4.3",
+  "repository": "github:opvious/abaca",
+  "description": "Abaca runtime utilities",
   "keywords": [
     "abaca"
   ],
-  "author": "Matthieu Monsch <mtth@apache.org>",
-  "license": "MIT",
+  "author": "Opvious Engineering <oss@opvious.io>",
+  "license": "Apache-2.0",
   "type": "module",
   "files": [
     "lib/"

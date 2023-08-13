@@ -1,10 +1,10 @@
 {
   "name": "@opvious/abaca-packages",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": true,
-  "repository": "github:mtth/abaca",
-  "author": "Matthieu Monsch <mtth@apache.org>",
-  "license": "MIT",
+  "repository": "github:opvious/abaca",
+  "author": "Opvious Engineering <oss@opvious.io>",
+  "license": "Apache-2.0",
   "scripts": {
     "bump": "pnpm -r --include-workspace-root exec npm version ${BUMP:-patch}",
     "clean": "pnpm -r -F !. run clean && rm -rf node_modules out",

@@ -1,17 +1,19 @@
-# Abaca
-
 <div align="center">
-  <img src="resources/images/logo.png" style="height: 400px; margin: 2em;"/>
+  <img src="resources/images/logo.png" style="height: 200px; margin: 2em;"/>
+  <p>
+    <em>Light on boilerplate, strong on type safety</em>
+  </p>
 </div>
 
-## Why?
+## Features
 
-+ Concise API with (very) strong typing guarantees
-+ Dependency-free single-file generated SDK (less than 2kB)
-+ Pluggable `fetch` implementation, without patching the global object
-+ Customizable codecs, including wildcard support
++ Boilerplate-free APIs with (very) strong typing guarantees
++ Support for arbitrary content-types and streaming
++ Tiny, dependency-free, single-file generated client SDKs with customizable
+  `fetch` implementation
++ Concise server SDKs via Koa routing and proxy utilities
 
-## Typings overview
+## Client typings overview
 
 `abaca` checks request types and narrows response types extensively:
 
