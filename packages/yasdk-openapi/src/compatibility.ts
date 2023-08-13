@@ -29,27 +29,32 @@ export const errorCodes = codes;
  *
  * Sample usage:
  *
- *    const {isOutline} = schemaCompatibilityPredicates<Schemas>(doc);
+ *    const {isOutline} = schemaCompatibilityPredicates<Schemas>({document});
  *    isOutline(arg); // Predicate
  *    assertValue(isOutline, arg); // Assertion
  */
 export function schemaCompatibilityPredicates<
   S,
-  N extends keyof S & string = keyof S & string
->(
-  doc: OpenapiDocument,
-  opts?: {
-    /**
-     * Schema names for which to generate predicates. By default all schemas are
-     * used.
-     */
-    readonly names?: ReadonlyArray<N>;
-  }
-): CompatibilityPredicatesFor<S, N> {
+  N extends keyof S & string
+>(args: {
+  readonly document: OpenapiDocument<S>;
+  /**
+   * Schema names for which to generate predicates. By default all schemas are
+   * used.
+   */
+  readonly names?: ReadonlyArray<N>;
+}): CompatibilityPredicatesFor<S, N> {
+  const doc = args.document;
   const checker = RealSchemaCompatibilityChecker.create<S>(doc);
-  const names: any =
-    opts?.names ?? Object.keys((doc as any).components.schemas);
+  const names: any = args.names ?? Object.keys(documentSchemas(doc));
   return checker.predicates(names);
+}
+
+function documentSchemas(doc: any): {readonly [name: string]: any} {
+  const version = doc.openapi;
+  return (
+    (version?.startsWith('2') ? doc.definitions : doc.components?.schemas) ?? {}
+  );
 }
 
 /** Schema validator factory. */
@@ -98,7 +103,7 @@ class RealSchemaCompatibilityChecker<S>
   private validator(name: string): ValidateFunction {
     let fn = this.ajv.getSchema(name);
     if (!fn) {
-      const schema = (this.document as any).components.schemas[name];
+      const schema = documentSchemas(this.document)[name];
       this.ajv.addSchema(schema, name);
       fn = this.ajv.getSchema(name);
       assert(fn, 'Missing validation function for %s', name);

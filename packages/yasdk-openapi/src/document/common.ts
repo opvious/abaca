@@ -29,14 +29,30 @@ function formatValidationIssue(i: DocumentValidationIssue): string {
   return `[${i.instancePath}] ${i.message}`;
 }
 
-export interface OpenapiDocuments {
-  '2.0': DeepReadonly<OpenAPIV2.Document>;
-  '3.0': DeepReadonly<OpenAPIV3.Document>;
-  '3.1': DeepReadonly<OpenAPIV3_1.Document>;
-}
+/** All supported OpenAPI versions */
+export const openapiVersions = ['2.0', '3.0', '3.1'] as const;
 
+/** Available OpenAPI version type */
 export type OpenapiVersion = keyof OpenapiDocuments;
 
-export type OpenapiDocument = OpenapiDocuments[OpenapiVersion];
+// Not using a symbol for interoperability with compatible library versions.
+const documentTag = 'yasdk-openapi:documentTag+v1';
 
-export const openapiVersions = ['2.0', '3.0', '3.1'] as const;
+/**
+ * An OpenAPI document with optional (virtual) type information about its
+ * component schemas. This information can be picked up by other utilities, for
+ * example schema compatibility checks.
+ */
+export type TaggedDocument<D, S> = DeepReadonly<D> & {
+  readonly [documentTag]: S;
+};
+
+/** All supported OpenAPI document types, by version */
+export interface OpenapiDocuments<S = any> {
+  '2.0': TaggedDocument<OpenAPIV2.Document, S>;
+  '3.0': TaggedDocument<OpenAPIV3.Document, S>;
+  '3.1': TaggedDocument<OpenAPIV3_1.Document, S>;
+}
+
+/** Version-generic OpenAPI document */
+export type OpenapiDocument<S = any> = OpenapiDocuments<S>[OpenapiVersion];
