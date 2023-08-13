@@ -1,0 +1,43 @@
+{
+  "name": "abaca-openapi",
+  "version": "0.4.3",
+  "repository": "github:opvious/abaca",
+  "description": "Abaca OpenAPI utilities",
+  "keywords": [
+    "openapi",
+    "abaca"
+  ],
+  "author": "Opvious Engineering <oss@opvious.io>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "lib/"
+  ],
+  "exports": {
+    ".": "./lib/index.js",
+    "./errors": "./lib/index.errors.js"
+  },
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out",
+    "fix": "prettier --write",
+    "prepare": "pnpm run build",
+    "test": "vitest",
+    "watch": "tsc -b -w src"
+  },
+  "dependencies": {
+    "@opvious/stl-errors": "^0.21.38",
+    "@opvious/stl-utils": "^0.21.38",
+    "@stoplight/json-ref-resolver": "^3.1.5",
+    "ajv": "^8.12.0",
+    "openapi-schema-validator": "^12.1.0",
+    "openapi-types": "^12.1.0",
+    "urijs": "^1.19.11",
+    "yaml": "^2.3.1",
+    "abaca-runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/urijs": "^1.19.19",
+    "ts-essentials": "^9.3.0"
+  }
+}

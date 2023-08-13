@@ -1,0 +1,51 @@
+{
+  "name": "abaca",
+  "version": "0.4.3",
+  "repository": "github:opvious/abaca",
+  "description": "Boilerplate-free type-safe OpenAPI SDKs",
+  "keywords": [
+    "abaca"
+  ],
+  "author": "Opvious Engineering <oss@opvious.io>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "bin/",
+    "lib/command/",
+    "lib/index.d.ts",
+    "lib/index.js",
+    "resources/preamble/index.gen.ts"
+  ],
+  "bin": "bin/abaca.js",
+  "exports": {},
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
+    "fix": "prettier --write",
+    "gen-preamble": "./scripts/assemble-preamble",
+    "gen-test-pets": "./bin/abaca.js g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
+    "gen-test-tables": "./bin/abaca.js g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
+    "prepare": "pnpm run gen-preamble && pnpm run build && inlinable e",
+    "test": "pnpm run gen-test && vitest",
+    "watch": "tsc -b -w src test"
+  },
+  "dependencies": {
+    "@opvious/stl-errors": "^0.21.38",
+    "@opvious/stl-utils": "^0.21.38",
+    "commander": "^10.0.0",
+    "openapi-typescript": "^6.2.0",
+    "yaml": "^2.3.1",
+    "abaca-openapi": "workspace:*",
+    "abaca-runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@koa/router": "^10.1.1",
+    "@types/koa": "^2.13.1",
+    "@types/koa__router": "^8.0.11",
+    "inlinable": "^0.2.6",
+    "koa": "^2.13.1",
+    "koa-body": "^6.0.1",
+    "node-fetch": "^3.3.1"
+  }
+}

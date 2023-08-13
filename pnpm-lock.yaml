@@ -45,7 +45,7 @@ importers:
         specifier: ^0.34.1
         version: 0.34.1
 
-  packages/yasdk:
+  packages/abaca:
     dependencies:
       '@opvious/stl-errors':
         specifier: ^0.21.38
@@ -62,12 +62,12 @@ importers:
       yaml:
         specifier: ^2.3.1
         version: 2.3.1
-      yasdk-openapi:
+      abaca-openapi:
         specifier: workspace:*
-        version: link:../yasdk-openapi
-      yasdk-runtime:
+        version: link:../abaca-openapi
+      abaca-runtime:
         specifier: workspace:*
-        version: link:../yasdk-runtime
+        version: link:../abaca-runtime
     devDependencies:
       '@koa/router':
         specifier: ^10.1.1
@@ -91,7 +91,7 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
 
-  packages/yasdk-koa:
+  packages/abaca-koa:
     dependencies:
       '@koa/router':
         specifier: ^10.1.1
@@ -126,12 +126,12 @@ importers:
       yaml:
         specifier: ^2.3.1
         version: 2.3.1
-      yasdk-openapi:
+      abaca-openapi:
         specifier: workspace:*
-        version: link:../yasdk-openapi
-      yasdk-runtime:
+        version: link:../abaca-openapi
+      abaca-runtime:
         specifier: workspace:*
-        version: link:../yasdk-runtime
+        version: link:../abaca-runtime
     devDependencies:
       '@types/co-body':
         specifier: ^6.1.0
@@ -163,11 +163,11 @@ importers:
       node-fetch:
         specifier: ^3.3.1
         version: 3.3.1
-      yasdk:
+      abaca:
         specifier: workspace:*
-        version: link:../yasdk
+        version: link:../abaca
 
-  packages/yasdk-openapi:
+  packages/abaca-openapi:
     dependencies:
       '@opvious/stl-errors':
         specifier: ^0.21.38
@@ -193,9 +193,9 @@ importers:
       yaml:
         specifier: ^2.3.1
         version: 2.3.1
-      yasdk-runtime:
+      abaca-runtime:
         specifier: workspace:*
-        version: link:../yasdk-runtime
+        version: link:../abaca-runtime
     devDependencies:
       '@types/urijs':
         specifier: ^1.19.19
@@ -204,7 +204,7 @@ importers:
         specifier: ^9.3.0
         version: 9.3.0(typescript@5.1.6)
 
-  packages/yasdk-runtime: {}
+  packages/abaca-runtime: {}
 
 packages:
 

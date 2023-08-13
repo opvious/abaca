@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -o nounset
+set -o errexit
+set -o pipefail
+shopt -s nullglob
+
+__dirname="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+preamble_imports="$__dirname/../../abaca-runtime/src"
+
+preamble_contents="$__dirname/../src/preamble.ts"
+
+main() {
+  local dst="$__dirname/../resources/preamble/index.gen.ts"
+  cat \
+      "$preamble_imports/common.ts" \
+      "$preamble_imports/operations.ts" \
+      "$preamble_imports/mime-types.ts" \
+      "$preamble_imports/options.ts" \
+      "$preamble_contents" \
+    | sed -E \
+      -e '/^import \{$/,/^\} from/d' \
+      -e '/^import /d' \
+      -e 's/^export //g' \
+      >"$dst"
+}
+
+main "$@"

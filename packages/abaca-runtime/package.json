@@ -1,0 +1,24 @@
+{
+  "name": "abaca-runtime",
+  "version": "0.4.3",
+  "repository": "github:opvious/abaca",
+  "description": "Abaca runtime utilities",
+  "keywords": [
+    "abaca"
+  ],
+  "author": "Opvious Engineering <oss@opvious.io>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "lib/"
+  ],
+  "exports": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out",
+    "fix": "prettier --write",
+    "prepare": "pnpm run build",
+    "watch": "tsc -b -w src"
+  }
+}
