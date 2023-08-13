@@ -1,0 +1,60 @@
+{
+  "name": "abaca-koa",
+  "version": "0.4.2",
+  "repository": "github:mtth/abaca",
+  "description": "abaca OpenAPI utilities",
+  "keywords": [
+    "koa",
+    "openapi",
+    "abaca"
+  ],
+  "author": "Matthieu Monsch <mtth@apache.org>",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "lib/"
+  ],
+  "exports": {
+    ".": "./lib/index.js",
+    "./errors": "./lib/index.errors.js"
+  },
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
+    "fix": "prettier --write",
+    "gen-test-pets": "abaca g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
+    "gen-test-tables": "abaca g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
+    "prepare": "pnpm run build && inlinable e",
+    "test": "pnpm run gen-test && vitest",
+    "watch": "tsc -b -w src"
+  },
+  "dependencies": {
+    "@koa/router": "^10.1.1",
+    "@opentelemetry/api": "~1.4.1",
+    "@opvious/stl-errors": "^0.21.38",
+    "@opvious/stl-telemetry": "^0.21.38",
+    "@opvious/stl-utils": "^0.21.38",
+    "ajv": "^8.12.0",
+    "co-body": "^6.1.0",
+    "http-proxy": "^1.18.1",
+    "koa-compose": "^4.1.0",
+    "openapi-types": "^12.1.0",
+    "yaml": "^2.3.1",
+    "abaca-openapi": "workspace:*",
+    "abaca-runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/co-body": "^6.1.0",
+    "@types/http-proxy": "^1.17.10",
+    "@types/koa": "^2.13.1",
+    "@types/koa-compose": "^3.2.5",
+    "@types/koa__router": "^8.0.11",
+    "inlinable": "^0.2.6",
+    "json-text-sequence": "^1.0.1",
+    "koa": "^2.13.1",
+    "koa-body": "^6.0.1",
+    "node-fetch": "^3.3.1",
+    "abaca": "workspace:*"
+  }
+}

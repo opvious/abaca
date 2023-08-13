@@ -1,6 +1,8 @@
-# YASDK
+# Abaca
 
-Yet another TypeScript OpenAPI SDK generator
+<div align="center">
+  <img src="resources/images/logo.png" style="height: 400px; margin: 2em;"/>
+</div>
 
 ## Why?
 
@@ -11,7 +13,7 @@ Yet another TypeScript OpenAPI SDK generator
 
 ## Typings overview
 
-`yasdk` checks request types and narrows response types extensively:
+`abaca` checks request types and narrows response types extensively:
 
 ```typescript
 const res = await sdk.doSomething({
@@ -92,7 +94,7 @@ follows:
 
 ### Request body type inference
 
-`yasdk` automatically type checks each request's body against its
+`abaca` automatically type checks each request's body against its
 `'content-type'` header. In the common case where the header is omitted, the
 SDK's default is used (`application/json`, unless overridden at creation time):
 
@@ -127,7 +129,7 @@ await sdk.uploadTable({
 
 ### Response type inference
 
-`yasdk` automatically narrows the types of responses according to the request's
+`abaca` automatically narrows the types of responses according to the request's
 `'accept'` header and response code. When the header is omitted, it uses the
 SDK's default (similar to request typing above):
 

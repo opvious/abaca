@@ -1,1 +1,0 @@
-# YASDK runtime utilities

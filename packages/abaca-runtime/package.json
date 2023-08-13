@@ -1,0 +1,24 @@
+{
+  "name": "abaca-runtime",
+  "version": "0.4.2",
+  "repository": "github:mtth/abaca",
+  "description": "abaca runtime utilities",
+  "keywords": [
+    "abaca"
+  ],
+  "author": "Matthieu Monsch <mtth@apache.org>",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "lib/"
+  ],
+  "exports": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out",
+    "fix": "prettier --write",
+    "prepare": "pnpm run build",
+    "watch": "tsc -b -w src"
+  }
+}
