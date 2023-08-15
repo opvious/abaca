@@ -9,8 +9,9 @@ boilerplate.
 
 + Exports tiny, dependency-free, single-file client SDKs
 + Supports custom `fetch` implementations, arbitrary content-types, streaming,
-  and more - all in a type-safe manner
+  and more
 + Provides [Koa][] integrations for server routing and proxying
+
 
 ## Examples
 
@@ -34,6 +35,8 @@ boilerplate.
 + https://github.com/ajaishankar/openapi-typescript-fetch
 + https://github.com/ferdikoomen/openapi-typescript-codegen
 + https://github.com/oazapfts/oazapfts
++ https://github.com/openapitools/openapi-generator
++ https://tools.openapis.org/categories/sdk.html (includes other languages)
 
 
 ## Developing
