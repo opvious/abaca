@@ -14,7 +14,12 @@ import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import path from 'path';
 import YAML from 'yaml';
 
-import {overridingVersion, supportedVersions, writeOutput} from './common.js';
+import {
+  overridingVersion,
+  packageInfo,
+  supportedVersions,
+  writeOutput,
+} from './common.js';
 
 const preambleUrl = new URL(
   '../../resources/preamble/index.gen.ts',
@@ -53,7 +58,8 @@ export function generateCommand(): Command {
         generateValues(doc),
       ]);
       const out = [
-        '// Do not edit, this file was auto-generated\n',
+        '// Do not edit, this file was auto-generated (Abaca ' +
+          `v${packageInfo.version})\n`,
         preambleStr,
         setupStreamingContentTypes(streamingTypes),
         typesStr
