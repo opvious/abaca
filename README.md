@@ -15,7 +15,8 @@ boilerplate.
 ## Packages
 
 + [`abaca`](/packages/abaca), client SDK generator CLI
-+ [`abaca-koa`](/packages/abaca-koa), server routing and proxying library
++ [`abaca-koa`](/packages/abaca-koa), Koa integrations for server routing and
+  proxying
 + [`abaca-openapi`](/packages/abaca-openapi), OpenAPI tools (specification
   parsing, schema validation, etc.)
 + [`abaca-runtime`](/packages/abaca-runtime), shared utilities
