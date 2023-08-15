@@ -102,16 +102,12 @@ components:
           type: integer
         name:
           type: string
-        tag:
-          type: string
     PetInput:
       type: object
       required:
         - name
       properties:
         name:
-          type: string
-        tag:
           type: string
     Pets:
       type: array

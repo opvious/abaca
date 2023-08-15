@@ -6,31 +6,32 @@ async function main(): Promise<void> {
   const sdk = createSdk('http://localhost:8080');
 
   // List initial pets
-  const res1 = await sdk.listPets();
-  if (res1.code !== 200) {
-    throw new Error(res1.data.message); // Error type
+  const listRes = await sdk.listPets();
+  if (listRes.code !== 200) {
+    throw new Error(listRes.data.message);
   }
-  console.log(`Initial pets: ${JSON.stringify(res1.data)}`); // Pet list type
+  console.log(`Initial pet count: ${listRes.data.length}`);
 
   // Create a new pet
-  const res2 = await sdk.createPet({
-    body: {name: 'Fido'}, // Type-checked
-  });
-  if (res2.code !== 201) {
-    throw new Error(res2.data.message);
+  const createRes = await sdk.createPet({body: {name: 'Fido'}});
+  if (createRes.code !== 201) {
+    throw new Error(createRes.data.message);
   }
-  console.log(`Created pet: ${JSON.stringify(res2.data)}`); // Pet type
+  const petId = createRes.data.id;
+  console.log(`Created pet ID: ${petId}`);
 
   // Refetch the newly created pet
-  const res3 = await sdk.showPetById({
-    parameters: {petId: res2.data.id},
-  });
-  if (res3.code === 404) {
-    console.log('Pet not found?'); // Empty body type
-  } else if (res3.code !== 200) {
-    throw new Error(res3.data.message);
+  const showRes = await sdk.showPetById({parameters: {petId}});
+  switch (showRes.code) {
+    case 200:
+      console.log(`Fetched pet named ${showRes.data.name}`);
+      break;
+    case 404:
+      console.log(`Pet ${petId} not found`);
+      break;
+    default:
+      throw new Error(showRes.data.message);
   }
-  console.log(`Fetched pet: ${JSON.stringify(res3.data)}`);
 }
 
 main().catch((err) => {
