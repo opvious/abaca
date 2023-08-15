@@ -2,6 +2,7 @@ import {check} from '@opvious/stl-errors';
 import {localPath, ResourceLoader} from '@opvious/stl-utils/files';
 import parseDataUrl from 'data-urls';
 import path from 'path';
+import YAML from 'yaml';
 
 import * as sut from '../../src/resolvable/index.js';
 
@@ -91,7 +92,8 @@ describe.each<[string, string, unknown]>([
   test('loads resolvable resource', async () => {
     const scoped = loader.scoped('resources/' + folder);
     const {contents} = await scoped.load(root);
-    const got = await sut.resolvingReferences(contents, {
+    const parsed = YAML.parse(contents);
+    const got = await sut.resolvingReferences(parsed, {
       loader: scoped,
       resolvers: {
         data: (url) =>

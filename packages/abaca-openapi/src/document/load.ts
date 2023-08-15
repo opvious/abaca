@@ -9,7 +9,7 @@ import {ifPresent} from '@opvious/stl-utils/functions';
 import {readFile} from 'fs/promises';
 import YAML from 'yaml';
 
-import {ReferenceResolvers,resolvingReferences} from '../resolvable/index.js';
+import {ReferenceResolvers, resolvingReferences} from '../resolvable/index.js';
 import {OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
 
@@ -67,9 +67,18 @@ export async function resolveOpenapiDocument<
     readonly bypassSchemaValidation?: boolean;
   }
 ): Promise<OpenapiDocuments[V]> {
+  const parsed = YAML.parse(data);
+
+  // Also validate before resolving since it will otherwise hide certain errors
+  // (e.g. objects with `$ref` and other properties).
+  assertIsOpenapiDocument(parsed, {
+    versions: opts?.versions,
+    bypassSchemaValidation: opts?.bypassSchemaValidation,
+  });
+
   let refno = 1;
   const embeddings = new Map<string, string>();
-  const resolved = await resolvingReferences(data, {
+  const resolved = await resolvingReferences(parsed, {
     loader: opts?.loader,
     onResolvedReference: (r) => {
       if (r.url.protocol !== 'resource:') {

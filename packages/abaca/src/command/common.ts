@@ -8,6 +8,7 @@ import {
 import {
   LocalPath,
   localPath,
+  localUrl,
   PathLike,
   ResourceLoader,
 } from '@opvious/stl-utils/files';
@@ -31,17 +32,24 @@ import {errors} from './index.errors.js';
 const versions = ['3.0', '3.1'] as const;
 
 export async function resolveDocument(args: {
-  readonly path: PathLike | URL;
+  readonly path: string;
   readonly loaderRoot: PathLike;
   readonly bypassSchemaValidation?: boolean;
 }): Promise<OpenapiDocuments[(typeof versions)[number]]> {
   const loader = ResourceLoader.create({root: args.loaderRoot});
 
+  let url;
+  try {
+    url = new URL(args.path);
+  } catch (_err) {
+    url = localUrl(args.path);
+  }
+
   let data: string;
-  if (args.path instanceof URL && args.path.protocol !== 'file:') {
-    data = await fetchUrl(args.path);
+  if (url.protocol !== 'file:') {
+    data = await fetchUrl(url);
   } else {
-    data = await readFile(localPath(args.path), 'utf8');
+    data = await readFile(localPath(url), 'utf8');
   }
 
   try {

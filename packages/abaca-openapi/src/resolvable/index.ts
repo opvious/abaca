@@ -1,5 +1,5 @@
 import {assert, check} from '@opvious/stl-errors';
-import { ResourceLoader} from '@opvious/stl-utils/files';
+import {ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {mapValues} from '@opvious/stl-utils/objects';
 import {Resolver} from '@stoplight/json-ref-resolver';
@@ -11,7 +11,7 @@ import {errors} from './index.errors.js';
 
 /** Loads and fully resolves a schema */
 export async function resolvingReferences<V = unknown>(
-  data: string,
+  parsed: {readonly [key: string]: unknown},
   opts?: {
     /** Custom resource loader. */
     readonly loader?: ResourceLoader;
@@ -27,7 +27,6 @@ export async function resolvingReferences<V = unknown>(
   }
 ): Promise<V> {
   const loader = opts?.loader ?? ResourceLoader.create();
-  const parsed = YAML.parse(data);
   const rootId = resourceUrl(parsed.$id);
 
   let seqno = 1;
