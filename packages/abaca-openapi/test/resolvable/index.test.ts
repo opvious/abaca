@@ -90,7 +90,8 @@ describe.each<[string, string, unknown]>([
 ])('%s', (folder, root, want) => {
   test('loads resolvable resource', async () => {
     const scoped = loader.scoped('resources/' + folder);
-    const got = await sut.loadResolvable(scoped.localUrl(root), {
+    const {contents} = await scoped.load(root);
+    const got = await sut.resolvingReferences(contents, {
       loader: scoped,
       resolvers: {
         data: (url) =>

@@ -1,6 +1,6 @@
 {
   "name": "abaca-runtime",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "repository": "github:opvious/abaca",
   "description": "Abaca runtime utilities",
   "keywords": [

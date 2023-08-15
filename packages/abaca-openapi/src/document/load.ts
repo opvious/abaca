@@ -1,15 +1,22 @@
 import {assert, unexpected} from '@opvious/stl-errors';
-import {localPath, PathLike, ResourceLoader} from '@opvious/stl-utils/files';
+import {
+  localPath,
+  localUrl,
+  PathLike,
+  ResourceLoader,
+} from '@opvious/stl-utils/files';
+import {ifPresent} from '@opvious/stl-utils/functions';
+import {readFile} from 'fs/promises';
 import YAML from 'yaml';
 
-import {loadResolvable, ReferenceResolvers} from '../resolvable/index.js';
+import {ReferenceResolvers,resolvingReferences} from '../resolvable/index.js';
 import {OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
 
 const DOCUMENT_FILE = 'openapi.yaml';
 
 /**
- * Loads a fully-resolved OpenAPI specification from a local path. Top-level
+ * Loads a fully-resolved OpenAPI specification stored locally. Top-level
  * references can use the `embed=*` search parameter to have all `$defs` in the
  * referenced resource embedded as schemas. All keys starting with `$` are
  * stripped from the final output.
@@ -17,7 +24,10 @@ const DOCUMENT_FILE = 'openapi.yaml';
 export async function loadOpenapiDocument<
   V extends OpenapiVersion = OpenapiVersion
 >(opts?: {
-  /** Defaults to `resources/openapi.yaml` */
+  /**
+   * Resource path, defaults to `resources/openapi.yaml` (from the loader's
+   * root if present).
+   */
   readonly path?: PathLike;
   /** Defaults to a loader for the CWD */
   readonly loader?: ResourceLoader;
@@ -25,15 +35,41 @@ export async function loadOpenapiDocument<
   readonly versions?: ReadonlyArray<V>;
   /** Additional resolvers */
   readonly resolvers?: ReferenceResolvers;
+  /** Bypass schema compatibility check */
+  readonly bypassSchemaValidation?: boolean;
 }): Promise<OpenapiDocuments[V]> {
   const pl =
-    opts?.path ??
-    opts?.loader?.localUrl(DOCUMENT_FILE) ??
+    ifPresent(opts?.path, (pl) => localUrl(pl)) ??
+    ifPresent(opts?.loader, (l) => l.localUrl(DOCUMENT_FILE)) ??
     localPath('resources', DOCUMENT_FILE);
+  const data = await readFile(localPath(pl), 'utf8');
+  return resolveOpenapiDocument(data, opts);
+}
 
+/**
+ * Fully resolves an OpenAPI specification. Top-level references can use the
+ * `embed=*` search parameter to have all `$defs` in the referenced resource
+ * embedded as schemas. All keys starting with `$` are stripped from the final
+ * output.
+ */
+export async function resolveOpenapiDocument<
+  V extends OpenapiVersion = OpenapiVersion
+>(
+  data: string,
+  opts?: {
+    /** Defaults to a loader for the CWD */
+    readonly loader?: ResourceLoader;
+    /** Defaults to all versions */
+    readonly versions?: ReadonlyArray<V>;
+    /** Additional resolvers */
+    readonly resolvers?: ReferenceResolvers;
+    /** Bypass schema compatibility check */
+    readonly bypassSchemaValidation?: boolean;
+  }
+): Promise<OpenapiDocuments[V]> {
   let refno = 1;
   const embeddings = new Map<string, string>();
-  const resolved = await loadResolvable(pl, {
+  const resolved = await resolvingReferences(data, {
     loader: opts?.loader,
     onResolvedReference: (r) => {
       if (r.url.protocol !== 'resource:') {
@@ -97,7 +133,10 @@ export async function loadOpenapiDocument<
     },
   });
   const stripped = doc.toJS();
-  assertIsOpenapiDocument(stripped, {versions: opts?.versions});
+  assertIsOpenapiDocument(stripped, {
+    versions: opts?.versions,
+    bypassSchemaValidation: opts?.bypassSchemaValidation,
+  });
   return stripped;
 }
 

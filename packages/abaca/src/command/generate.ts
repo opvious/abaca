@@ -1,24 +1,19 @@
 import {assert} from '@opvious/stl-errors';
-import {localUrl, ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {commaSeparated} from '@opvious/stl-utils/strings';
-import {
-  extractOperationDefinitions,
-  loadOpenapiDocument,
-  OpenapiDocuments,
-  parseOpenapiDocument,
-} from 'abaca-openapi';
+import {extractOperationDefinitions, OpenapiDocuments} from 'abaca-openapi';
 import {JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
 import {Command} from 'commander';
 import {readFile} from 'fs/promises';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import YAML from 'yaml';
 
+import {packageInfo} from '../common.js';
 import {
-  fetchUrl,
+  contextualAction,
+  newCommand,
   overridingVersion,
-  packageInfo,
-  supportedVersions,
+  resolveDocument,
   writeOutput,
 } from './common.js';
 
@@ -28,70 +23,87 @@ const preambleUrl = new URL(
 );
 
 export function generateCommand(): Command {
-  return new Command()
+  return newCommand()
     .command('generate')
     .alias('g')
-    .description('Generate OpenAPI SDK')
+    .description('generate types and client SDK from an OpenAPI specification')
     .argument('<path|url>', 'path or URL to OpenAPI document (v3.0 or v3.1)')
     .option('-o, --output <path>', 'output file path (default: stdin)')
-    .option(
-      '-d, --document-output <path>',
-      'also output fully-resolved document at the given path'
-    )
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option(
       '-t, --streaming-content-types <types>',
-      'comma-separated list of content-types which contain streamed data',
+      'comma-separated list of content-types which contain streamed data. ' +
+        'request and responses with these types will expect async iterables',
       JSON_SEQ_MIME_TYPE
     )
-    .option('-v, --document-version <version>', 'version override')
-    .action(async (pl, opts) => {
-      const loader = ResourceLoader.create({root: opts.loaderRoot});
-      const url = new URL(pl, localUrl(loader.rootPath));
+    .option(
+      '-d, --document-output <path>',
+      'also output a consolidated and fully-resolved document at this path. ' +
+        'this document is equivalent to the input and easier to export'
+    )
+    .option(
+      '-v, --document-version <version>',
+      'version override used in the consolidated document. only applicable ' +
+        'if the `--document-output` option is used'
+    )
+    .option(
+      '--bypass-schema-validation',
+      'bypass OpenAPI specification schema validation. this may cause ' +
+        'unexpected results'
+    )
+    .action(
+      contextualAction(async function (pl, opts) {
+        const {spinner} = this;
 
-      let doc: OpenapiDocuments[(typeof supportedVersions)[number]];
-      if (url.protocol !== 'file:') {
-        const text = await fetchUrl(url);
-        doc = parseOpenapiDocument(text, {versions: supportedVersions});
-      } else {
-        doc = await loadOpenapiDocument({
-          path: url,
-          loader,
-          versions: supportedVersions,
+        spinner.start('Loading document...');
+        const doc = await resolveDocument({
+          path: pl,
+          loaderRoot: opts.loaderRoot,
+          bypassSchemaValidation: opts.bypassSchemaValidation,
         });
-      }
+        spinner.succeed('Loaded document.');
 
-      const streamingTypes = commaSeparated(opts.streamingContentTypes);
-      const [preambleStr, typesStr, valuesStr] = await Promise.all([
-        readFile(preambleUrl, 'utf8'),
-        generateTypes(doc, streamingTypes),
-        generateValues(doc),
-      ]);
-      const out = [
-        '// Do not edit, this file was auto-generated (Abaca ' +
-          `v${packageInfo.version})\n`,
-        preambleStr,
-        setupStreamingContentTypes(streamingTypes),
-        typesStr
-          .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
-          .replace(/export /g, ''),
-        valuesStr,
-      ].join('\n');
-      if (opts.documentOutput) {
-        await writeOutput(
-          opts.documentOutput,
-          YAML.stringify(
-            ifPresent(opts.documentVersion, (v) => overridingVersion(doc, v)) ??
-              doc
-          )
-        );
-      }
-      if (opts.output) {
-        await writeOutput(opts.output, out);
-      } else {
-        console.log(out);
-      }
-    });
+        spinner.start('Generating types...');
+        const streamingTypes = commaSeparated(opts.streamingContentTypes);
+        const [preambleStr, typesStr, valuesStr] = await Promise.all([
+          readFile(preambleUrl, 'utf8'),
+          generateTypes(doc, streamingTypes),
+          generateValues(doc),
+        ]);
+        const out = [
+          '// Do not edit, this file was auto-generated (Abaca ' +
+            `v${packageInfo.version})\n`,
+          preambleStr,
+          setupStreamingContentTypes(streamingTypes),
+          typesStr
+            .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
+            .replace(/export /g, ''),
+          valuesStr,
+        ].join('\n');
+        spinner.succeed('Generated types.');
+
+        if (opts.documentOutput) {
+          spinner.start('Saving consolidated document...');
+          await writeOutput(
+            opts.documentOutput,
+            YAML.stringify(
+              ifPresent(opts.documentVersion, (v) =>
+                overridingVersion(doc, v)
+              ) ?? doc
+            )
+          );
+          spinner.succeed('Saved consolidated document.');
+        }
+        if (opts.output) {
+          spinner.start('Saving SDK...');
+          await writeOutput(opts.output, out);
+          spinner.succeed('Saved SDK.');
+        } else {
+          spinner.succeed('Printing SDK to stdout.');
+          console.log(out);
+        }
+      })
+    );
 }
 
 function setupStreamingContentTypes(stypes: ReadonlyArray<string>): string {

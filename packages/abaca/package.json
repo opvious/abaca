@@ -1,6 +1,6 @@
 {
   "name": "abaca",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "repository": "github:opvious/abaca",
   "description": "Boilerplate-free type-safe OpenAPI SDKs",
   "keywords": [
@@ -31,6 +31,7 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
+    "@opvious/stl-bootstrap": "^0.21.38",
     "@opvious/stl-errors": "^0.21.38",
     "@opvious/stl-utils": "^0.21.38",
     "abaca-openapi": "workspace:*",
@@ -38,6 +39,7 @@
     "commander": "^10.0.0",
     "node-fetch": "^3.3.1",
     "openapi-typescript": "^6.2.0",
+    "ora": "^7.0.1",
     "yaml": "^2.3.1"
   },
   "devDependencies": {
@@ -46,6 +48,7 @@
     "@types/koa__router": "^8.0.11",
     "inlinable": "^0.2.6",
     "koa": "^2.13.1",
-    "koa-body": "^6.0.1"
+    "koa-body": "^6.0.1",
+    "ts-essentials": "^9.3.0"
   }
 }
