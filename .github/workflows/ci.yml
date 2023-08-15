@@ -88,6 +88,6 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
       - name: Publish
-        run: pnpm -r exec pnpm publish
+        run: pnpm -r -F '!abaca-example-*' exec pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
