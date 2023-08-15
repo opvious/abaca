@@ -8,9 +8,16 @@ An [OpenAPI][] SDK generator with (very) strong typing guarantees and minimal
 boilerplate.
 
 + Exports tiny, dependency-free, single-file client SDKs
-+ Provides [Koa][]-compatible server routing and proxying functionality
-+ Supports custom `fetch` implementations, arbitrary content-types, and
-  streaming
++ Supports custom `fetch` implementations, arbitrary content-types, streaming,
+  and more - all in a type-safe manner
++ Provides [Koa][] integrations for server routing and proxying
+
+## Examples
+
++ [Simple JSON API](/examples/json)
++ [Streaming API (client-side, server-side, and
+  bi-directional)](/examples/streaming)
+
 
 ## Packages
 
@@ -21,11 +28,13 @@ boilerplate.
   parsing, schema validation, etc.)
 + [`abaca-runtime`](/packages/abaca-runtime), shared utilities
 
+
 ## Alternatives
 
 + https://github.com/ajaishankar/openapi-typescript-fetch
 + https://github.com/ferdikoomen/openapi-typescript-codegen
 + https://github.com/oazapfts/oazapfts
+
 
 ## Developing
 
