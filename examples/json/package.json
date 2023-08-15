@@ -23,12 +23,12 @@
   },
   "dependencies": {
     "abaca-koa": "workspace:*",
-    "abaca-openapi": "workspace:*",
-    "koa": "^2.13.1"
+    "abaca-openapi": "workspace:*"
   },
   "devDependencies": {
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
-    "abaca": "workspace:*"
+    "abaca": "workspace:*",
+    "koa": "^2.13.1"
   }
 }
