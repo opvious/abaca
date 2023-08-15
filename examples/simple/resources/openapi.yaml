@@ -2,16 +2,12 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Swagger Petstore
-  license:
-    name: MIT
+  title: Petstore
 paths:
   /pets:
     get:
       summary: List all pets
       operationId: listPets
-      tags:
-        - pets
       parameters:
         - name: limit
           in: query
@@ -23,26 +19,15 @@ paths:
       responses:
         '200':
           description: A paged array of pets
-          headers:
-            x-next:
-              description: A link to the next page of responses
-              schema:
-                type: string
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pets"
         default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
     post:
       summary: Create a pet
       operationId: createPet
-      tags:
-        - pets
       requestBody:
         required: true
         content:
@@ -57,17 +42,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pet'
         default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
   /pets/{petId}:
     get:
       summary: Info for a specific pet
       operationId: showPetById
-      tags:
-        - pets
       parameters:
         - name: petId
           in: path
@@ -85,12 +64,15 @@ paths:
         '404':
           description: Pet not found
         default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 components:
+  responses:
+    Error:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     Pet:
       type: object
