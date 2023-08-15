@@ -21,7 +21,7 @@ describe('schema compatibility predicates', () => {
 
   beforeAll(async () => {
     const doc: OpenapiDocument<Schemas> = await loadOpenapiDocument({
-      path: 'pets.openapi.yaml',
+      path: loader.localUrl('pets.openapi.yaml'),
       loader,
     });
     predicates = sut.schemaCompatibilityPredicates({document: doc});

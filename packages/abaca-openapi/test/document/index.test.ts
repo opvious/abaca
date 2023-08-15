@@ -1,5 +1,5 @@
 import {fail} from '@opvious/stl-errors';
-import {ResourceLoader} from '@opvious/stl-utils/files';
+import { ResourceLoader} from '@opvious/stl-utils/files';
 
 import codes from '../../src/document/index.errors.js';
 import * as sut from '../../src/document/index.js';
@@ -13,14 +13,14 @@ describe('load OpenAPI document', () => {
       'petstore.openapi.json',
       'tables.openapi.yaml',
     ])('%s', async (name) => {
-      await sut.loadOpenapiDocument({path: name, loader});
+      await sut.loadOpenapiDocument({path: loader.localUrl(name), loader});
     });
   });
 
   test('unexpected version', async () => {
     try {
       await sut.loadOpenapiDocument({
-        path: 'pets.openapi.yaml',
+        path: loader.localUrl('pets.openapi.yaml'),
         loader,
         versions: ['2.0'],
       });
@@ -32,7 +32,10 @@ describe('load OpenAPI document', () => {
 
   test('invalid document', async () => {
     try {
-      await sut.loadOpenapiDocument({path: 'invalid.openapi.yaml', loader});
+      await sut.loadOpenapiDocument({
+        path: loader.localUrl('invalid.openapi.yaml'),
+        loader,
+      });
       fail();
     } catch (err) {
       expect(err).toMatchObject({code: codes.InvalidDocument});
@@ -41,7 +44,6 @@ describe('load OpenAPI document', () => {
 
   test('embeds definitions', async () => {
     const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
-      path: 'openapi.yaml',
       loader: loader.scoped('document/resources/embedded'),
       versions: ['3.0'],
     });
