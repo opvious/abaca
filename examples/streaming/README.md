@@ -1,4 +1,4 @@
-# Streaming Abaca example
+# Streaming example
 
 This example shows how to implement streaming (client-side, server-side, and
 bi-directional) using Abaca and [JSON text sequences][json-seq].

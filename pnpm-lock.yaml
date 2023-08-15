@@ -45,7 +45,7 @@ importers:
         specifier: ^0.34.1
         version: 0.34.1
 
-  examples/simple:
+  examples/json:
     dependencies:
       abaca-koa:
         specifier: workspace:*

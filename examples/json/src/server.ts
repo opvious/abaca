@@ -1,12 +1,11 @@
 import Router from '@koa/router';
 import {createOperationsRouter} from 'abaca-koa';
 import {loadOpenapiDocument} from 'abaca-openapi';
-import Koa from 'koa';
 
 import {operations, Schema} from './sdk.gen.js';
 
 /** Creates a basic router for the pets API */
-async function petsRouter(): Promise<Router> {
+export async function createRouter(): Promise<Router> {
   // Load OpenAPI specification from resources/ folder
   const document = await loadOpenapiDocument();
 
@@ -15,6 +14,10 @@ async function petsRouter(): Promise<Router> {
   return createOperationsRouter<operations>({
     document,
     handlers: {
+      clearPets: () => {
+        pets.clear();
+        return 204;
+      },
       createPet: (ctx) => {
         const pet = {id: pets.size + 1, ...ctx.request.body};
         pets.set(pet.id, pet);
@@ -31,15 +34,3 @@ async function petsRouter(): Promise<Router> {
     },
   });
 }
-
-/** Runs the pets router on port 8080 */
-async function main(): Promise<void> {
-  const router = await petsRouter();
-  const app = new Koa().use(router.routes());
-  app.listen(8080).on('listening', () => void console.log('Listening...'));
-}
-
-main().catch((err) => {
-  process.exitCode = 1;
-  console.error(err);
-});

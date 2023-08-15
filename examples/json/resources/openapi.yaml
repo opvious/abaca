@@ -43,6 +43,14 @@ paths:
                 $ref: '#/components/schemas/Pet'
         default:
           $ref: "#/components/responses/Error"
+    delete:
+      summary: Clear all stored pets
+      operationId: clearPets
+      responses:
+        '204':
+          description: Pets cleared
+        default:
+          $ref: "#/components/responses/Error"
   /pets/{petId}:
     get:
       summary: Info for a specific pet
