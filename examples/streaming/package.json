@@ -1,9 +1,9 @@
 {
-  "name": "abaca-example-simple",
+  "name": "abaca-example-streaming",
   "private": true,
   "version": "0.0.0",
   "repository": "github:opvious/abaca",
-  "description": "Simple example using Abaca",
+  "description": "Streaming example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
   "license": "Apache-2.0",
   "type": "module",
@@ -11,26 +11,26 @@
     "lib/",
     "resources/"
   ],
-  "exports": {
-    "./client": "./lib/client.js",
-    "./server": "./lib/server.js"
-  },
+  "exports": "./lib/index.js",
   "scripts": {
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
     "gen": "abaca g resources/openapi.yaml -o src/sdk.gen.ts",
     "prepare": "pnpm run gen && pnpm run build",
+    "test": "vitest",
     "watch": "tsc -b -w src"
   },
   "dependencies": {
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*",
-    "koa": "^2.13.1"
+    "json-text-sequence": "^1.0.1",
+    "node-fetch": "^3.3.1"
   },
   "devDependencies": {
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
-    "abaca": "workspace:*"
+    "abaca": "workspace:*",
+    "koa": "^2.13.1"
   }
 }
