@@ -30,12 +30,7 @@ jobs:
       - name: Lint
         run: pnpm run lint
       - name: Test
-        run: |
-          ls examples/json/node_modules/
-          ls examples/json/node_modules/
-          ls packages/abaca-koa//node_modules/
-          ls examples/json/node_modules/koa
-          pnpm t
+        run: pnpm t
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:

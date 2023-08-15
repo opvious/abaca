@@ -1,6 +1,6 @@
 import events from 'events';
 import http from 'http';
-import Koa from 'Koa';
+import Koa from 'koa';
 import {setTimeout} from 'timers/promises';
 
 import {
