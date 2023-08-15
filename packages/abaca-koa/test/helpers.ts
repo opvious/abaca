@@ -23,5 +23,5 @@ export function serverAddress(server: http.Server): string {
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
 
 export function loadResourceDocument(name: string): Promise<OpenapiDocument> {
-  return loadOpenapiDocument({path: name, loader});
+  return loadOpenapiDocument({path: loader.localUrl(name), loader});
 }

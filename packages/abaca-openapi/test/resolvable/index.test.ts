@@ -1,4 +1,6 @@
+import {check} from '@opvious/stl-errors';
 import {localPath, ResourceLoader} from '@opvious/stl-utils/files';
+import parseDataUrl from 'data-urls';
 import path from 'path';
 
 import * as sut from '../../src/resolvable/index.js';
@@ -73,10 +75,27 @@ describe.each<[string, string, unknown]>([
     },
   ],
   ['simple', 'openapi.yaml', {openapi: '3.0.0', paths: {}}],
+  [
+    'data-resolver',
+    'root.yaml',
+    {
+      $id: 'resource://root/root.yaml',
+      components: {
+        schemas: {
+          House: {type: 'string'},
+        },
+      },
+    },
+  ],
 ])('%s', (folder, root, want) => {
   test('loads resolvable resource', async () => {
-    const got = await sut.loadResolvableResource(root, {
-      loader: loader.scoped('resources/' + folder),
+    const scoped = loader.scoped('resources/' + folder);
+    const got = await sut.loadResolvable(scoped.localUrl(root), {
+      loader: scoped,
+      resolvers: {
+        data: (url) =>
+          Buffer.from(check.isPresent(parseDataUrl('' + url)).body).toString(),
+      },
     });
     expect(got).toEqual(want);
   });

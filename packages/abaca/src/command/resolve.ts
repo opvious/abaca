@@ -1,8 +1,7 @@
 import {ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {assertIsOpenapiDocument, loadResolvableResource} from 'abaca-openapi';
+import {assertIsOpenapiDocument, loadResolvable} from 'abaca-openapi';
 import {Command} from 'commander';
-import path from 'path';
 import YAML from 'yaml';
 
 import {overridingVersion, supportedVersions, writeOutput} from './common.js';
@@ -17,8 +16,8 @@ export function resolveCommand(): Command {
     .option('-s, --skip-validation', 'skip schema validation')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option('-v, --document-version <version>', 'version override')
-    .action(async (pp, opts) => {
-      const doc: any = await loadResolvableResource(path.resolve(pp), {
+    .action(async (pl, opts) => {
+      const doc: any = await loadResolvable(pl, {
         loader: ResourceLoader.create({root: opts.loaderRoot}),
       });
       if (!opts.skipValidation) {

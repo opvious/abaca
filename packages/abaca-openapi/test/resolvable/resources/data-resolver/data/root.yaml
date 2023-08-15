@@ -1,0 +1,5 @@
+$id: resource://root/root.yaml
+components:
+  schemas:
+    House:
+      $ref: data:text/plain;base64,eyJ0eXBlIjoic3RyaW5nIn0K

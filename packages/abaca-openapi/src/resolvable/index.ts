@@ -1,18 +1,27 @@
 import {assert, check} from '@opvious/stl-errors';
-import {PosixPath, ResourceLoader} from '@opvious/stl-utils/files';
+import {localUrl, PathLike, ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
+import {mapValues} from '@opvious/stl-utils/objects';
 import {Resolver} from '@stoplight/json-ref-resolver';
+import {readFile} from 'fs/promises';
+import {AsyncOrSync} from 'ts-essentials';
 import URI from 'urijs'; // Needed because of the resolver library.
 import YAML from 'yaml';
 
 import {errors} from './index.errors.js';
 
-/** Loads and fully resolves a schema. Only `resource:` refs are supported. */
-export async function loadResolvableResource<V = unknown>(
-  pp: PosixPath,
+/** Loads and fully resolves a schema */
+export async function loadResolvable<V = unknown>(
+  pl: PathLike,
   opts?: {
     /** Custom resource loader. */
     readonly loader?: ResourceLoader;
+
+    /**
+     * Additional reference resolvers. By default only `resource` refs are
+     * supported.
+     */
+    readonly resolvers?: ReferenceResolvers;
 
     /** Optional function called each time a referenced resource is resolved. */
     readonly onResolvedReference?: (r: ResolvedResource) => void;
@@ -20,7 +29,8 @@ export async function loadResolvableResource<V = unknown>(
 ): Promise<V> {
   const loader = opts?.loader ?? ResourceLoader.create({root: process.cwd()});
 
-  const {url: rootUrl, contents} = await loader.load(pp);
+  const rootUrl = localUrl(pl);
+  const contents = await readFile(rootUrl, 'utf8');
   const parsed = YAML.parse(contents);
   const rootId = resourceUrl(parsed.$id);
 
@@ -30,6 +40,9 @@ export async function loadResolvableResource<V = unknown>(
   const resolver = new Resolver({
     dereferenceInline: true,
     resolvers: {
+      ...ifPresent(opts?.resolvers, (r) =>
+        mapValues(r, (fn) => ({resolve: fn}))
+      ),
       resource: {
         resolve: async () => {
           if (!rootId) {
@@ -68,7 +81,16 @@ export async function loadResolvableResource<V = unknown>(
       return new URI('' + target);
     },
     parseResolveResult: async (p) => {
-      assert(p.result === resourceSymbol, 'Unexpected resolution: %j', p);
+      if (p.result !== resourceSymbol) {
+        // Custom resolver, expected to return a YAML string
+        assert(
+          typeof p.result == 'string',
+          'Unexpected resolver result: %j',
+          p.result
+        );
+        return {result: YAML.parse(p.result)};
+      }
+
       const target = resourceUrl(p.targetAuthority);
       assert(target, 'Unexpected target URI:', p.targetAuthority);
 
@@ -95,6 +117,11 @@ export async function loadResolvableResource<V = unknown>(
     throw errors.unresolvableResource(rootUrl, resolved.errors);
   }
   return resolved.result;
+}
+
+/** Resolvers, keyed by scheme (e.g. `http`, `https`) */
+export interface ReferenceResolvers {
+  readonly [scheme: string]: (url: URL) => AsyncOrSync<string>;
 }
 
 export interface ResolvedResource {

@@ -1,33 +1,45 @@
 import {assert, unexpected} from '@opvious/stl-errors';
-import {PosixPath, ResourceLoader} from '@opvious/stl-utils/files';
+import {localPath, PathLike, ResourceLoader} from '@opvious/stl-utils/files';
 import YAML from 'yaml';
 
-import {loadResolvableResource} from '../resolvable/index.js';
+import {loadResolvable, ReferenceResolvers} from '../resolvable/index.js';
 import {OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
 
-/** Default file name for OpenAPI documents. */
-export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
+const DOCUMENT_FILE = 'openapi.yaml';
 
 /**
- * Loads a fully-resolved OpenAPI specification. Top-level references can use
- * the `embed=*` search parameter to have all `$defs` in the referenced resource
- * embedded as schemas. All keys starting with `$` are also stripped.
+ * Loads a fully-resolved OpenAPI specification from a local path. Top-level
+ * references can use the `embed=*` search parameter to have all `$defs` in the
+ * referenced resource embedded as schemas. All keys starting with `$` are
+ * stripped from the final output.
  */
 export async function loadOpenapiDocument<
   V extends OpenapiVersion = OpenapiVersion
 >(opts?: {
-  readonly path?: PosixPath;
+  /** Defaults to `resources/openapi.yaml` */
+  readonly path?: PathLike;
+  /** Defaults to a loader for the CWD */
   readonly loader?: ResourceLoader;
+  /** Defaults to all versions */
   readonly versions?: ReadonlyArray<V>;
+  /** Additional resolvers */
+  readonly resolvers?: ReferenceResolvers;
 }): Promise<OpenapiDocuments[V]> {
-  const pp = opts?.path ?? OPENAPI_DOCUMENT_FILE;
+  const pl =
+    opts?.path ??
+    opts?.loader?.localUrl(DOCUMENT_FILE) ??
+    localPath('resources', DOCUMENT_FILE);
 
   let refno = 1;
   const embeddings = new Map<string, string>();
-  const resolved = await loadResolvableResource(pp, {
+  const resolved = await loadResolvable(pl, {
     loader: opts?.loader,
     onResolvedReference: (r) => {
+      if (r.url.protocol !== 'resource:') {
+        return;
+      }
+
       const doc = r.document;
 
       // Generate a unique ID for this reference so we can locate it later.

@@ -1,20 +1,21 @@
 import {assert} from '@opvious/stl-errors';
-import {ResourceLoader} from '@opvious/stl-utils/files';
+import {localUrl, ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {commaSeparated} from '@opvious/stl-utils/strings';
 import {
   extractOperationDefinitions,
   loadOpenapiDocument,
   OpenapiDocuments,
+  parseOpenapiDocument,
 } from 'abaca-openapi';
 import {JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
 import {Command} from 'commander';
 import {readFile} from 'fs/promises';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
-import path from 'path';
 import YAML from 'yaml';
 
 import {
+  fetchUrl,
   overridingVersion,
   packageInfo,
   supportedVersions,
@@ -30,12 +31,12 @@ export function generateCommand(): Command {
   return new Command()
     .command('generate')
     .alias('g')
-    .description('Generate typed OpenAPI SDK')
-    .argument('<path>', 'path to OpenAPI document (v3.0 or v3.1)')
+    .description('Generate OpenAPI SDK')
+    .argument('<path|url>', 'path or URL to OpenAPI document (v3.0 or v3.1)')
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option(
       '-d, --document-output <path>',
-      'also output consolidated document at the given path'
+      'also output fully-resolved document at the given path'
     )
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option(
@@ -44,12 +45,21 @@ export function generateCommand(): Command {
       JSON_SEQ_MIME_TYPE
     )
     .option('-v, --document-version <version>', 'version override')
-    .action(async (pp, opts) => {
-      const doc = await loadOpenapiDocument({
-        path: path.resolve(pp),
-        loader: ResourceLoader.create({root: opts.loaderRoot}),
-        versions: supportedVersions,
-      });
+    .action(async (pl, opts) => {
+      const loader = ResourceLoader.create({root: opts.loaderRoot});
+      const url = new URL(pl, localUrl(loader.rootPath));
+
+      let doc: OpenapiDocuments[(typeof supportedVersions)[number]];
+      if (url.protocol !== 'file:') {
+        const text = await fetchUrl(url);
+        doc = parseOpenapiDocument(text, {versions: supportedVersions});
+      } else {
+        doc = await loadOpenapiDocument({
+          path: url,
+          loader,
+          versions: supportedVersions,
+        });
+      }
 
       const streamingTypes = commaSeparated(opts.streamingContentTypes);
       const [preambleStr, typesStr, valuesStr] = await Promise.all([

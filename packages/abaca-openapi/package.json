@@ -29,15 +29,17 @@
     "@opvious/stl-errors": "^0.21.38",
     "@opvious/stl-utils": "^0.21.38",
     "@stoplight/json-ref-resolver": "^3.1.5",
+    "abaca-runtime": "workspace:*",
     "ajv": "^8.12.0",
     "openapi-schema-validator": "^12.1.0",
     "openapi-types": "^12.1.0",
     "urijs": "^1.19.11",
-    "yaml": "^2.3.1",
-    "abaca-runtime": "workspace:*"
+    "yaml": "^2.3.1"
   },
   "devDependencies": {
+    "@types/data-urls": "^3.0.1",
     "@types/urijs": "^1.19.19",
+    "data-urls": "^4.0.0",
     "ts-essentials": "^9.3.0"
   }
 }
