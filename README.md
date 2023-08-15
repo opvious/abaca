@@ -2,7 +2,7 @@
   <img src="assets/logo.png" height="200" stype="margin: 2em;"/>
 </p>
 
-# Abaca
+# Abaca [![CI](https://github.com/opvious/abaca/actions/workflows/ci.yml/badge.svg)](https://github.com/opvious/abaca/actions/workflows/ci.yml) [![NPM version](https://img.shields.io/npm/v/abaca.svg)](https://www.npmjs.com/package/abaca)
 
 An [OpenAPI][] SDK generator with (very) strong typing guarantees and minimal
 boilerplate.
