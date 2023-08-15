@@ -1,7 +1,12 @@
 import {LocalPath} from '@opvious/stl-utils/files';
-import {OpenapiDocuments, OpenapiVersion} from 'abaca-openapi';
+import {
+  OpenapiDocuments,
+  OpenapiVersion,
+  ReferenceResolvers,
+} from 'abaca-openapi';
 import {mkdir, writeFile} from 'fs/promises';
 import __inlinable from 'inlinable';
+import fetch from 'node-fetch';
 import path from 'path';
 
 export const packageInfo = __inlinable((ctx) =>
@@ -22,3 +27,13 @@ export function overridingVersion<V extends OpenapiVersion>(
 ): OpenapiDocuments[V] {
   return {...doc, info: {...doc.info, version}};
 }
+
+export async function fetchUrl(url: URL): Promise<string> {
+  const res = await fetch(url);
+  return res.text();
+}
+
+export const referenceResolvers = {
+  http: fetchUrl,
+  https: fetchUrl,
+} as const satisfies ReferenceResolvers;

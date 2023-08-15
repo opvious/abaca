@@ -1,16 +1,13 @@
 import {assert, unexpected} from '@opvious/stl-errors';
-import {PosixPath, ResourceLoader} from '@opvious/stl-utils/files';
+import {PathLike, ResourceLoader} from '@opvious/stl-utils/files';
 import YAML from 'yaml';
 
-import {
-  loadResolvableResource,
-  ReferenceResolvers,
-} from '../resolvable/index.js';
+import {loadResolvable, ReferenceResolvers} from '../resolvable/index.js';
 import {OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
 
 /** Default file name for OpenAPI documents. */
-export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
+export const OPENAPI_DOCUMENT_FILE = 'resources/openapi.yaml';
 
 /**
  * Loads a fully-resolved OpenAPI specification from a local path. Top-level
@@ -21,8 +18,8 @@ export const OPENAPI_DOCUMENT_FILE = 'openapi.yaml';
 export async function loadOpenapiDocument<
   V extends OpenapiVersion = OpenapiVersion
 >(opts?: {
-  /** Defaults to `openapi.yaml` */
-  readonly path?: PosixPath;
+  /** Defaults to `resources/openapi.yaml` */
+  readonly path?: PathLike;
   /** Defaults to a loader for the CWD */
   readonly loader?: ResourceLoader;
   /** Defaults to all versions */
@@ -30,11 +27,11 @@ export async function loadOpenapiDocument<
   /** Additional resolvers */
   readonly resolvers?: ReferenceResolvers;
 }): Promise<OpenapiDocuments[V]> {
-  const pp = opts?.path ?? OPENAPI_DOCUMENT_FILE;
+  const pl = opts?.path ?? OPENAPI_DOCUMENT_FILE;
 
   let refno = 1;
   const embeddings = new Map<string, string>();
-  const resolved = await loadResolvableResource(pp, {
+  const resolved = await loadResolvable(pl, {
     loader: opts?.loader,
     onResolvedReference: (r) => {
       if (r.url.protocol !== 'resource') {

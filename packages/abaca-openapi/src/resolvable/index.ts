@@ -1,8 +1,9 @@
 import {assert, check} from '@opvious/stl-errors';
-import {PosixPath, ResourceLoader} from '@opvious/stl-utils/files';
+import {localUrl, PathLike, ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {mapValues} from '@opvious/stl-utils/objects';
 import {Resolver} from '@stoplight/json-ref-resolver';
+import {readFile} from 'fs/promises';
 import {AsyncOrSync} from 'ts-essentials';
 import URI from 'urijs'; // Needed because of the resolver library.
 import YAML from 'yaml';
@@ -10,8 +11,8 @@ import YAML from 'yaml';
 import {errors} from './index.errors.js';
 
 /** Loads and fully resolves a schema */
-export async function loadResolvableResource<V = unknown>(
-  pp: PosixPath,
+export async function loadResolvable<V = unknown>(
+  pl: PathLike,
   opts?: {
     /** Custom resource loader. */
     readonly loader?: ResourceLoader;
@@ -28,7 +29,8 @@ export async function loadResolvableResource<V = unknown>(
 ): Promise<V> {
   const loader = opts?.loader ?? ResourceLoader.create({root: process.cwd()});
 
-  const {url: rootUrl, contents} = await loader.load(pp);
+  const rootUrl = localUrl(pl);
+  const contents = await readFile(rootUrl, 'utf8');
   const parsed = YAML.parse(contents);
   const rootId = resourceUrl(parsed.$id);
 
