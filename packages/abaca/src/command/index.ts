@@ -7,7 +7,7 @@ import {generateCommand} from './generate.js';
 import {resolveCommand} from './resolve.js';
 
 export function mainCommand(): Command {
-  return new Command()
+  return newCommand()
     .name(packageInfo.name)
     .description('Abaca CLI')
     .addCommand(generateCommand())
@@ -20,16 +20,12 @@ function showLogPathCommand(): Command {
   return newCommand()
     .command('log')
     .description('display log path')
-    .action(() => {
-      console.log(logPath());
-    });
+    .action(() => void console.log(logPath()));
 }
 
 function showVersionCommand(): Command {
   return newCommand()
     .command('version')
     .description('display version')
-    .action(() => {
-      console.log(check.isPresent(packageInfo.version));
-    });
+    .action(() => void console.log(check.isPresent(packageInfo.version)));
 }

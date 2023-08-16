@@ -67,6 +67,34 @@ importers:
         specifier: ^2.13.1
         version: 2.14.1
 
+  examples/multi-content:
+    dependencies:
+      abaca-koa:
+        specifier: workspace:*
+        version: link:../../packages/abaca-koa
+      abaca-openapi:
+        specifier: workspace:*
+        version: link:../../packages/abaca-openapi
+      json-text-sequence:
+        specifier: ^1.0.1
+        version: 1.0.1
+      node-fetch:
+        specifier: ^3.3.1
+        version: 3.3.1
+    devDependencies:
+      '@types/koa':
+        specifier: ^2.13.1
+        version: 2.13.5
+      '@types/koa__router':
+        specifier: ^8.0.11
+        version: 8.0.11
+      abaca:
+        specifier: workspace:*
+        version: link:../../packages/abaca
+      koa:
+        specifier: ^2.13.1
+        version: 2.14.1
+
   examples/streaming:
     dependencies:
       abaca-koa:
