@@ -12,8 +12,10 @@ import {
 export function parseOpenapiDocument<V extends OpenapiVersion>(
   arg: string,
   opts?: {
-    /** Acceptable document versions. */
+    /** Acceptable document versions */
     readonly versions?: ReadonlyArray<V>;
+    /** Bypass schema compatibility check */
+    readonly bypassSchemaValidation?: boolean;
   }
 ): OpenapiDocuments[V] {
   const doc = YAML.parse(arg);
@@ -29,6 +31,8 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   opts?: {
     /** Acceptable document versions. */
     readonly versions?: ReadonlyArray<V>;
+    /** Bypass schema compatibility check */
+    readonly bypassSchemaValidation?: boolean;
   }
 ): asserts arg is OpenapiDocuments[V] {
   // TODO: Check that it is fully resolved (potentially gated by an option).
@@ -42,10 +46,12 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   if (!allowed.includes(version)) {
     throw errors.unexpectedDocumentVersion(version, allowed);
   }
-  const validator = new SchemaValidator({version});
-  const validated = validator.validate(schema);
-  if (validated.errors.length) {
-    throw errors.invalidDocument(validated.errors);
+  if (!opts?.bypassSchemaValidation) {
+    const validator = new SchemaValidator({version});
+    const validated = validator.validate(schema);
+    if (validated.errors.length) {
+      throw errors.invalidDocument(validated.errors);
+    }
   }
   return schema;
 }

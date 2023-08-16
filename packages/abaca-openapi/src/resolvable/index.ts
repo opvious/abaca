@@ -1,9 +1,8 @@
 import {assert, check} from '@opvious/stl-errors';
-import {localUrl, PathLike, ResourceLoader} from '@opvious/stl-utils/files';
+import {ResourceLoader} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {mapValues} from '@opvious/stl-utils/objects';
 import {Resolver} from '@stoplight/json-ref-resolver';
-import {readFile} from 'fs/promises';
 import {AsyncOrSync} from 'ts-essentials';
 import URI from 'urijs'; // Needed because of the resolver library.
 import YAML from 'yaml';
@@ -11,8 +10,8 @@ import YAML from 'yaml';
 import {errors} from './index.errors.js';
 
 /** Loads and fully resolves a schema */
-export async function loadResolvable<V = unknown>(
-  pl: PathLike,
+export async function resolvingReferences<V = unknown>(
+  parsed: object,
   opts?: {
     /** Custom resource loader. */
     readonly loader?: ResourceLoader;
@@ -27,12 +26,8 @@ export async function loadResolvable<V = unknown>(
     readonly onResolvedReference?: (r: ResolvedResource) => void;
   }
 ): Promise<V> {
-  const loader = opts?.loader ?? ResourceLoader.create({root: process.cwd()});
-
-  const rootUrl = localUrl(pl);
-  const contents = await readFile(rootUrl, 'utf8');
-  const parsed = YAML.parse(contents);
-  const rootId = resourceUrl(parsed.$id);
+  const loader = opts?.loader ?? ResourceLoader.create();
+  const rootId = resourceUrl((parsed as any).$id);
 
   let seqno = 1;
   const refUrls = new Map<number, ResourceUrl>();
@@ -44,9 +39,9 @@ export async function loadResolvable<V = unknown>(
         mapValues(r, (fn) => ({resolve: fn}))
       ),
       resource: {
-        resolve: async () => {
+        resolve: async (url) => {
           if (!rootId) {
-            throw errors.missingResolvableId(rootUrl);
+            throw errors.orphanedResource(url);
           }
           return resourceSymbol;
         },
@@ -100,7 +95,7 @@ export async function loadResolvable<V = unknown>(
         scoped = scoped.scopedToDependency(p);
       }
       const {contents} = await scoped.load(target.pathname.slice(1));
-      const doc = parseReferenceContents(target, contents);
+      const doc = parseResourceReferenceContents(target, contents);
 
       const n = +check.isNumeric(target.searchParams.get(QueryKey.SEQNO));
       const ru = refUrls.get(n);
@@ -114,7 +109,7 @@ export async function loadResolvable<V = unknown>(
 
   const resolved = await resolver.resolve(parsed, {baseUri: '' + rootId});
   if (resolved.errors.length) {
-    throw errors.unresolvableResource(rootUrl, resolved.errors);
+    throw errors.unresolvable(resolved.errors);
   }
   return resolved.result;
 }
@@ -142,7 +137,7 @@ enum QueryKey {
   PARENT = 'p',
 }
 
-function parseReferenceContents(
+function parseResourceReferenceContents(
   ru: ResourceUrl,
   contents: string
 ): YAML.Document {
