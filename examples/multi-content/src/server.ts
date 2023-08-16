@@ -21,7 +21,7 @@ export async function createRouter(): Promise<Router> {
 }
 
 // Convenience alias for strongly-typed Koa context for each operation
-// (including request bodies, params, ...).
+// (including request bodies, parameters, ...).
 type Contexts = KoaContextsFor<Operations>;
 
 // Similarly, convenience alias for acceptable return values for each operation
