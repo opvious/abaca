@@ -11,7 +11,7 @@ import {errors} from './index.errors.js';
 
 /** Loads and fully resolves a schema */
 export async function resolvingReferences<V = unknown>(
-  parsed: {readonly [key: string]: unknown},
+  parsed: object,
   opts?: {
     /** Custom resource loader. */
     readonly loader?: ResourceLoader;
@@ -27,7 +27,7 @@ export async function resolvingReferences<V = unknown>(
   }
 ): Promise<V> {
   const loader = opts?.loader ?? ResourceLoader.create();
-  const rootId = resourceUrl(parsed.$id);
+  const rootId = resourceUrl((parsed as any).$id);
 
   let seqno = 1;
   const refUrls = new Map<number, ResourceUrl>();

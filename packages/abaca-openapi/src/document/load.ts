@@ -16,10 +16,8 @@ import {assertIsOpenapiDocument} from './parse.js';
 const DOCUMENT_FILE = 'openapi.yaml';
 
 /**
- * Loads a fully-resolved OpenAPI specification stored locally. Top-level
- * references can use the `embed=*` search parameter to have all `$defs` in the
- * referenced resource embedded as schemas. All keys starting with `$` are
- * stripped from the final output.
+ * Loads a fully-resolved OpenAPI specification stored locally. See
+ * `resolveOpenapiDocument` for more information.
  */
 export async function loadOpenapiDocument<
   V extends OpenapiVersion = OpenapiVersion
@@ -67,10 +65,10 @@ export async function resolveOpenapiDocument<
     readonly bypassSchemaValidation?: boolean;
   }
 ): Promise<OpenapiDocuments[V]> {
-  const parsed = YAML.parse(data);
+  const {$id, ...parsed} = YAML.parse(data);
 
-  // Also validate before resolving since it will otherwise hide certain errors
-  // (e.g. objects with `$ref` and other properties).
+  // Validate before resolving since it will otherwise hide certain errors (e.g.
+  // objects with both `$ref` and other properties will have the latter erased).
   assertIsOpenapiDocument(parsed, {
     versions: opts?.versions,
     bypassSchemaValidation: opts?.bypassSchemaValidation,
@@ -78,37 +76,40 @@ export async function resolveOpenapiDocument<
 
   let refno = 1;
   const embeddings = new Map<string, string>();
-  const resolved = await resolvingReferences(parsed, {
-    loader: opts?.loader,
-    onResolvedReference: (r) => {
-      if (r.url.protocol !== 'resource:') {
-        return;
-      }
-
-      const doc = r.document;
-
-      // Generate a unique ID for this reference so we can locate it later.
-      const url = new URL(r.url);
-      url.search = '';
-      url.searchParams.set(QueryKey.REFNO, '' + refno++);
-      const id = '' + url;
-      doc.set('$id', id);
-
-      // Apply any parameters.
-      for (const [key, val] of r.url.searchParams) {
-        switch (key) {
-          case QueryKey.EMBED: {
-            assert(!r.parents.length, 'Nested embedding: %s', r.url);
-            assert(doc.get('$defs'), 'No definitions to embed in %s', r.url);
-            embeddings.set(id, val);
-            break;
-          }
-          default:
-            throw unexpected(key);
+  const resolved = await resolvingReferences(
+    {$id, ...parsed},
+    {
+      loader: opts?.loader,
+      onResolvedReference: (r) => {
+        if (r.url.protocol !== 'resource:') {
+          return;
         }
-      }
-    },
-  });
+
+        const doc = r.document;
+
+        // Generate a unique ID for this reference so we can locate it later.
+        const url = new URL(r.url);
+        url.search = '';
+        url.searchParams.set(QueryKey.REFNO, '' + refno++);
+        const id = '' + url;
+        doc.set('$id', id);
+
+        // Apply any parameters.
+        for (const [key, val] of r.url.searchParams) {
+          switch (key) {
+            case QueryKey.EMBED: {
+              assert(!r.parents.length, 'Nested embedding: %s', r.url);
+              assert(doc.get('$defs'), 'No definitions to embed in %s', r.url);
+              embeddings.set(id, val);
+              break;
+            }
+            default:
+              throw unexpected(key);
+          }
+        }
+      },
+    }
+  );
 
   // We use a YAML document to mutate the tree since shared nodes are otherwise
   // frozen. The parser is smart enough to respect identical nodes.
