@@ -4,13 +4,20 @@
 
 # Abaca [![CI](https://github.com/opvious/abaca/actions/workflows/ci.yml/badge.svg)](https://github.com/opvious/abaca/actions/workflows/ci.yml) [![NPM version](https://img.shields.io/npm/v/abaca.svg)](https://www.npmjs.com/package/abaca) [![codecov](https://codecov.io/gh/opvious/abaca/branch/main/graph/badge.svg?token=XuV2bcZPjJ)](https://codecov.io/gh/opvious/abaca)
 
-An [OpenAPI][] SDK generator with (very) strong typing guarantees and minimal
+An [OpenAPI][] SDK generator with (very) strong type guarantees and minimal
 boilerplate.
 
 + Exports tiny, dependency-free, single-file client SDKs
 + Supports custom `fetch` implementations, arbitrary content-types, streaming,
   and more
 + Provides [Koa][] integrations for server routing and proxying
+
+
+## Motivation
+
+Abaca provides more type-safety most alternatives with less boilerplate. It
+generates SDKs with minimal overhead, typed `fetch` methods for each operation
+in an OpenAPI specification.
 
 
 ## Examples
@@ -50,3 +57,4 @@ $ pnpm dlx husky install # Set up git hooks, only needed once
 
 [OpenAPI]: https://www.openapis.org/
 [Koa]: https://koajs.com/
+[string literals]: https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types

@@ -9,7 +9,7 @@ __dirname="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 preamble_imports="$__dirname/../../abaca-runtime/src"
 
-preamble_contents="$__dirname/../src/preamble.ts"
+preable_template="$__dirname/../resources/preamble/index.tpl.ts"
 
 main() {
   local dst="$__dirname/../resources/preamble/index.gen.ts"
@@ -18,7 +18,7 @@ main() {
       "$preamble_imports/operations.ts" \
       "$preamble_imports/mime-types.ts" \
       "$preamble_imports/options.ts" \
-      "$preamble_contents" \
+      "$preable_template" \
     | sed -E \
       -e '/^import \{$/,/^\} from/d' \
       -e '/^import /d' \
