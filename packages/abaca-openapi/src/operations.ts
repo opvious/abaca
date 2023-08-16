@@ -39,12 +39,12 @@ export function extractOperationDefinitions(
           code,
         });
       }
-      const parameters: Record<string, ParameterDefinition> = {};
+      const params: Record<string, ParameterDefinition> = {};
       for (const param of op.parameters ?? []) {
         assert(!('$ref' in param), 'Unexpected reference', param);
         const required = !!param.required;
         const location = param.in;
-        parameters[param.name] = {location, required};
+        params[param.name] = {location, required};
         if (hook) {
           hook(param.schema, {
             operationId,
@@ -55,7 +55,7 @@ export function extractOperationDefinitions(
       defs[operationId] = {
         path,
         method,
-        parameters,
+        parameters: params,
         body: ifPresent(op.requestBody, (b) => ({
           required: !!b.required,
           types: contentTypes(b.content, operationId, {kind: 'requestBody'}),

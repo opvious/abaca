@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
 
 import * as sut from '../../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
-import {createSdk, Operations, Schema,Sdk} from '../pets-sdk.gen.js';
+import {createSdk, Operations, Schema, Sdk} from '../pets-sdk.gen.js';
 
 describe('pets', async () => {
   let document: OpenapiDocument;
@@ -50,7 +50,7 @@ describe('pets', async () => {
     const res1 = await sdk.listPets();
     expect(res1).toMatchObject({code: 200, data: []});
 
-    const res2 = await sdk.listPets({parameters: {limit: 3}});
+    const res2 = await sdk.listPets({params: {limit: 3}});
     expect(res2).toMatchObject({
       code: 'default',
       data: {code: 400},

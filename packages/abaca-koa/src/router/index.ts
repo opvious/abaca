@@ -320,7 +320,7 @@ function defaultHandlerContext(obj: any): unknown {
 }
 
 class Registry {
-  private readonly parameters = new Ajv({coerceTypes: true});
+  private readonly params = new Ajv({coerceTypes: true});
   private readonly bodies = new Ajv();
 
   register(schema: any, env: OperationHookEnv): void {
@@ -329,7 +329,7 @@ class Registry {
       const {name} = target;
       const key = schemaKey(operationId, name);
       // Nest within an object to enable coercion and better error reporting.
-      this.parameters.addSchema(
+      this.params.addSchema(
         {
           type: 'object',
           properties: {[name]: schema ?? {type: 'string'}},
@@ -349,7 +349,7 @@ class Registry {
     oid: string,
     def: OperationDefinition
   ): void {
-    const {parameters} = this;
+    const {params} = this;
     for (const [name, pdef] of Object.entries(def.parameters)) {
       let str: unknown;
       switch (pdef.location) {
@@ -372,7 +372,7 @@ class Registry {
         continue;
       }
       const key = schemaKey(oid, name);
-      const validate = parameters.getSchema(key);
+      const validate = params.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
       ifPresent(incompatibleValueError(validate, {value: obj}), (err) => {

@@ -2,7 +2,7 @@ import events from 'events';
 import http from 'http';
 import Koa from 'koa';
 
-import {createRouter, createSdk, Schema,Sdk} from '../src/index.js';
+import {createRouter, createSdk, Schema, Sdk} from '../src/index.js';
 
 let server: http.Server;
 let sdk: Sdk;
@@ -11,7 +11,7 @@ beforeAll(async () => {
   const router = await createRouter();
   server = new Koa().use(router.routes()).listen();
   await events.once(server, 'listening');
-  sdk = createSdk(`http://localhost:${(server.address() as any).port}`);
+  sdk = createSdk(server.address()!);
 });
 
 beforeEach(async () => {
@@ -24,7 +24,7 @@ afterAll(() => {
 
 test('uploads table from JSON', async () => {
   await sdk.setTable({
-    parameters: {id: 'id1'},
+    params: {id: 'id1'},
     body: {
       rows: [
         ['r1', 'v1'],
@@ -36,7 +36,7 @@ test('uploads table from JSON', async () => {
 
 test('uploads table from CSV', async () => {
   await sdk.setTable({
-    parameters: {id: 'id2'},
+    params: {id: 'id2'},
     headers: {'content-type': 'text/csv'},
     body: 'r1\nr2',
   });
@@ -44,7 +44,7 @@ test('uploads table from CSV', async () => {
 
 test('fetches table as JSON', async () => {
   const res = await sdk.getTable({
-    parameters: {id: 'id3'},
+    params: {id: 'id3'},
     headers: {accept: 'application/json'},
   });
   switch (res.code) {
@@ -59,7 +59,7 @@ test('fetches table as JSON', async () => {
 
 test('fetches tables as CSV', async () => {
   const res = await sdk.getTable({
-    parameters: {id: 'id4'},
+    params: {id: 'id4'},
     headers: {accept: 'text/csv'},
   });
   switch (res.code) {
@@ -74,7 +74,7 @@ test('fetches tables as CSV', async () => {
 
 test('fetches table using glob', async () => {
   const res = await sdk.getTable({
-    parameters: {id: 'id5'},
+    params: {id: 'id5'},
     headers: {accept: '*/*'},
   });
   switch (res.code) {

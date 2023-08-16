@@ -11,7 +11,7 @@ beforeAll(async () => {
   const router = await createRouter();
   server = new Koa().use(router.routes()).listen();
   await events.once(server, 'listening');
-  sdk = createSdk(`http://localhost:${(server.address() as any).port}`);
+  sdk = createSdk(server.address()!);
 });
 
 beforeEach(async () => {
@@ -39,14 +39,14 @@ test('creates and fetches a pet', async () => {
   assertType<Schema<'Pet'>>(createRes.data);
   const petId = createRes.data.id;
 
-  const showRes = await sdk.showPetById({parameters: {petId}});
+  const showRes = await sdk.showPetById({params: {petId}});
   assert(showRes.code === 200);
   // Similarly here
   assertType<Schema<'Pet'>>(showRes.data);
 });
 
 test('fetches a missing pet', async () => {
-  const res = await sdk.showPetById({parameters: {petId: 123}});
+  const res = await sdk.showPetById({params: {petId: 123}});
   assert(res.code === 404);
   // The type of the response's data is narrowed to `undefined` here: 404s do
   // not have a body in our specification

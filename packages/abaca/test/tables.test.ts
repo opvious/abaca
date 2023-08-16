@@ -34,7 +34,7 @@ describe('tables', () => {
 
   test('upload JSON', async () => {
     await sdk.setTable({
-      parameters: {id: 'id1'},
+      params: {id: 'id1'},
       body: {
         rows: [
           ['r1', 'v1'],
@@ -46,14 +46,14 @@ describe('tables', () => {
 
   test('upload CSV', async () => {
     await sdk.setTable({
-      parameters: {id: 'id2'},
+      params: {id: 'id2'},
       headers: {'content-type': 'text/csv'},
       body: 'r1\nr2',
     });
   });
 
   test('fetch JSON', async () => {
-    const res = await sdk.getTable({parameters: {id: 'id3'}});
+    const res = await sdk.getTable({params: {id: 'id3'}});
     switch (res.code) {
       case 200:
         expect<Schema<'Table'>>(res.data).toEqual([]);
@@ -66,7 +66,7 @@ describe('tables', () => {
 
   test('fetch CSV', async () => {
     const res = await sdk.getTable({
-      parameters: {id: 'id4'},
+      params: {id: 'id4'},
       headers: {accept: 'text/csv'},
     });
     switch (res.code) {
@@ -81,7 +81,7 @@ describe('tables', () => {
 
   test('fetch any with glob', async () => {
     const res = await sdk.getTable({
-      parameters: {id: 'id5'},
+      params: {id: 'id5'},
       headers: {accept: '*/*'},
     });
     switch (res.code) {
@@ -96,7 +96,7 @@ describe('tables', () => {
 
   test('fetch any with list', async () => {
     const res = await sdk.getTable({
-      parameters: {id: 'id5'},
+      params: {id: 'id5'},
       headers: {accept: 'application/json, text/csv'},
     });
     switch (res.code) {
@@ -111,7 +111,7 @@ describe('tables', () => {
 
   test('fetch any with partial overlap list', async () => {
     const res = await sdk.getTable({
-      parameters: {id: 'id5'},
+      params: {id: 'id5'},
       headers: {accept: 'application/json, application/xml'},
     });
     switch (res.code) {
