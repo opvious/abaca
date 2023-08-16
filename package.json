@@ -1,6 +1,6 @@
 {
   "name": "@opvious/abaca-packages",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "private": true,
   "repository": "github:opvious/abaca",
   "author": "Opvious Engineering <oss@opvious.io>",

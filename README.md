@@ -7,13 +7,41 @@
 An [OpenAPI][] SDK generator with (very) strong type guarantees and minimal
 boilerplate.
 
-+ Exports tiny, dependency-free, single-file client SDKs
++ Exports dependency-free, single-file client SDKs with a tiny runtime footprint
 + Supports custom `fetch` implementations, arbitrary content-types, streaming,
   and more
 + Provides [Koa][] integrations for server routing and proxying
 
 
-## Examples
+## Preview
+
+First, generate the SDK from an OpenAPI specification:
+
+```sh
+abaca generate \
+  resources/openapi.yaml \
+  --output src/sdk.gen.ts
+```
+
+Then simply import the generated file in your code to benefit from strongly
+typed fetch methods for all operations defined in the specification:
+
+```typescript
+import {createSdk} from './sdk.gen.js'; // Generated SDK
+
+const sdk = createSdk(/* Server URL */);
+
+const res = await sdk.someOperation(/* Typed body, parameters, ... */);
+switch (res.code) { // Typed code
+  case 200:
+    doSomething(res.data); // Narrowed data type
+    break;
+  // ...
+}
+```
+
+Take a look at the following examples to see how Abaca handles various
+use-cases:
 
 + [Simple JSON API](/examples/json)
 + [Streaming API (client-side, server-side, and
@@ -43,8 +71,8 @@ boilerplate.
 ## Developing
 
 ```sh
-$ pnpm i
-$ pnpm dlx husky install # Set up git hooks, only needed once
+pnpm i
+pnpm dlx husky install # Set up git hooks, only needed once
 ```
 
 

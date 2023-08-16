@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
 
 import * as sut from '../../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
-import {createSdk, operations, Sdk, types} from '../pets-sdk.gen.js';
+import {createSdk, Operations, Schema,Sdk} from '../pets-sdk.gen.js';
 
 describe('pets', async () => {
   let document: OpenapiDocument;
@@ -13,9 +13,9 @@ describe('pets', async () => {
   let server: http.Server;
 
   async function resetHandlers(
-    handlers: sut.KoaHandlersFor<operations>
+    handlers: sut.KoaHandlersFor<Operations>
   ): Promise<void> {
-    const router = sut.createOperationsRouter<operations>({
+    const router = sut.createOperationsRouter<Operations>({
       document,
       handlers,
       handleInvalidRequests: true,
@@ -36,7 +36,7 @@ describe('pets', async () => {
   });
 
   test('lists pets', async () => {
-    const pets: types['Pet'][] = [];
+    const pets: Schema<'Pet'>[] = [];
     await resetHandlers({
       listPets: async (ctx) => {
         const limit = ctx.params.limit ?? 2;
@@ -59,7 +59,7 @@ describe('pets', async () => {
   });
 
   test('creates pet ', async () => {
-    let pet: types['Pet'] | undefined;
+    let pet: Schema<'Pet'> | undefined;
     await resetHandlers({
       createPet: (ctx) => {
         pet = {id: 11, ...ctx.request.body};
