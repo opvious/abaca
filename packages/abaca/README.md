@@ -2,29 +2,42 @@
 
 ## Quickstart
 
-1. Add this package as `devDependency`:
+1. Install this package, typically as development dependency:
 
-```sh
-npm i -D abaca
-```
+  ```sh
+  npm i -D abaca
+  ```
 
-2. Use the `generate` command to create a TypeScript SDK from an OpenAPI
+2. Use its `generate` command to create a TypeScript SDK from an OpenAPI
    definition file. This is typically done from a NPM script:
 
-```sh
-abaca generate resources/openapi.yaml -o src/sdk.gen.ts
-```
+  ```sh
+  abaca generate resources/openapi.yaml -o src/sdk.gen.ts
+  ```
 
-3. Import the SDK in your code:
+3. Import the generated SDK from your code and instantiate it:
 
-```typescript
-import {createSdk} from './sdk.gen.js';
+  ```typescript
+  import {createSdk} from './sdk.gen.js';
 
-const sdk = createSdk(
-  'http://localhost:8080', // Server address
-  {/* Optional configuration, see below */}
-);
-```
+  const sdk = createSdk(
+    'http://localhost:8080', // Server address
+    {/* Optional configuration, see below */}
+  );
+  ```
+
+4. That's it! The instantiated SDK exposes a strongly typed method for each
+   operation in OpenAPI specification which you can use to make requests.
+
+  ```typescript
+  const res = await sdk.someOperation(/* Request body, parameters, ... */);
+  switch (res.code) {
+    case 200:
+      doSomething(res.data); // Narrowed response data
+      break;
+    // ...
+  }
+  ```
 
 
 ## SDK creation options
@@ -270,4 +283,3 @@ switch (res.code) {
   // ...
 }
 ```
-

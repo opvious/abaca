@@ -16,7 +16,7 @@ boilerplate.
 ## Preview
 
 ```typescript
-import {createSdk} from './sdk.gen.js'; // Generated SDK source file
+import {createSdk} from './sdk.gen.js'; // Generated SDK
 
 const sdk = createSdk(/* Server URL */);
 
