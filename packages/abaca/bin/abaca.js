@@ -10,13 +10,13 @@ telemetry.logger.info(
 );
 
 mainCommand().parseAsync(process.argv).catch((err) => {
-  if (err.code === errorCodes.CommandAborted) {
+  if (err.code === errorCodes.command.CommandAborted) {
     process.exitCode = err.tags?.exitCode ?? 0;
     return;
   }
   process.exitCode = 1;
   telemetry.logger.fatal({err}, 'Command failed.');
-  if (!errorCodes.has(err.code)) {
+  if (!errorCodes.command.has(err.code)) {
     console.error(err);
   }
 });

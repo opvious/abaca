@@ -8,30 +8,39 @@
 npm i -D abaca
 ```
 
-2. Run it on your OpenAPI definition file, typically via a NPM script:
+2. Use the `generate` command to create a TypeScript SDK from an OpenAPI
+   definition file. This is typically done from a NPM script:
 
 ```sh
-abaca -i resources/openapi.yaml -o src/sdk.gen.ts
+abaca generate resources/openapi.yaml -o src/sdk.gen.ts
 ```
 
-3. Import the SDK:
+3. Import the SDK in your code:
 
 ```typescript
-import {createSdk} from './sdk.gen';
+import {createSdk} from './sdk.gen.js';
+
+const sdk = createSdk(
+  'http://localhost:8080', // Server address
+  {/* Optional configuration, see below */}
+);
 ```
 
-## Options
 
-SDKs support the following options at creation time:
+## SDK creation options
+
+Each `createSdk` factory supports the following options:
 
 + `headers`, headers sent with all requests
-+ `options`, options set on all requests
 + `fetch`, custom fetch implementation
++ `options`, options set on all requests (typed consistently with the `fetch`
+  option)
 + `defaultContentType`, default content-type used as `'content-type'` and
   `'accept'` headers when omitted
 + `encoders`, request body encoders
 + `decoders`, response decoders
 + `coercer`, unexpected response content-type handler
+
 
 ## Client typings overview
 
@@ -69,6 +78,7 @@ if (res.code === 200) { // 6
    both status numbers and ranges (`2XX`, ...).
 7. The response's type is automatically narrowed to both the `accept` header and
    response code.
+
 
 ## Examples
 
@@ -261,6 +271,3 @@ switch (res.code) {
 }
 ```
 
-+ [Motivation](https://github.com/mtth/abaca#why)
-+ [Typings overview](https://github.com/mtth/abaca#typings-overview)
-+ [Examples](https://github.com/mtth/abaca#examples)

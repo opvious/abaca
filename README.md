@@ -18,6 +18,7 @@ boilerplate.
 + [Simple JSON API](/examples/json)
 + [Streaming API (client-side, server-side, and
   bi-directional)](/examples/streaming)
++ [Multiple content-types (requests and responses)](/examples/multi-content)
 
 
 ## Packages
