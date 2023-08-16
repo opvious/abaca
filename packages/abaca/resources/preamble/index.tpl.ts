@@ -159,8 +159,8 @@ type MaybeParamInput<P extends ParametersType> = MaybeParam<
 type MaybeParam<V> = keyof V extends never
   ? {}
   : {} extends V
-  ? {readonly parameters?: V}
-  : {readonly parameters: V};
+  ? {readonly params?: V}
+  : {readonly params: V};
 
 type Output<O, X, F, A extends MimeType> = O extends OperationType<infer R>
   ? CommonOutput<F> & DataOutput<GetHeader<X, 'accept', A> & MimeType, R>
@@ -220,6 +220,12 @@ type SdkFunction<O, I, F, A extends MimeType> = {} extends I
     ) => Output<O, Exact<I, X> extends never ? X : {}, F, A>
   : <X extends I>(args: X) => Output<O, X, F, A>;
 
+// Copy of net.AddressInfo to avoid the import
+interface AddressInfo {
+  readonly port: number;
+  readonly address: string;
+}
+
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
@@ -227,13 +233,20 @@ export function createSdkFor<
   A extends MimeType = typeof DEFAULT_ACCEPT
 >(
   operations: OperationDefinitions<O>,
-  url: string | URL,
+  target: string | URL | AddressInfo,
   opts?: CreateSdkOptionsFor<O, F, M, A>
 ): SdkFor<O, F, M, A> {
   const realFetch: BaseFetch = (opts?.fetch as any) ?? fetch;
   const defaultContentType = opts?.defaultContentType ?? JSON_MIME_TYPE;
   const defaultAccept = opts?.defaultAccept ?? DEFAULT_ACCEPT;
-  const root = url.toString().replace(/\/+$/, '');
+
+  const root =
+    typeof target == 'string' || target instanceof URL
+      ? target.toString().replace(/\/+$/, '')
+      : `http://${
+          target.address.includes(':') ? `[${target.address}]` : target.address
+        }:${target.port}`;
+
   const base: any = opts?.options ?? {};
   const baseHeaders = opts?.headers;
   const coercer: Coercer<any> = opts?.coercer ?? defaultCoercer;
@@ -253,7 +266,7 @@ export function createSdkFor<
     const clauseMatcher = ResponseClauseMatcher.create(op.responses);
     fetchers[id] = async (init: any): Promise<any> => {
       const {body: rawBody, encoder, decoder, ...input} = init ?? {};
-      const params = input?.parameters ?? {};
+      const params = input?.params ?? {};
 
       const url = new URL(
         root + formatPath(op.path, params),

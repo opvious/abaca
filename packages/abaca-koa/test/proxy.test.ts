@@ -6,7 +6,7 @@ import fetch from 'node-fetch';
 import * as sut from '../src/proxy.js';
 import {createOperationsRouter} from '../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from './helpers.js';
-import {createSdk, Operations, Schema,Sdk} from './tables-sdk.gen.js';
+import {createSdk, Operations, Schema, Sdk} from './tables-sdk.gen.js';
 
 describe('operation proxy', () => {
   let sdk: Sdk<typeof fetch>;
@@ -63,14 +63,14 @@ describe('operation proxy', () => {
 
   test('dispatches', async () => {
     const table: Schema<'Table'> = {rows: [['a', 'one']]};
-    const setRes = await sdk.setTable({parameters: {id: '1'}, body: table});
+    const setRes = await sdk.setTable({params: {id: '1'}, body: table});
     expect(setRes).toMatchObject({code: 204});
-    const getRes = await sdk.getTable({parameters: {id: '1'}});
+    const getRes = await sdk.getTable({params: {id: '1'}});
     expect(getRes).toMatchObject({code: 200, data: table});
   });
 
   test('calls prepare', async () => {
-    const res = await sdk.getTable({parameters: {id: '100'}});
+    const res = await sdk.getTable({params: {id: '100'}});
     expect(res.raw.headers.get('oid')).toEqual('getTable');
   });
 });

@@ -94,7 +94,7 @@ export async function resolveOpenapiDocument<
         const id = '' + url;
         doc.set('$id', id);
 
-        // Apply any parameters.
+        // Apply any params.
         for (const [key, val] of r.url.searchParams) {
           switch (key) {
             case QueryKey.EMBED: {

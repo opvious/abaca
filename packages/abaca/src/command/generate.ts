@@ -233,9 +233,9 @@ export function createSdk<
   M extends string = typeof JSON_MIME_TYPE,
   A extends MimeType = typeof DEFAULT_ACCEPT
 >(
-  url: string | URL,
+  target: string | URL | AddressInfo,
   opts?: CreateSdkOptions<F, M, A>
 ): Sdk<F, M, A> {
-  return createSdkFor<operations, F, M, A>(allOperations, url, opts);
+  return createSdkFor<operations, F, M, A>(allOperations, target, opts);
 }
 `;

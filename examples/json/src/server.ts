@@ -35,7 +35,7 @@ export async function createRouter(): Promise<Router> {
         return {status: 201, data: pet};
       },
       listPets: (ctx) => {
-        // Similarly to request bodies, parameters are validated and typed
+        // Similarly to request bodies, params are validated and typed
         // automatically.
         const limit = ctx.params.limit ?? 10;
         // A 200 status can be omitted when sending data.

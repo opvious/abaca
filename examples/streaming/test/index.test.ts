@@ -17,7 +17,7 @@ beforeAll(async () => {
   const router = await messagesRouter();
   server = new Koa().use(router.routes()).listen();
   await events.once(server, 'listening');
-  sdk = messagesSdk(`http://localhost:${(server.address() as any).port}`);
+  sdk = messagesSdk(server.address()!);
 });
 
 afterAll(() => {
@@ -43,7 +43,7 @@ test('client streaming', async () => {
 test('server streaming', async () => {
   const res = await sdk.repeatMessage({
     body: 'hello',
-    parameters: {count: 3},
+    params: {count: 3},
     headers: {accept: 'application/json-seq', 'content-type': 'text/plain'},
   });
   assert(res.code === 200);

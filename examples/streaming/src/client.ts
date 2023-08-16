@@ -1,4 +1,5 @@
 import jsonSeq from 'json-text-sequence';
+import net from 'net';
 import fetch from 'node-fetch';
 import stream from 'stream';
 
@@ -6,7 +7,7 @@ import {createSdk, Sdk} from './sdk.gen.js';
 
 export type MessagesSdk = Sdk<typeof fetch>;
 
-export function messagesSdk(address: string): MessagesSdk {
+export function messagesSdk(address: net.AddressInfo): MessagesSdk {
   return createSdk(address, {
     fetch,
     decoders: {

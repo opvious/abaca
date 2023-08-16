@@ -18,7 +18,7 @@ import stream from 'stream';
 
 import * as sut from '../../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
-import {createSdk, Operations, Schema,Sdk} from '../tables-sdk.gen.js';
+import {createSdk, Operations, Schema, Sdk} from '../tables-sdk.gen.js';
 
 describe('tables', async () => {
   const handler = new Handler();
@@ -89,7 +89,7 @@ describe('tables', async () => {
     const id = 'id1';
 
     const createRes = await sdk.setTable({
-      parameters: {id},
+      params: {id},
       headers: {'content-type': 'text/csv'},
       body: 'a,1\nb,2',
     });
@@ -97,31 +97,31 @@ describe('tables', async () => {
 
     const getRes1 = await sdk.getTable({
       headers: {accept: 'application/json'},
-      parameters: {id},
+      params: {id},
     });
     assert(getRes1.code === 200, '');
 
     const updateRes = await sdk.setTable({
-      parameters: {id},
+      params: {id},
       body: {rows: getRes1.data.rows.slice(1)},
     });
     expect(updateRes).toMatchObject({code: 204, raw: {status: 204}});
 
     const getRes2 = await sdk.getTable({
-      parameters: {id},
+      params: {id},
       headers: {accept: 'text/csv'},
     });
     expect(getRes2).toMatchObject({code: 200, data: 'b,2'});
   });
 
   test('get missing', async () => {
-    const res = await sdk.getTable({parameters: {id: 'unknown'}});
+    const res = await sdk.getTable({params: {id: 'unknown'}});
     expect(res).toMatchObject({code: 404, data: undefined});
   });
 
   test('set invalid', async () => {
     const res = await sdk.setTable({
-      parameters: {id: 'unused'},
+      params: {id: 'unused'},
       body: {rows: 123} as any,
     });
     expect(res).toMatchObject({
@@ -139,7 +139,7 @@ describe('tables', async () => {
     ];
 
     const createRes = await sdk.setTable({
-      parameters: {id},
+      params: {id},
       headers: {'content-type': 'application/json-seq'},
       body: toAsyncIterable(rows),
     });
@@ -147,7 +147,7 @@ describe('tables', async () => {
 
     const getRes = await sdk.getTable({
       headers: {accept: 'application/json-seq'},
-      parameters: {id},
+      params: {id},
     });
     assert(getRes.code === 200, '');
     const got = await fromAsyncIterable(getRes.data);

@@ -43,7 +43,7 @@ describe('pets', () => {
 
   test('query parameter', async () => {
     const res = await sdk.listPets({
-      parameters: {limit: 5},
+      params: {limit: 5},
     });
     switch (res.code) {
       case 200:
@@ -96,7 +96,7 @@ describe('pets', () => {
 
   test('required path parameter', async () => {
     const res = await sdk.showPetById({
-      parameters: {petId: '12'},
+      params: {petId: '12'},
     });
     switch (res.code) {
       case 200:
@@ -108,7 +108,7 @@ describe('pets', () => {
   });
 
   test('optional query parameter', async () => {
-    const res = await sdk.listPets({parameters: {limit: 1}});
+    const res = await sdk.listPets({params: {limit: 1}});
     let data: ResponseData<'listPets', 200> | undefined;
     switch (res.code) {
       case 200:
@@ -130,7 +130,7 @@ describe('pets', () => {
     }
     const id: string = cres.data;
     const body: RequestBody<'updatePetTag'> = {name: 'a'};
-    const res = await sdk.updatePetTag({body, parameters: {petId: id}});
+    const res = await sdk.updatePetTag({body, params: {petId: id}});
     switch (res.code) {
       case 200:
         expect<types['Pet']>(res.data).toEqual({id, name: 'a', tag: 't'});
@@ -157,7 +157,7 @@ describe('pets', () => {
   });
 
   test('empty response content type', async () => {
-    const res = await sdk.getPetAge({parameters: {petId: 'hi'}});
+    const res = await sdk.getPetAge({params: {petId: 'hi'}});
     switch (res.code) {
       case 200:
         touch<number>(res.data);
@@ -176,7 +176,7 @@ describe('pets', () => {
 
   test('empty response content type with accept one header', async () => {
     const res = await sdk.getPetAge({
-      parameters: {petId: 'hi'},
+      params: {petId: 'hi'},
       headers: {accept: 'application/*'},
     });
     switch (res.code) {
@@ -198,7 +198,7 @@ describe('pets', () => {
 
   test('empty response content type with accept all header', async () => {
     const res = await sdk.getPetAge({
-      parameters: {petId: 'hi'},
+      params: {petId: 'hi'},
       headers: {accept: 'text/*'},
     });
     switch (res.code) {

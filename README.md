@@ -15,11 +15,11 @@ boilerplate.
 
 ## Preview
 
-First, generate the SDK from an OpenAPI specification:
+First, generate the SDK from an OpenAPI specification (URL or local path):
 
 ```sh
 abaca generate \
-  resources/openapi.yaml \
+  https://petstore3.swagger.io/api/v3/openapi.json \
   --output src/sdk.gen.ts
 ```
 
@@ -29,12 +29,12 @@ typed fetch methods for all operations defined in the specification:
 ```typescript
 import {createSdk} from './sdk.gen.js'; // Generated SDK
 
-const sdk = createSdk(/* Server URL */);
+const sdk = createSdk('https://petstore3.swagger.io/api/v3');
 
-const res = await sdk.someOperation(/* Typed body, parameters, ... */);
-switch (res.code) { // Typed code
+const res = await sdk.getPetById({params: {petId: 1}}); // Typed request
+switch (res.code) { // Typed response code
   case 200:
-    doSomething(res.data); // Narrowed data type
+    console.log(`Pet is named ${res.data.name}`); // Narrowed response data type
     break;
   // ...
 }
