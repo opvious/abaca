@@ -7,7 +7,7 @@
 An [OpenAPI][] SDK generator with (very) strong type guarantees and minimal
 boilerplate.
 
-+ Exports tiny, dependency-free, single-file client SDKs
++ Exports dependency-free, single-file client SDKs with a tiny runtime footprint
 + Supports custom `fetch` implementations, arbitrary content-types, streaming,
   and more
 + Provides [Koa][] integrations for server routing and proxying
@@ -18,7 +18,9 @@ boilerplate.
 First, generate the SDK from an OpenAPI specification:
 
 ```sh
-abaca generate resources/openapi.yaml --output src/sdk.gen.ts
+abaca generate \
+  resources/openapi.yaml \
+  --output src/sdk.gen.ts
 ```
 
 Then simply import the generated file in your code to benefit from strongly
@@ -69,8 +71,8 @@ use-cases:
 ## Developing
 
 ```sh
-$ pnpm i
-$ pnpm dlx husky install # Set up git hooks, only needed once
+pnpm i
+pnpm dlx husky install # Set up git hooks, only needed once
 ```
 
 
