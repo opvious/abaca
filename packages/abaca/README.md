@@ -8,16 +8,17 @@
 npm i -D abaca
 ```
 
-2. Run it on your OpenAPI definition file, typically via a NPM script:
+2. Use the `generate` command to create a TypeScript SDK from an OpenAPI
+   definition file. This is typically done from a NPM script:
 
 ```sh
-abaca -i resources/openapi.yaml -o src/sdk.gen.ts
+abaca generate resources/openapi.yaml -o src/sdk.gen.ts
 ```
 
-3. Import the SDK:
+3. Use the SDK from your code:
 
 ```typescript
-import {createSdk} from './sdk.gen';
+import {createSdk} from './sdk.gen.js';
 ```
 
 ## Options

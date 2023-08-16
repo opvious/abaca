@@ -75,12 +75,6 @@ importers:
       abaca-openapi:
         specifier: workspace:*
         version: link:../../packages/abaca-openapi
-      json-text-sequence:
-        specifier: ^1.0.1
-        version: 1.0.1
-      node-fetch:
-        specifier: ^3.3.1
-        version: 3.3.1
     devDependencies:
       '@types/koa':
         specifier: ^2.13.1
