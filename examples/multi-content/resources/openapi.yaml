@@ -55,12 +55,6 @@ components:
       schema:
         type: string
   schemas:
-    Error:
-      type: object
-      required: [message]
-      properties:
-        message:
-          type: string
     Row:
       type: array
       items:
