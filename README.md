@@ -15,6 +15,15 @@ boilerplate.
 
 ## Preview
 
+First, generate the SDK from an OpenAPI specification:
+
+```sh
+abaca generate resources/openapi.yaml --output src/sdk.gen.ts
+```
+
+Then simply import the generated file in your code to benefit from strongly
+typed fetch methods for all operations defined in the specification:
+
 ```typescript
 import {createSdk} from './sdk.gen.js'; // Generated SDK
 
