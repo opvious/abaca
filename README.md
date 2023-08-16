@@ -13,19 +13,12 @@ boilerplate.
 + Provides [Koa][] integrations for server routing and proxying
 
 
-## Motivation
-
-Abaca provides more type-safety most alternatives with less boilerplate. It
-generates SDKs with minimal overhead, typed `fetch` methods for each operation
-in an OpenAPI specification.
-
-
 ## Examples
 
 + [Simple JSON API](/examples/json)
 + [Streaming API (client-side, server-side, and
   bi-directional)](/examples/streaming)
-+ [Multiple content-types (requests and responses)](/examples/multi-content)
++ [API with multiple content-types](/examples/multi-content)
 
 
 ## Packages
