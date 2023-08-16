@@ -7,13 +7,13 @@ import {
 } from 'abaca-koa';
 import {loadOpenapiDocument} from 'abaca-openapi';
 
-import {operations, Schema} from './sdk.gen.js';
+import {Operations, Schema} from './sdk.gen.js';
 
 export async function createRouter(): Promise<Router> {
   // Load OpenAPI specification from resources/ folder
   const document = await loadOpenapiDocument();
   // Create the router from type-checked operation handlers
-  return createOperationsRouter<operations>({
+  return createOperationsRouter<Operations>({
     document,
     handlers: new Handler(),
     handleInvalidRequests: true,
@@ -22,13 +22,13 @@ export async function createRouter(): Promise<Router> {
 
 // Convenience alias for strongly-typed Koa context for each operation
 // (including request bodies, parameters, ...).
-type Contexts = KoaContextsFor<operations>;
+type Contexts = KoaContextsFor<Operations>;
 
 // Similarly, convenience alias for acceptable return values for each operation
 // (response body, status codes, ...).
-type Values = KoaValuesFor<operations>;
+type Values = KoaValuesFor<Operations>;
 
-class Handler implements KoaHandlersFor<operations> {
+class Handler implements KoaHandlersFor<Operations> {
   private readonly tables = new Map<string, Schema<'Table'>>();
 
   getTable(ctx: Contexts['getTable']): Values['getTable'] {

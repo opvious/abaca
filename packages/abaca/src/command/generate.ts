@@ -193,13 +193,11 @@ async function generateValues(doc: OpenapiDocument): Promise<string> {
 const SUFFIX = `
 
 export type {
-  operations,
+  operations as Operations,
   StreamingContentTypes,
 };
 
 export type Schemas = components['schemas'];
-
-export type types = Schemas;
 
 export type Schema<K extends keyof Schemas> = Schemas[K];
 

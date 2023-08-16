@@ -5,14 +5,14 @@ import jsonSeq from 'json-text-sequence';
 import stream from 'stream';
 import {setTimeout} from 'timers/promises';
 
-import {operations, Schema} from './sdk.gen.js';
+import {Operations, Schema} from './sdk.gen.js';
 
 export async function messagesRouter(): Promise<Router> {
   // Load OpenAPI specification from resources/ folder
   const document = await loadOpenapiDocument();
 
   // Create the router from type-checked operation handlers
-  return createOperationsRouter<operations>({
+  return createOperationsRouter<Operations>({
     document,
     handlers: {
       echoMessages: (ctx) => {

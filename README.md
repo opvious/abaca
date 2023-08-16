@@ -13,7 +13,24 @@ boilerplate.
 + Provides [Koa][] integrations for server routing and proxying
 
 
-## Examples
+## Preview
+
+```typescript
+import {createSdk} from './sdk.gen.js'; // Generated SDK source file
+
+const sdk = createSdk(/* Server URL */);
+
+const res = await sdk.someOperation(/* Typed body, parameters, ... */);
+switch (res.code) { // Typed code
+  case 200:
+    doSomething(res.data); // Narrowed data type
+    break;
+  // ...
+}
+```
+
+Take a look at the following examples to see how Abaca handles various
+use-cases:
 
 + [Simple JSON API](/examples/json)
 + [Streaming API (client-side, server-side, and

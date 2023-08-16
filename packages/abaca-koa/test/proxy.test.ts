@@ -6,24 +6,24 @@ import fetch from 'node-fetch';
 import * as sut from '../src/proxy.js';
 import {createOperationsRouter} from '../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from './helpers.js';
-import {createSdk, operations, Sdk, types} from './tables-sdk.gen.js';
+import {createSdk, Operations, Schema,Sdk} from './tables-sdk.gen.js';
 
 describe('operation proxy', () => {
   let sdk: Sdk<typeof fetch>;
   let server, readServer, writeServer: http.Server;
   let address: string;
-  let table: types['Table'] | undefined;
+  let table: Schema<'Table'> | undefined;
 
   beforeAll(async () => {
     const document = await loadResourceDocument('tables.openapi.yaml');
 
-    const readRouter = createOperationsRouter<operations>({
+    const readRouter = createOperationsRouter<Operations>({
       document,
       handlers: {getTable: () => (table ? {data: table} : 404)},
     });
     readServer = await startApp(new Koa().use(readRouter.routes()));
 
-    const writeRouter = createOperationsRouter<operations>({
+    const writeRouter = createOperationsRouter<Operations>({
       document,
       handlers: {
         setTable: (ctx) => {
@@ -62,7 +62,7 @@ describe('operation proxy', () => {
   });
 
   test('dispatches', async () => {
-    const table: types['Table'] = {rows: [['a', 'one']]};
+    const table: Schema<'Table'> = {rows: [['a', 'one']]};
     const setRes = await sdk.setTable({parameters: {id: '1'}, body: table});
     expect(setRes).toMatchObject({code: 204});
     const getRes = await sdk.getTable({parameters: {id: '1'}});

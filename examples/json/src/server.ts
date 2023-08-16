@@ -2,7 +2,7 @@ import Router from '@koa/router';
 import {createOperationsRouter} from 'abaca-koa';
 import {loadOpenapiDocument} from 'abaca-openapi';
 
-import {operations, Schema} from './sdk.gen.js';
+import {Operations, Schema} from './sdk.gen.js';
 
 /** Creates a basic router for the pets API */
 export async function createRouter(): Promise<Router> {
@@ -13,7 +13,7 @@ export async function createRouter(): Promise<Router> {
   // corresponding OpenAPI operation. In this simple example we use a simple
   // in-memory map to store the pets.
   const pets = new Map<number, Schema<'Pet'>>();
-  return createOperationsRouter<operations>({
+  return createOperationsRouter<Operations>({
     document,
     handlers: {
       clearPets: () => {

@@ -18,7 +18,7 @@ import stream from 'stream';
 
 import * as sut from '../../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
-import {createSdk, operations, Sdk, types} from '../tables-sdk.gen.js';
+import {createSdk, Operations, Schema,Sdk} from '../tables-sdk.gen.js';
 
 describe('tables', async () => {
   const handler = new Handler();
@@ -27,7 +27,7 @@ describe('tables', async () => {
 
   beforeAll(async () => {
     const doc = await loadResourceDocument('tables.openapi.yaml');
-    const router = sut.createOperationsRouter<operations>({
+    const router = sut.createOperationsRouter<Operations>({
       document: doc,
       handlers: handler,
       decoders: {
@@ -155,12 +155,12 @@ describe('tables', async () => {
   });
 });
 
-type Contexts = sut.KoaContextsFor<operations>;
+type Contexts = sut.KoaContextsFor<Operations>;
 
-type Values = sut.KoaValuesFor<operations>;
+type Values = sut.KoaValuesFor<Operations>;
 
-class Handler implements sut.KoaHandlersFor<operations> {
-  private readonly tables = new Map<string, types['Table']>();
+class Handler implements sut.KoaHandlersFor<Operations> {
+  private readonly tables = new Map<string, Schema<'Table'>>();
 
   reset(): void {
     this.tables.clear();
@@ -197,7 +197,7 @@ class Handler implements sut.KoaHandlersFor<operations> {
   }
 
   async setTable(ctx: Contexts['setTable']): Promise<Values['setTable']> {
-    let table: types['Table'];
+    let table: Schema<'Table'>;
     switch (ctx.request.type) {
       case 'application/json':
         table = ctx.request.body;
