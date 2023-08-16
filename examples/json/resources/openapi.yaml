@@ -23,8 +23,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pets"
-        default:
-          $ref: "#/components/responses/Error"
     post:
       summary: Create a pet
       operationId: createPet
@@ -41,16 +39,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pet'
-        default:
-          $ref: "#/components/responses/Error"
     delete:
       summary: Clear all stored pets
       operationId: clearPets
       responses:
         '204':
           description: Pets cleared
-        default:
-          $ref: "#/components/responses/Error"
   /pets/{petId}:
     get:
       summary: Info for a specific pet
@@ -71,16 +65,7 @@ paths:
                 $ref: "#/components/schemas/Pet"
         '404':
           description: Pet not found
-        default:
-          $ref: "#/components/responses/Error"
 components:
-  responses:
-    Error:
-      description: Unexpected error
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
   schemas:
     Pet:
       type: object

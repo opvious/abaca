@@ -2,7 +2,7 @@ import events from 'events';
 import http from 'http';
 import Koa from 'koa';
 
-import {createRouter, createSdk, Sdk} from '../src/index.js';
+import {createRouter, createSdk, Schema, Sdk} from '../src/index.js';
 
 let server: http.Server;
 let sdk: Sdk;
@@ -24,20 +24,42 @@ afterAll(() => {
 
 test('list no pets', async () => {
   const res = await sdk.listPets();
+
   assert(res.code === 200);
+  // Response data (body) type is narrowed to list of pets after code assertion
+  assertType<ReadonlyArray<Schema<'Pet'>>>(res.data);
   expect(res.data).toEqual([]);
 });
 
 test('creates and fetches a pet', async () => {
   const createRes = await sdk.createPet({body: {name: 'Fido'}});
+
   assert(createRes.code === 201);
+  // Response data type is narrowed to a pet here
+  assertType<Schema<'Pet'>>(createRes.data);
   const petId = createRes.data.id;
 
   const showRes = await sdk.showPetById({parameters: {petId}});
   assert(showRes.code === 200);
+  // Similarly here
+  assertType<Schema<'Pet'>>(showRes.data);
 });
 
 test('fetches a missing pet', async () => {
   const res = await sdk.showPetById({parameters: {petId: 123}});
-  expect(res.code).toEqual(404);
+  assert(res.code === 404);
+  // The type of the response's data is narrowed to `undefined` here: 404s do
+  // not have a body in our specification
+  assertType<undefined>(res.data);
+});
+
+test('handles invalid input', async () => {
+  // @ts-expect-error invalid request body (missing name)
+  const res = await sdk.createPet({body: {tag: '1234'}});
+  assert(res.raw.status === 400);
+  // Since we didn't declare 400 error responses in this example's
+  // specification, the response data's type is left `unknown`. We can still
+  // access it though: in this case we know that it is a string containing the
+  // relevant error message.
+  expect(res.data).contains('Invalid body');
 });
