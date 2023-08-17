@@ -15,7 +15,7 @@ export function parseOpenapiDocument<V extends OpenapiVersion>(
     /** Acceptable document versions */
     readonly versions?: ReadonlyArray<V>;
     /** Bypass schema compatibility check */
-    readonly bypassSchemaValidation?: boolean;
+    readonly skipSchemaValidation?: boolean;
   }
 ): OpenapiDocuments[V] {
   const doc = YAML.parse(arg);
@@ -34,7 +34,7 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
     /** Acceptable document versions. */
     readonly versions?: ReadonlyArray<V>;
     /** Bypass schema compatibility check */
-    readonly bypassSchemaValidation?: boolean;
+    readonly skipSchemaValidation?: boolean;
   }
 ): asserts arg is OpenapiDocuments[V] {
   // TODO: Check that it is fully resolved (potentially gated by an option).
@@ -51,7 +51,7 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   }
 
   // Check that it matches the expected schema
-  if (!opts?.bypassSchemaValidation) {
+  if (!opts?.skipSchemaValidation) {
     const validator = new SchemaValidator({version});
     const validated = validator.validate(schema);
     if (validated.errors.length) {

@@ -1,12 +1,12 @@
 {
   "name": "abaca-koa",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "repository": "github:opvious/abaca",
-  "description": "Abaca Koa utilities",
+  "description": "Abaca Koa integrations",
   "keywords": [
+    "abaca",
     "koa",
-    "openapi",
-    "abaca"
+    "openapi"
   ],
   "author": "Opvious Engineering <oss@opvious.io>",
   "license": "Apache-2.0",

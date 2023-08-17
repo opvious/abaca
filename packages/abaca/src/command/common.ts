@@ -36,7 +36,8 @@ type Document = OpenapiDocuments[(typeof versions)[number]];
 export async function resolveDocument(args: {
   readonly path: string;
   readonly loaderRoot: PathLike;
-  readonly bypassSchemaValidation?: boolean;
+  readonly skipSchemaValidation?: boolean;
+  readonly generateOperationIds?: boolean;
 }): Promise<Document> {
   const loader = ResourceLoader.create({root: args.loaderRoot});
 
@@ -58,16 +59,17 @@ export async function resolveDocument(args: {
     return await resolveOpenapiDocument(data, {
       loader,
       versions,
-      bypassSchemaValidation: args.bypassSchemaValidation,
+      skipSchemaValidation: args.skipSchemaValidation,
       ignoreWebhooks: true,
       parsingOptions: {maxAliasCount: -1},
+      generateOperationIds: args.generateOperationIds,
     });
   } catch (err) {
     rethrowUnless(isStandardError(err, openapiErrorCodes.InvalidDocument), err);
     let msg =
       'OpenAPI specification does not match the schema for its version ' +
       '(see issues below). You can disable this check with the ' +
-      '`--bypass-schema-validation` flag though this may cause ' +
+      '`--skip-document-validation` flag though this may cause ' +
       'unexpected results.\n';
     for (const issue of err.tags.issues) {
       msg += JSON.stringify(issue, null, 2) + '\n';

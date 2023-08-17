@@ -125,9 +125,6 @@ importers:
       '@opvious/stl-errors':
         specifier: ^0.21.38
         version: 0.21.38
-      '@opvious/stl-telemetry':
-        specifier: ^0.21.38
-        version: 0.21.38(@opentelemetry/api@1.4.1)
       '@opvious/stl-utils':
         specifier: ^0.21.38
         version: 0.21.38

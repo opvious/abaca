@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-streaming",
   "private": true,
-  "version": "0.6.2",
+  "version": "0.6.3",
   "repository": "github:opvious/abaca",
   "description": "Streaming example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",

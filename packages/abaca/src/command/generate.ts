@@ -48,8 +48,14 @@ export function generateCommand(): Command {
         'if the `--document-output` option is used'
     )
     .option(
-      '--bypass-schema-validation',
-      'bypass OpenAPI specification schema validation. this may cause ' +
+      '--generate-operation-ids',
+      'automatically generate IDs for operations which do not have one. ' +
+        'the generated ID is `<path>#<verb>`, for example `/pets#post`. by ' +
+        'these operations are skipped'
+    )
+    .option(
+      '--skip-document-validation',
+      'bypass input OpenAPI specification schema validation. this may cause ' +
         'unexpected results'
     )
     .action(
@@ -60,7 +66,8 @@ export function generateCommand(): Command {
         const doc = await resolveDocument({
           path: pl,
           loaderRoot: opts.loaderRoot,
-          bypassSchemaValidation: opts.bypassSchemaValidation,
+          skipSchemaValidation: opts.skipDocumentValidation,
+          generateOperationIds: opts.generateOperationIds,
         });
         const {pathCount, schemaCount} = summarizeDocument(doc);
         spinner.succeed(
