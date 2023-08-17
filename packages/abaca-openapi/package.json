@@ -1,6 +1,6 @@
 {
   "name": "abaca-openapi",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "repository": "github:opvious/abaca",
   "description": "Abaca OpenAPI utilities",
   "keywords": [
@@ -21,12 +21,13 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
-    "prepare": "pnpm run build",
+    "prepare": "pnpm run build && inlinable e",
     "test": "vitest",
     "watch": "tsc -b -w src"
   },
   "dependencies": {
     "@opvious/stl-errors": "^0.21.38",
+    "@opvious/stl-telemetry": "^0.21.38",
     "@opvious/stl-utils": "^0.21.38",
     "@stoplight/json-ref-resolver": "^3.1.5",
     "abaca-runtime": "workspace:*",
@@ -40,6 +41,7 @@
     "@types/data-urls": "^3.0.1",
     "@types/urijs": "^1.19.19",
     "data-urls": "^4.0.0",
+    "inlinable": "^0.2.6",
     "ts-essentials": "^9.3.0"
   }
 }

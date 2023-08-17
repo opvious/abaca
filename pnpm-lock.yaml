@@ -253,6 +253,9 @@ importers:
       '@opvious/stl-errors':
         specifier: ^0.21.38
         version: 0.21.38
+      '@opvious/stl-telemetry':
+        specifier: ^0.21.38
+        version: 0.21.38(@opentelemetry/api@1.4.1)
       '@opvious/stl-utils':
         specifier: ^0.21.38
         version: 0.21.38
@@ -287,6 +290,9 @@ importers:
       data-urls:
         specifier: ^4.0.0
         version: 4.0.0
+      inlinable:
+        specifier: ^0.2.6
+        version: 0.2.6
       ts-essentials:
         specifier: ^9.3.0
         version: 9.3.0(typescript@5.1.6)
