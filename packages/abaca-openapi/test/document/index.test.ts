@@ -1,10 +1,13 @@
 import {fail} from '@opvious/stl-errors';
+import {RecordingTelemetry} from '@opvious/stl-telemetry';
 import {ResourceLoader} from '@opvious/stl-utils/files';
 
 import codes from '../../src/document/index.errors.js';
 import * as sut from '../../src/document/index.js';
 
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
+
+const telemetry = RecordingTelemetry.forTesting();
 
 describe('load OpenAPI document', () => {
   describe('valid', () => {
@@ -46,6 +49,7 @@ describe('load OpenAPI document', () => {
     const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
       loader: loader.scoped('document/resources/embedded'),
       versions: ['3.0'],
+      telemetry,
     });
     expect(Object.keys(doc.components!.schemas!)).toEqual(['Row']);
   });

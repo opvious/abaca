@@ -1,4 +1,5 @@
 import {assert, unexpected} from '@opvious/stl-errors';
+import {noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
 import {
   localPath,
   localUrl,
@@ -9,6 +10,7 @@ import {ifPresent} from '@opvious/stl-utils/functions';
 import {readFile} from 'fs/promises';
 import YAML from 'yaml';
 
+import {packageInfo} from '../common.js';
 import {ReferenceResolvers, resolvingReferences} from '../resolvable/index.js';
 import {OpenapiDocument, OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
@@ -50,7 +52,11 @@ export async function resolveOpenapiDocument<
   data: string,
   opts?: ResolveOpenapiDocumentOptions<V>
 ): Promise<OpenapiDocuments[V]> {
-  const {$id, webhooks, ...parsed} = YAML.parse(data, opts?.parsingOptions);
+  const tel = opts?.telemetry?.via(packageInfo) ?? noopTelemetry();
+  tel.logger.debug('Resolving OpenAPI document...');
+
+  const {$id, ...parsed} = YAML.parse(data);
+  tel.logger.debug('Parsed original document.');
 
   // Validate before resolving since it will otherwise hide certain errors (e.g.
   // objects with both `$ref` and other properties will have the latter erased).
@@ -59,10 +65,14 @@ export async function resolveOpenapiDocument<
     skipSchemaValidation: opts?.skipSchemaValidation,
   });
 
-  let refno = 1;
+  if (opts?.ignoreWebhooks) {
+    delete (parsed as any).webhooks;
+  }
+
+  let resourceRefCount = 0;
   const embeddings = new Map<string, string>();
   const resolved = await resolvingReferences(
-    {$id, webhooks: opts?.ignoreWebhooks ? undefined : webhooks, ...parsed},
+    {$id, ...parsed},
     {
       loader: opts?.loader,
       onResolvedReference: (r) => {
@@ -73,7 +83,7 @@ export async function resolveOpenapiDocument<
         // Generate a unique ID for this reference so we can locate it later.
         const url = new URL(r.url);
         url.search = '';
-        url.searchParams.set(QueryKey.REFNO, '' + refno++);
+        url.searchParams.set(QueryKey.REFNO, '' + ++resourceRefCount);
         const id = '' + url;
         const doc = r.document;
         doc.set('$id', id);
@@ -94,45 +104,61 @@ export async function resolveOpenapiDocument<
       },
     }
   );
+  tel.logger.debug('Resolved all references. [resources=%s]', resourceRefCount);
 
-  // We use a YAML document to mutate the tree since shared nodes are otherwise
-  // frozen. The parser is smart enough to respect identical nodes.
-  const doc = new YAML.Document(resolved);
+  let stripped: OpenapiDocument;
+  if (resourceRefCount > 0) {
+    // We need to strip metadata added for resource reference handling and
+    // potentially handle embeddings. We use a YAML document to mutate the tree
+    // since shared nodes are otherwise frozen. The parser is smart enough to
+    // respect identical nodes.
+    const doc = new YAML.Document(resolved);
 
-  // We now add embedded nodes.
-  if (embeddings.size) {
-    const embedder = new Embedder(doc);
+    // We now add embedded nodes if any.
+    if (embeddings.size) {
+      const embedder = new Embedder(doc);
+      YAML.visit(doc.contents, {
+        Pair: (_, pair, path) => {
+          if ((pair.key as any)?.value !== '$id') {
+            return;
+          }
+          const id = (pair.value as any)?.value;
+          assert(typeof id == 'string', 'Invalid ID: %s', id);
+          const embedding = embeddings.get(id);
+          if (embedding) {
+            const node = path[path.length - 1];
+            assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
+            embedder.embedSchemas(node, embedding);
+          }
+        },
+      });
+      tel.logger.debug('Processed %s embedding(s).', embeddings.size);
+    }
+
+    // Strip special keys (in particular IDs added during resolution)
     YAML.visit(doc.contents, {
-      Pair: (_, pair, path) => {
-        if ((pair.key as any)?.value !== '$id') {
-          return;
-        }
-        const id = (pair.value as any)?.value;
-        assert(typeof id == 'string', 'Invalid ID: %s', id);
-        const embedding = embeddings.get(id);
-        if (embedding) {
-          const node = path[path.length - 1];
-          assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
-          embedder.embedSchemas(node, embedding);
-        }
+      Pair: (_, pair) => {
+        const key = (pair.key as any)?.value;
+        return typeof key == 'string' && key.startsWith('$')
+          ? YAML.visit.REMOVE
+          : undefined;
       },
     });
-  }
+    tel.logger.debug('Stripped special keys.');
 
-  // Finally we strip special keys and check that the schema validates.
-  YAML.visit(doc.contents, {
-    Pair: (_, pair) => {
-      const key = (pair.key as any)?.value;
-      return typeof key == 'string' && key.startsWith('$')
-        ? YAML.visit.REMOVE
-        : undefined;
-    },
-  });
-  const stripped = doc.toJS(opts?.parsingOptions);
+    // Note: this step is slow. Currently suspecting it is due to the aliases
+    // which traverse the tree each time to `resolve` themselves.
+    stripped = doc.toJS({maxAliasCount: -1});
+  } else {
+    const {$id: _$id, ...rest} = resolved as any;
+    stripped = rest;
+  }
+  tel.logger.debug('Generated stripped document.');
 
   // Generate operation IDs if requested
   if (opts?.generateOperationIds && stripped.paths) {
-    generateOperationIds(stripped.paths);
+    const count = generateOperationIds(stripped.paths);
+    tel.logger.debug('Generated %s operation ID(s).', count);
   }
 
   // Check the schema again now that all references have been resolved
@@ -141,6 +167,7 @@ export async function resolveOpenapiDocument<
     skipSchemaValidation: opts?.skipSchemaValidation,
   });
 
+  tel.logger.info('Resolved OpenAPI document.');
   return stripped;
 }
 
@@ -155,10 +182,10 @@ export interface ResolveOpenapiDocumentOptions<V> {
   readonly skipSchemaValidation?: boolean;
   /** Skip any defined webhook operations */
   readonly ignoreWebhooks?: boolean;
-  /** YAML parsing options */
-  readonly parsingOptions?: Parameters<typeof YAML.parse>[2];
   /** Generate IDs for operations which do not have one */
   readonly generateOperationIds?: boolean;
+  /** Telemetry instance */
+  readonly telemetry?: Telemetry;
 }
 
 const verbs = new Set([
@@ -172,14 +199,17 @@ const verbs = new Set([
   'trace',
 ]);
 
-function generateOperationIds(paths: OpenapiDocument['paths']): void {
+function generateOperationIds(paths: OpenapiDocument['paths']): number {
+  let count = 0;
   for (const [path, ops] of Object.entries(paths ?? {})) {
     for (const [key, op] of Object.entries<any>(ops)) {
       if (verbs.has(key) && !op.operationId) {
         op.operationId = `${path}#${key}`;
+        count += 1;
       }
     }
   }
+  return count;
 }
 
 class Embedder {

@@ -26,6 +26,7 @@ import ora, {Ora} from 'ora';
 import path from 'path';
 import {AsyncOrSync} from 'ts-essentials';
 
+import {telemetry} from '../common.js';
 import {errors} from './index.errors.js';
 
 // Supported versions
@@ -61,18 +62,22 @@ export async function resolveDocument(args: {
       versions,
       skipSchemaValidation: args.skipSchemaValidation,
       ignoreWebhooks: true,
-      parsingOptions: {maxAliasCount: -1},
       generateOperationIds: args.generateOperationIds,
+      telemetry,
     });
   } catch (err) {
     rethrowUnless(isStandardError(err, openapiErrorCodes.InvalidDocument), err);
+    const {issueCount, issues} = err.tags;
     let msg =
-      'OpenAPI specification does not match the schema for its version ' +
-      '(see issues below). You can disable this check with the ' +
-      '`--skip-document-validation` flag though this may cause ' +
+      'OpenAPI specification does not match the schema for its version: ' +
+      `${issueCount} issue(s) found, see below. You can disable this check ` +
+      'with the `--skip-document-validation` flag though this may cause ' +
       'unexpected results.\n';
     for (const issue of err.tags.issues) {
       msg += JSON.stringify(issue, null, 2) + '\n';
+    }
+    if (issueCount > issues.length) {
+      msg += `and ${issueCount - issues.length} more...\n`;
     }
     throw statusErrors.invalidArgument(new Error(msg));
   }
