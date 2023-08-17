@@ -63,9 +63,13 @@ export async function resolveOpenapiDocument<
     readonly resolvers?: ReferenceResolvers;
     /** Bypass schema compatibility check */
     readonly bypassSchemaValidation?: boolean;
+    /** Skip any defined webhook operations */
+    readonly ignoreWebhooks?: boolean;
+    /** YAML parsing options */
+    readonly parsingOptions?: Parameters<typeof YAML.parse>[2];
   }
 ): Promise<OpenapiDocuments[V]> {
-  const {$id, ...parsed} = YAML.parse(data);
+  const {$id, webhooks, ...parsed} = YAML.parse(data, opts?.parsingOptions);
 
   // Validate before resolving since it will otherwise hide certain errors (e.g.
   // objects with both `$ref` and other properties will have the latter erased).
@@ -77,7 +81,7 @@ export async function resolveOpenapiDocument<
   let refno = 1;
   const embeddings = new Map<string, string>();
   const resolved = await resolvingReferences(
-    {$id, ...parsed},
+    {$id, webhooks: opts?.ignoreWebhooks ? undefined : webhooks, ...parsed},
     {
       loader: opts?.loader,
       onResolvedReference: (r) => {
@@ -85,16 +89,15 @@ export async function resolveOpenapiDocument<
           return;
         }
 
-        const doc = r.document;
-
         // Generate a unique ID for this reference so we can locate it later.
         const url = new URL(r.url);
         url.search = '';
         url.searchParams.set(QueryKey.REFNO, '' + refno++);
         const id = '' + url;
+        const doc = r.document;
         doc.set('$id', id);
 
-        // Apply any params.
+        // Apply any parameters.
         for (const [key, val] of r.url.searchParams) {
           switch (key) {
             case QueryKey.EMBED: {
@@ -116,22 +119,24 @@ export async function resolveOpenapiDocument<
   const doc = new YAML.Document(resolved);
 
   // We now add embedded nodes.
-  const embedder = new Embedder(doc);
-  YAML.visit(doc.contents, {
-    Pair: (_, pair, path) => {
-      if ((pair.key as any)?.value !== '$id') {
-        return;
-      }
-      const id = (pair.value as any)?.value;
-      assert(typeof id == 'string', 'Invalid ID: %s', id);
-      const embedding = embeddings.get(id);
-      if (embedding) {
-        const node = path[path.length - 1];
-        assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
-        embedder.embedSchemas(node, embedding);
-      }
-    },
-  });
+  if (embeddings.size) {
+    const embedder = new Embedder(doc);
+    YAML.visit(doc.contents, {
+      Pair: (_, pair, path) => {
+        if ((pair.key as any)?.value !== '$id') {
+          return;
+        }
+        const id = (pair.value as any)?.value;
+        assert(typeof id == 'string', 'Invalid ID: %s', id);
+        const embedding = embeddings.get(id);
+        if (embedding) {
+          const node = path[path.length - 1];
+          assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
+          embedder.embedSchemas(node, embedding);
+        }
+      },
+    });
+  }
 
   // Finally we strip special keys and check that the schema validates.
   YAML.visit(doc.contents, {
@@ -142,11 +147,14 @@ export async function resolveOpenapiDocument<
         : undefined;
     },
   });
-  const stripped = doc.toJS();
+  const stripped = doc.toJS(opts?.parsingOptions);
+
+  // Check the schema again now that all references have been resolved
   assertIsOpenapiDocument(stripped, {
     versions: opts?.versions,
     bypassSchemaValidation: opts?.bypassSchemaValidation,
   });
+
   return stripped;
 }
 

@@ -1,5 +1,4 @@
 import {
-  assert,
   errorMessage,
   isStandardError,
   rethrowUnless,
@@ -12,6 +11,7 @@ import {
   PathLike,
   ResourceLoader,
 } from '@opvious/stl-utils/files';
+import {ifPresent} from '@opvious/stl-utils/functions';
 import {
   OpenapiDocuments,
   OpenapiVersion,
@@ -31,11 +31,13 @@ import {errors} from './index.errors.js';
 // Supported versions
 const versions = ['3.0', '3.1'] as const;
 
+type Document = OpenapiDocuments[(typeof versions)[number]];
+
 export async function resolveDocument(args: {
   readonly path: string;
   readonly loaderRoot: PathLike;
   readonly bypassSchemaValidation?: boolean;
-}): Promise<OpenapiDocuments[(typeof versions)[number]]> {
+}): Promise<Document> {
   const loader = ResourceLoader.create({root: args.loaderRoot});
 
   let url;
@@ -57,6 +59,8 @@ export async function resolveDocument(args: {
       loader,
       versions,
       bypassSchemaValidation: args.bypassSchemaValidation,
+      ignoreWebhooks: true,
+      parsingOptions: {maxAliasCount: -1},
     });
   } catch (err) {
     rethrowUnless(isStandardError(err, openapiErrorCodes.InvalidDocument), err);
@@ -70,6 +74,17 @@ export async function resolveDocument(args: {
     }
     throw statusErrors.invalidArgument(new Error(msg));
   }
+}
+
+export function summarizeDocument(doc: Document): {
+  readonly pathCount: number;
+  readonly schemaCount: number;
+} {
+  return {
+    pathCount: ifPresent(doc.paths, (o) => Object.keys(o).length) ?? 0,
+    schemaCount:
+      ifPresent(doc.components?.schemas, (o) => Object.keys(o).length) ?? 0,
+  };
 }
 
 /** Writes output to path, creating parent folders as necessary. */
@@ -110,13 +125,17 @@ export function contextualAction(
       cmd = cmd.parent;
     }
     const opts = cmd.opts();
-    const spinner = ora({isSilent: !!opts.quiet});
-    const commandPrefix = cmd.rawArgs.slice(0, 2);
-    assert(commandPrefix[0] != null, 'Empty command initializer');
+    const isSilent = !!opts.quiet;
+    const spinner = ora({isSilent});
     try {
-      await fn.call({spinner, commandPrefix}, ...args);
+      await fn.call({spinner}, ...args);
     } catch (cause) {
-      spinner.fail(errorMessage(cause));
+      const msg = `Error (PID ${process.pid}): ${errorMessage(cause)}`;
+      if (isSilent) {
+        console.error(msg);
+      } else {
+        spinner.fail(msg);
+      }
       throw errors.actionFailed(cause);
     }
   };
@@ -124,5 +143,4 @@ export function contextualAction(
 
 export interface ActionContext {
   readonly spinner: Ora;
-  readonly commandPrefix: [string, ...string[]];
 }

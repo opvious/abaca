@@ -7,6 +7,7 @@ import {
   newCommand,
   overridingVersion,
   resolveDocument,
+  summarizeDocument,
   writeOutput,
 } from './common.js';
 
@@ -27,13 +28,16 @@ export function resolveCommand(): Command {
       contextualAction(async function (pl, opts) {
         const {spinner} = this;
 
-        spinner.start('Loading document...');
+        spinner.start('Resolving document...');
         const doc = await resolveDocument({
           path: pl,
           loaderRoot: opts.loaderRoot,
           bypassSchemaValidation: opts.bypassSchemaValidation,
         });
-        spinner.succeed('Loaded document.');
+        const {pathCount, schemaCount} = summarizeDocument(doc);
+        spinner.succeed(
+          `Resolved document. [paths=${pathCount}, schemas=${schemaCount}]`
+        );
 
         const out = YAML.stringify(
           ifPresent(opts.documentVersion, (v) => overridingVersion(doc, v)) ??

@@ -14,6 +14,7 @@ import {
   newCommand,
   overridingVersion,
   resolveDocument,
+  summarizeDocument,
   writeOutput,
 } from './common.js';
 
@@ -55,20 +56,27 @@ export function generateCommand(): Command {
       contextualAction(async function (pl, opts) {
         const {spinner} = this;
 
-        spinner.start('Loading document...');
+        spinner.start('Resolving document...');
         const doc = await resolveDocument({
           path: pl,
           loaderRoot: opts.loaderRoot,
           bypassSchemaValidation: opts.bypassSchemaValidation,
         });
-        spinner.succeed('Loaded document.');
+        const {pathCount, schemaCount} = summarizeDocument(doc);
+        spinner.succeed(
+          `Resolved document. [paths=${pathCount}, schemas=${schemaCount}]`
+        );
 
-        spinner.start('Generating types...');
+        spinner.start('Generating SDK...');
         const streamingTypes = commaSeparated(opts.streamingContentTypes);
-        const [preambleStr, typesStr, valuesStr] = await Promise.all([
+        const [
+          preambleStr,
+          {source: typesStr, count: typeCount},
+          {source: opsStr, count: opsCount},
+        ] = await Promise.all([
           readFile(preambleUrl, 'utf8'),
           generateTypes(doc, streamingTypes),
-          generateValues(doc),
+          generateOperations(doc),
         ]);
         const out = [
           '// Do not edit, this file was auto-generated (Abaca ' +
@@ -78,12 +86,13 @@ export function generateCommand(): Command {
           typesStr
             .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
             .replace(/export /g, ''),
-          valuesStr,
+          opsStr,
         ].join('\n');
-        spinner.succeed('Generated types.');
+        spinner.succeed(
+          `Generated SDK. [operations=${opsCount}, types=${typeCount}]`
+        );
 
         if (opts.documentOutput) {
-          spinner.start('Saving consolidated document...');
           await writeOutput(
             opts.documentOutput,
             YAML.stringify(
@@ -92,14 +101,10 @@ export function generateCommand(): Command {
               ) ?? doc
             )
           );
-          spinner.succeed('Saved consolidated document.');
         }
         if (opts.output) {
-          spinner.start('Saving SDK...');
           await writeOutput(opts.output, out);
-          spinner.succeed('Saved SDK.');
         } else {
-          spinner.succeed('Printing SDK to stdout.');
           console.log(out);
         }
       })
@@ -118,7 +123,10 @@ type OpenapiDocument = OpenapiDocuments['3.0' | '3.1'];
 async function generateTypes(
   doc: OpenapiDocument,
   stypes: ReadonlyArray<string>
-): Promise<string> {
+): Promise<{
+  readonly source: string;
+  readonly count: number;
+}> {
   // We must clone the document since `openapi-typescript` will mutate it (for
   // example to filter `x-` properties) and `doc` contains immutable nodes.
   const cloned = JSON.parse(JSON.stringify(doc));
@@ -126,9 +134,11 @@ async function generateTypes(
   // postTransform can be called multiple times for a given path, we need to
   // keep track of the last time it runs to correctly wrap it later on. This
   // will require two passes.
+  let count = 0;
   const lastGenerated = new Map<string, string>();
   const nonStreaming = await generate({
     postTransform(gen, opts) {
+      count++;
       const {path} = opts;
       if (isStreamingPath(path, stypes)) {
         lastGenerated.set(path, gen);
@@ -138,14 +148,15 @@ async function generateTypes(
   });
   if (!lastGenerated.size) {
     // No streaming content types, we can return directly.
-    return nonStreaming;
+    return {source: nonStreaming, count};
   }
-  return generate({
+  const source = await generate({
     transform(_schema, opts) {
       const gen = lastGenerated.get(opts.path);
       return gen == null ? undefined : `AsyncIterable<${gen}>`;
     },
   });
+  return {source, count};
 
   function generate(opts: OpenAPITSOptions): Promise<string> {
     return openapiTypescript(cloned, {
@@ -183,11 +194,18 @@ function isStreamingPath(p: string, stypes: ReadonlyArray<string>): boolean {
   return false;
 }
 
-async function generateValues(doc: OpenapiDocument): Promise<string> {
+function generateOperations(doc: OpenapiDocument): {
+  readonly source: string;
+  readonly count: number;
+} {
   const ops = extractOperationDefinitions(doc);
-  let out = `\nconst allOperations = ${JSON.stringify(ops, null, 2)} as const;`;
-  out += SUFFIX;
-  return out;
+  let source = `\nconst allOperations = ${JSON.stringify(
+    ops,
+    null,
+    2
+  )} as const;`;
+  source += SUFFIX;
+  return {source, count: Object.keys(ops).length};
 }
 
 const SUFFIX = `

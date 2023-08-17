@@ -31,6 +31,7 @@
   "dependencies": {
     "@opvious/stl-bootstrap": "^0.21.38",
     "@opvious/stl-errors": "^0.21.38",
+    "@opvious/stl-telemetry": "^0.21.38",
     "@opvious/stl-utils": "^0.21.38",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",

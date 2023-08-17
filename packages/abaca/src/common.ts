@@ -7,6 +7,8 @@ export const packageInfo = __inlinable((ctx) =>
   ctx.enclosing(import.meta.url).metadata()
 );
 
+export const COMMAND_NAME = packageInfo.name;
+
 export function logPath(): string {
   return path.join(os.tmpdir(), packageInfo.name + '.log');
 }
