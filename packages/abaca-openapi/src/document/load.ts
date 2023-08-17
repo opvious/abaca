@@ -149,11 +149,11 @@ export async function resolveOpenapiDocument<
     // Note: this step is slow. Currently suspecting it is due to the aliases
     // which traverse the tree each time to `resolve` themselves.
     stripped = doc.toJS({maxAliasCount: -1});
-    tel.logger.debug('Generated stripped document.');
   } else {
     const {$id: _$id, ...rest} = resolved as any;
     stripped = rest;
   }
+  tel.logger.debug('Generated stripped document.');
 
   // Generate operation IDs if requested
   if (opts?.generateOperationIds && stripped.paths) {
