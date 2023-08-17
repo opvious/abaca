@@ -2,12 +2,20 @@ import Router from '@koa/router';
 import {absurd, assert, unexpected, unreachable} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
-import koaBody from 'koa-body';
+import koaBody_ from 'koa-body';
 import fetch from 'node-fetch';
 import {Writable} from 'ts-essentials';
 
-import {startApp, touch} from './helpers';
-import {createSdk, RequestBody, ResponseData, Sdk, types} from './pets-sdk.gen';
+const koaBody = koaBody_.default ?? koaBody_;
+
+import {startApp, touch} from './helpers.js';
+import {
+  createSdk,
+  RequestBody,
+  ResponseData,
+  Schema,
+  Sdk,
+} from './pets-sdk.gen.js';
 
 describe('pets', () => {
   let sdk: Sdk<typeof fetch>;
@@ -23,7 +31,7 @@ describe('pets', () => {
     const addr = server.address();
     assert(addr, 'Missing server address');
     root = typeof addr == 'string' ? addr : `http://localhost:${addr.port}`;
-    sdk = createSdk(root, {fetch});
+    sdk = createSdk({address: server.address()!, fetch});
   });
 
   afterAll(() => {
@@ -34,7 +42,7 @@ describe('pets', () => {
     const res = await sdk.listPets({});
     switch (res.code) {
       case 200:
-        expect<ReadonlyArray<types['Pet']>>(res.data).toEqual([]);
+        expect<ReadonlyArray<Schema<'Pet'>>>(res.data).toEqual([]);
         break;
       default:
         throw unexpected(res);
@@ -79,7 +87,7 @@ describe('pets', () => {
       default:
         expect(res.code).toEqual('default');
         expect(res.raw.status).toEqual(406);
-        expect<types['Error']>(res.data).toBeUndefined();
+        expect<Schema<'Error'>>(res.data).toBeUndefined();
     }
   });
 
@@ -87,7 +95,7 @@ describe('pets', () => {
     const res = await sdk.listPets();
     switch (res.code) {
       case 200:
-        expect<ReadonlyArray<types['Pet']>>(res.data).toEqual([]);
+        expect<ReadonlyArray<Schema<'Pet'>>>(res.data).toEqual([]);
         break;
       default:
         throw unexpected(res);
@@ -133,7 +141,7 @@ describe('pets', () => {
     const res = await sdk.updatePetTag({body, params: {petId: id}});
     switch (res.code) {
       case 200:
-        expect<types['Pet']>(res.data).toEqual({id, name: 'a', tag: 't'});
+        expect<Schema<'Pet'>>(res.data).toEqual({id, name: 'a', tag: 't'});
         break;
       default:
         throw unexpected(res);
@@ -219,7 +227,8 @@ describe('pets', () => {
   });
 
   test('custom fetch', async () => {
-    const sdk = createSdk<typeof fetch>(root, {
+    const sdk = createSdk<typeof fetch>({
+      address: root,
       fetch: (url, init) => {
         init.headers.boom = '1';
         return fetch(url, init);
@@ -234,13 +243,13 @@ describe('pets', () => {
 });
 
 function newRouter(): Router {
-  const pets = new Map<string, Writable<types['Pet']>>();
+  const pets = new Map<string, Writable<Schema<'Pet'>>>();
   return new Router()
     .use(koaBody())
     .get('/pets', (ctx) => {
       ctx.status = 200;
-      const limit = ctx.query.limit ?? 2;
-      if (limit! > 2) {
+      const limit = +ctx.query.limit! ?? 2;
+      if (limit > 2) {
         ctx.status = 400;
         ctx.body = {code: 400, message: 'Limit too high'};
         return;

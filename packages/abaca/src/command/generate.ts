@@ -1,27 +1,26 @@
 import {assert} from '@opvious/stl-errors';
+import {localPath} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {commaSeparated} from '@opvious/stl-utils/strings';
-import {extractOperationDefinitions, OpenapiDocuments} from 'abaca-openapi';
+import {extractOperationDefinitions} from 'abaca-openapi';
 import {JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
 import {Command} from 'commander';
-import {readFile} from 'fs/promises';
+import {Eta} from 'eta';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
 import YAML from 'yaml';
 
-import {packageInfo} from '../common.js';
+import {packageInfo, resourceLoader} from '../common.js';
 import {
   contextualAction,
+  Document,
+  extractServerAddresses,
   newCommand,
   overridingVersion,
+  parseDocumentUri,
   resolveDocument,
   summarizeDocument,
   writeOutput,
 } from './common.js';
-
-const preambleUrl = new URL(
-  '../../resources/preamble/index.gen.ts',
-  import.meta.url
-);
 
 export function generateCommand(): Command {
   return newCommand()
@@ -43,6 +42,11 @@ export function generateCommand(): Command {
         'this document is equivalent to the input and easier to export'
     )
     .option(
+      '-a, --default-address <url>',
+      'default address to use when instantiating the SDK. this will ' +
+        'override any first server defined in the document' // TODO
+    )
+    .option(
       '-v, --document-version <version>',
       'version override used in the consolidated document. only applicable ' +
         'if the `--document-output` option is used'
@@ -59,12 +63,13 @@ export function generateCommand(): Command {
         'unexpected results'
     )
     .action(
-      contextualAction(async function (pl, opts) {
+      contextualAction(async function (uri, opts) {
         const {spinner} = this;
 
         spinner.start('Resolving document...');
+        const url = parseDocumentUri(uri);
         const doc = await resolveDocument({
-          path: pl,
+          url,
           loaderRoot: opts.loaderRoot,
           skipSchemaValidation: opts.skipDocumentValidation,
           generateOperationIds: opts.generateOperationIds,
@@ -76,27 +81,24 @@ export function generateCommand(): Command {
 
         spinner.start('Generating SDK...');
         const streamingTypes = commaSeparated(opts.streamingContentTypes);
-        const [
-          preambleStr,
-          {source: typesStr, count: typeCount},
-          {source: opsStr, count: opsCount},
-        ] = await Promise.all([
-          readFile(preambleUrl, 'utf8'),
-          generateTypes(doc, streamingTypes),
-          generateOperations(doc),
-        ]);
-        const out = [
-          '// Do not edit, this file was auto-generated (Abaca ' +
-            `v${packageInfo.version})\n`,
-          preambleStr,
-          setupStreamingContentTypes(streamingTypes),
-          typesStr
+        const operations = extractOperationDefinitions(doc);
+        const serverAddresses = extractServerAddresses(doc, url);
+        const types = await generateTypes(doc, streamingTypes);
+        const eta = new Eta({
+          autoEscape: false,
+          views: localPath(resourceLoader.localUrl('templates')),
+        });
+        const source = await eta.renderAsync('sdk', {
+          version: packageInfo.version,
+          operations,
+          typeSource: types.source
             .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
             .replace(/export /g, ''),
-          opsStr,
-        ].join('\n');
+          serverAddresses,
+        });
         spinner.succeed(
-          `Generated SDK. [operations=${opsCount}, types=${typeCount}]`
+          `Generated SDK. [operations=${Object.keys(operations).length}, ` +
+            `types=${types.count}]`
         );
 
         if (opts.documentOutput) {
@@ -110,25 +112,16 @@ export function generateCommand(): Command {
           );
         }
         if (opts.output) {
-          await writeOutput(opts.output, out);
+          await writeOutput(opts.output, source);
         } else {
-          console.log(out);
+          console.log(source);
         }
       })
     );
 }
 
-function setupStreamingContentTypes(stypes: ReadonlyArray<string>): string {
-  return [
-    `const streamingContentTypes = ${JSON.stringify(stypes)} as const;`,
-    'type StreamingContentTypes = typeof streamingContentTypes[number];\n',
-  ].join('\n');
-}
-
-type OpenapiDocument = OpenapiDocuments['3.0' | '3.1'];
-
 async function generateTypes(
-  doc: OpenapiDocument,
+  doc: Document,
   stypes: ReadonlyArray<string>
 ): Promise<{
   readonly source: string;
@@ -200,67 +193,3 @@ function isStreamingPath(p: string, stypes: ReadonlyArray<string>): boolean {
   }
   return false;
 }
-
-function generateOperations(doc: OpenapiDocument): {
-  readonly source: string;
-  readonly count: number;
-} {
-  const ops = extractOperationDefinitions(doc);
-  let source = `\nconst allOperations = ${JSON.stringify(
-    ops,
-    null,
-    2
-  )} as const;`;
-  source += SUFFIX;
-  return {source, count: Object.keys(ops).length};
-}
-
-const SUFFIX = `
-
-export type {
-  operations as Operations,
-  StreamingContentTypes,
-};
-
-export type Schemas = components['schemas'];
-
-export type Schema<K extends keyof Schemas> = Schemas[K];
-
-export type RequestBody<
-  K extends keyof operations,
-  M extends MimeType = typeof JSON_MIME_TYPE
-> = RequestBodyFor<operations[K], M>;
-
-export type RequestParameters<
-  K extends keyof operations
-> = RequestParametersFor<operations[K]>;
-
-export type ResponseData<
-  K extends keyof operations,
-  C extends keyof operations[K]['responses'] = keyof operations[K]['responses'],
-  M extends MimeType = typeof JSON_MIME_TYPE
-> = ResponseDataFor<operations[K], C, M>;
-
-export type CreateSdkOptions<
-  F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
-> = CreateSdkOptionsFor<operations, F, M, A>;
-
-export type Sdk<
-  F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
-> = SdkFor<operations, F, M, A>;
-
-export function createSdk<
-  F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
->(
-  target: string | URL | AddressInfo,
-  opts?: CreateSdkOptions<F, M, A>
-): Sdk<F, M, A> {
-  return createSdkFor<operations, F, M, A>(allOperations, target, opts);
-}
-`;

@@ -48,7 +48,7 @@ describe('operation proxy', () => {
     });
     server = await startApp(new Koa().use(proxy));
     address = serverAddress(server);
-    sdk = createSdk(address, {fetch});
+    sdk = createSdk({address, fetch});
   });
 
   afterAll(() => {

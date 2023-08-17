@@ -24,7 +24,7 @@ describe('pets', async () => {
       .use(router.allowedMethods())
       .use(router.routes());
     server = await startApp(app);
-    sdk = createSdk(serverAddress(server), {fetch});
+    sdk = createSdk({address: serverAddress(server), fetch});
   }
 
   beforeAll(async () => {

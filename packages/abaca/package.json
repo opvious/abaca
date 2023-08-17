@@ -1,6 +1,6 @@
 {
   "name": "abaca",
-  "version": "0.6.4",
+  "version": "0.7.0",
   "repository": "github:opvious/abaca",
   "description": "OpenAPI SDK generator with strong type guarantees and minimal boilerplate",
   "keywords": [
@@ -17,7 +17,7 @@
   "files": [
     "bin/",
     "lib/",
-    "resources/preamble/index.gen.ts"
+    "resources/templates"
   ],
   "bin": "bin/abaca.js",
   "exports": {},
@@ -25,7 +25,7 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out $(find . -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
-    "gen-preamble": "./scripts/assemble-preamble",
+    "gen-preamble": "./scripts/generate-preamble-template",
     "gen-test-pets": "./bin/abaca.js g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-tables": "./bin/abaca.js g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
@@ -40,6 +40,7 @@
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "commander": "^10.0.0",
+    "eta": "^3.1.0",
     "node-fetch": "^3.3.1",
     "openapi-typescript": "^6.2.0",
     "ora": "^7.0.1",

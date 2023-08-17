@@ -1,0 +1,15 @@
+// Do not edit, this file was auto-generated (Abaca <%= it.version %>)
+
+<%~ include("./preamble.gen.eta") %>
+
+<%= it.typeSource %>
+
+const allOperations = <%= JSON.stringify(it.operations, null, 2) %> as const;
+
+<%~ include("./type-exports.eta") %>
+
+<% if (it.serverAddresses.length) { %>
+<%~ include("./smart-factory.eta", it) %>
+<% } else { %>
+<%~ include("./default-factory.eta") %>
+<% } %>

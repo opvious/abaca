@@ -32,28 +32,29 @@ import {errors} from './index.errors.js';
 // Supported versions
 const versions = ['3.0', '3.1'] as const;
 
-type Document = OpenapiDocuments[(typeof versions)[number]];
+export function parseDocumentUri(uri: string): URL {
+  try {
+    return new URL(uri);
+  } catch (_err) {
+    return localUrl(uri);
+  }
+}
+
+export type Document = OpenapiDocuments[(typeof versions)[number]];
 
 export async function resolveDocument(args: {
-  readonly path: string;
+  readonly url: URL;
   readonly loaderRoot: PathLike;
   readonly skipSchemaValidation?: boolean;
   readonly generateOperationIds?: boolean;
 }): Promise<Document> {
   const loader = ResourceLoader.create({root: args.loaderRoot});
 
-  let url;
-  try {
-    url = new URL(args.path);
-  } catch (_err) {
-    url = localUrl(args.path);
-  }
-
   let data: string;
-  if (url.protocol !== 'file:') {
-    data = await fetchUrl(url);
+  if (args.url.protocol !== 'file:') {
+    data = await fetchUrl(args.url);
   } else {
-    data = await readFile(localPath(url), 'utf8');
+    data = await readFile(localPath(args.url), 'utf8');
   }
 
   try {
@@ -92,6 +93,27 @@ export function summarizeDocument(doc: Document): {
     schemaCount:
       ifPresent(doc.components?.schemas, (o) => Object.keys(o).length) ?? 0,
   };
+}
+
+export function extractServerAddresses(
+  doc: Document,
+  base: URL
+): ReadonlyArray<string> {
+  const ret: string[] = [];
+  for (const item of doc.servers ?? []) {
+    if (item.variables && Object.keys(item.variables).length) {
+      // TODO: Support templated servers.
+      continue;
+    }
+    let url;
+    try {
+      url = new URL(item.url, base.protocol === 'file:' ? undefined : base);
+    } catch (_err) {
+      continue;
+    }
+    ret.push('' + url);
+  }
+  return ret;
 }
 
 /** Writes output to path, creating parent folders as necessary. */
