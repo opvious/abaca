@@ -71,7 +71,7 @@ export async function resolveOpenapiDocument<
 
   let resourceRefCount = 0;
   const embeddings = new Map<string, string>();
-  const resolved = await resolvingReferences<OpenapiDocument>(
+  const resolved = await resolvingReferences(
     {$id, ...parsed},
     {
       loader: opts?.loader,

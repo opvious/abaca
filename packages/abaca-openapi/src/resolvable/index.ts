@@ -10,8 +10,8 @@ import YAML from 'yaml';
 import {errors} from './index.errors.js';
 
 /** Loads and fully resolves a schema */
-export async function resolvingReferences<V = unknown>(
-  parsed: object,
+export async function resolvingReferences<V extends object>(
+  parsed: V,
   opts?: {
     /** Custom resource loader. */
     readonly loader?: ResourceLoader;
