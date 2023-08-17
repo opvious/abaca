@@ -55,7 +55,7 @@ export async function resolveOpenapiDocument<
   const tel = opts?.telemetry?.via(packageInfo) ?? noopTelemetry();
   tel.logger.debug('Resolving OpenAPI document...');
 
-  const {$id, webhooks, ...parsed} = YAML.parse(data);
+  const {$id, ...parsed} = YAML.parse(data);
   tel.logger.debug('Parsed original document.');
 
   // Validate before resolving since it will otherwise hide certain errors (e.g.
@@ -65,10 +65,14 @@ export async function resolveOpenapiDocument<
     skipSchemaValidation: opts?.skipSchemaValidation,
   });
 
+  if (opts?.ignoreWebhooks) {
+    delete (parsed as any).webhooks;
+  }
+
   let resourceRefCount = 0;
   const embeddings = new Map<string, string>();
   const resolved = await resolvingReferences<OpenapiDocument>(
-    opts?.ignoreWebhooks ? {$id, ...parsed} : {$id, webhooks, ...parsed},
+    {$id, ...parsed},
     {
       loader: opts?.loader,
       onResolvedReference: (r) => {
