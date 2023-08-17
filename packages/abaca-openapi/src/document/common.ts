@@ -5,11 +5,17 @@ import {DeepReadonly} from 'ts-essentials';
 
 export const [errors, errorCodes] = errorFactories({
   definitions: {
-    invalidDocument: (issues: ReadonlyArray<DocumentValidationIssue>) => ({
+    invalidDocument: (
+      issues: ReadonlyArray<DocumentValidationIssue>,
+      issueCount: number
+    ) => ({
       message:
         'OpenAPI schema is invalid: ' +
-        issues.map(formatValidationIssue).join(', '),
-      tags: {issues},
+        issues.map(formatValidationIssue).join(', ') +
+        (issueCount > issues.length
+          ? `, and ${issueCount - issues.length} more...`
+          : ''),
+      tags: {issueCount, issues},
     }),
     unexpectedDocumentVersion: (
       got: string,

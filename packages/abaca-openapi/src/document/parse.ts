@@ -25,6 +25,8 @@ export function parseOpenapiDocument<V extends OpenapiVersion>(
 
 const SchemaValidator = validation.default ?? validation; // Hack.
 
+const MAX_ISSUE_COUNT = 10;
+
 /** Checks that the input argument is a valid OpenAPI document. */
 export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   arg: unknown,
@@ -36,8 +38,9 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   }
 ): asserts arg is OpenapiDocuments[V] {
   // TODO: Check that it is fully resolved (potentially gated by an option).
-
   const schema: any = arg;
+
+  // Check the version
   const version =
     typeof schema?.openapi == 'string'
       ? schema.openapi.trim().slice(0, 3)
@@ -46,12 +49,16 @@ export function assertIsOpenapiDocument<V extends OpenapiVersion>(
   if (!allowed.includes(version)) {
     throw errors.unexpectedDocumentVersion(version, allowed);
   }
+
+  // Check that it matches the expected schema
   if (!opts?.bypassSchemaValidation) {
     const validator = new SchemaValidator({version});
     const validated = validator.validate(schema);
     if (validated.errors.length) {
-      throw errors.invalidDocument(validated.errors);
+      throw errors.invalidDocument(
+        validated.errors.slice(0, MAX_ISSUE_COUNT),
+        validated.errors.length
+      );
     }
   }
-  return schema;
 }

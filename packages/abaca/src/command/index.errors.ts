@@ -4,7 +4,7 @@ import {CommanderError} from 'commander';
 const [errors, errorCodes] = errorFactories({
   definitions: {
     actionFailed: (cause: unknown) => ({
-      message: 'Command failed: ' + errorMessage(cause),
+      message: `Action failed: ${errorMessage(cause)}`,
       cause,
     }),
     commandAborted: (cause: CommanderError) => ({
