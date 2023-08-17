@@ -23,7 +23,7 @@ export function resolveCommand(): Command {
       '-v, --document-version <version>',
       'consolidated document version override'
     )
-    .option('--bypass-schema-validation', 'bypass schema validation')
+    .option('--skip-document-validation', 'bypass schema validation')
     .action(
       contextualAction(async function (pl, opts) {
         const {spinner} = this;
@@ -32,7 +32,7 @@ export function resolveCommand(): Command {
         const doc = await resolveDocument({
           path: pl,
           loaderRoot: opts.loaderRoot,
-          bypassSchemaValidation: opts.bypassSchemaValidation,
+          skipSchemaValidation: opts.skipDocumentValidation,
         });
         const {pathCount, schemaCount} = summarizeDocument(doc);
         spinner.succeed(

@@ -10,7 +10,7 @@ import {readFile} from 'fs/promises';
 import YAML from 'yaml';
 
 import {ReferenceResolvers, resolvingReferences} from '../resolvable/index.js';
-import {OpenapiDocuments, OpenapiVersion} from './common.js';
+import {OpenapiDocument, OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
 
 const DOCUMENT_FILE = 'openapi.yaml';
@@ -21,21 +21,15 @@ const DOCUMENT_FILE = 'openapi.yaml';
  */
 export async function loadOpenapiDocument<
   V extends OpenapiVersion = OpenapiVersion
->(opts?: {
-  /**
-   * Resource path, defaults to `resources/openapi.yaml` (from the loader's
-   * root if present).
-   */
-  readonly path?: PathLike;
-  /** Defaults to a loader for the CWD */
-  readonly loader?: ResourceLoader;
-  /** Defaults to all versions */
-  readonly versions?: ReadonlyArray<V>;
-  /** Additional resolvers */
-  readonly resolvers?: ReferenceResolvers;
-  /** Bypass schema compatibility check */
-  readonly bypassSchemaValidation?: boolean;
-}): Promise<OpenapiDocuments[V]> {
+>(
+  opts?: ResolveOpenapiDocumentOptions<V> & {
+    /**
+     * Resource path, defaults to `resources/openapi.yaml` (from the loader's
+     * root if present).
+     */
+    readonly path?: PathLike;
+  }
+): Promise<OpenapiDocuments[V]> {
   const pl =
     ifPresent(opts?.path, (pl) => localUrl(pl)) ??
     ifPresent(opts?.loader, (l) => l.localUrl(DOCUMENT_FILE)) ??
@@ -54,20 +48,7 @@ export async function resolveOpenapiDocument<
   V extends OpenapiVersion = OpenapiVersion
 >(
   data: string,
-  opts?: {
-    /** Defaults to a loader for the CWD */
-    readonly loader?: ResourceLoader;
-    /** Defaults to all versions */
-    readonly versions?: ReadonlyArray<V>;
-    /** Additional resolvers */
-    readonly resolvers?: ReferenceResolvers;
-    /** Bypass schema compatibility check */
-    readonly bypassSchemaValidation?: boolean;
-    /** Skip any defined webhook operations */
-    readonly ignoreWebhooks?: boolean;
-    /** YAML parsing options */
-    readonly parsingOptions?: Parameters<typeof YAML.parse>[2];
-  }
+  opts?: ResolveOpenapiDocumentOptions<V>
 ): Promise<OpenapiDocuments[V]> {
   const {$id, webhooks, ...parsed} = YAML.parse(data, opts?.parsingOptions);
 
@@ -75,7 +56,7 @@ export async function resolveOpenapiDocument<
   // objects with both `$ref` and other properties will have the latter erased).
   assertIsOpenapiDocument(parsed, {
     versions: opts?.versions,
-    bypassSchemaValidation: opts?.bypassSchemaValidation,
+    skipSchemaValidation: opts?.skipSchemaValidation,
   });
 
   let refno = 1;
@@ -149,13 +130,56 @@ export async function resolveOpenapiDocument<
   });
   const stripped = doc.toJS(opts?.parsingOptions);
 
+  // Generate operation IDs if requested
+  if (opts?.generateOperationIds && stripped.paths) {
+    generateOperationIds(stripped.paths);
+  }
+
   // Check the schema again now that all references have been resolved
   assertIsOpenapiDocument(stripped, {
     versions: opts?.versions,
-    bypassSchemaValidation: opts?.bypassSchemaValidation,
+    skipSchemaValidation: opts?.skipSchemaValidation,
   });
 
   return stripped;
+}
+
+export interface ResolveOpenapiDocumentOptions<V> {
+  /** Defaults to a loader for the CWD */
+  readonly loader?: ResourceLoader;
+  /** Defaults to all versions */
+  readonly versions?: ReadonlyArray<V>;
+  /** Additional resolvers */
+  readonly resolvers?: ReferenceResolvers;
+  /** Bypass schema compatibility check */
+  readonly skipSchemaValidation?: boolean;
+  /** Skip any defined webhook operations */
+  readonly ignoreWebhooks?: boolean;
+  /** YAML parsing options */
+  readonly parsingOptions?: Parameters<typeof YAML.parse>[2];
+  /** Generate IDs for operations which do not have one */
+  readonly generateOperationIds?: boolean;
+}
+
+const verbs = new Set([
+  'get',
+  'put',
+  'post',
+  'delete',
+  'options',
+  'head',
+  'patch',
+  'trace',
+]);
+
+function generateOperationIds(paths: OpenapiDocument['paths']): void {
+  for (const [path, ops] of Object.entries(paths ?? {})) {
+    for (const [key, op] of Object.entries<any>(ops)) {
+      if (verbs.has(key) && !op.operationId) {
+        op.operationId = `${path}#${key}`;
+      }
+    }
+  }
 }
 
 class Embedder {

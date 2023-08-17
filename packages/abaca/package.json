@@ -1,10 +1,15 @@
 {
   "name": "abaca",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "repository": "github:opvious/abaca",
-  "description": "Boilerplate-free type-safe OpenAPI SDKs",
+  "description": "OpenAPI SDK generator with strong type guarantees and minimal boilerplate",
   "keywords": [
-    "abaca"
+    "abaca",
+    "cli",
+    "fetch",
+    "openapi",
+    "sdk",
+    "typescript"
   ],
   "author": "Opvious Engineering <oss@opvious.io>",
   "license": "Apache-2.0",
@@ -31,7 +36,6 @@
   "dependencies": {
     "@opvious/stl-bootstrap": "^0.21.38",
     "@opvious/stl-errors": "^0.21.38",
-    "@opvious/stl-telemetry": "^0.21.38",
     "@opvious/stl-utils": "^0.21.38",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
