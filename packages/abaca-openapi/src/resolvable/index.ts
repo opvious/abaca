@@ -27,8 +27,7 @@ export async function resolvingReferences<V = unknown>(
   }
 ): Promise<V> {
   const loader = opts?.loader ?? ResourceLoader.create();
-  const {$id, ...data} = parsed as any;
-  const rootId = resourceUrl($id);
+  const rootId = resourceUrl((parsed as any).$id);
 
   let seqno = 1;
   const refUrls = new Map<number, ResourceUrl>();
@@ -108,7 +107,7 @@ export async function resolvingReferences<V = unknown>(
     },
   });
 
-  const resolved = await resolver.resolve(data, {baseUri: '' + rootId});
+  const resolved = await resolver.resolve(parsed, {baseUri: '' + rootId});
   if (resolved.errors.length) {
     throw errors.unresolvable(resolved.errors);
   }

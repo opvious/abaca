@@ -151,7 +151,8 @@ export async function resolveOpenapiDocument<
     stripped = doc.toJS({maxAliasCount: -1});
     tel.logger.debug('Generated stripped document.');
   } else {
-    stripped = resolved;
+    const {$id: _$id, ...rest} = resolved as any;
+    stripped = rest;
   }
 
   // Generate operation IDs if requested
