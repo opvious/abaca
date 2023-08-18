@@ -59,7 +59,8 @@ describe('tables', async () => {
       .use(router.allowedMethods())
       .use(router.routes());
     server = await startApp(app);
-    sdk = createSdk<typeof fetch>(serverAddress(server), {
+    sdk = createSdk<typeof fetch>({
+      address: serverAddress(server),
       fetch,
       encoders: {
         'application/json-seq': (iter) => {

@@ -20,10 +20,7 @@
   ```typescript
   import {createSdk} from './sdk.gen.js';
 
-  const sdk = createSdk(
-    'http://localhost:8080', // Server address
-    {/* Optional configuration, see below */}
-  );
+  const sdk = createSdk({/* Optional configuration, see below */});
   ```
 
 4. That's it! The instantiated SDK exposes a strongly typed method for each
@@ -249,7 +246,7 @@ additional arguments it supports. For example to use
 ```typescript
 import fetch from 'node-fetch'
 
-const nodeFetchSdk = createSdk(API_URL, {fetch});
+const nodeFetchSdk = createSdk({fetch, /** Other options... */});
 await nodeFetchSdk.uploadTable({
   options: {
     compress: true, // OK: `node-fetch` argument
@@ -257,7 +254,7 @@ await nodeFetchSdk.uploadTable({
   // ...
 });
 
-const fetchSdk = createSdk(API_URL);
+const fetchSdk = createSdk();
 await fetchSdk.uploadTable({
   options: {
     compress: true, // Type error: default `fetch` does not support `compress`
@@ -266,7 +263,7 @@ await fetchSdk.uploadTable({
 ```
 
 ```typescript
-const sdk = createSdk(API_URL);
+const sdk = createSdk();
 
 const res = await sdk.runSomeOperation({
   parameters: {/* ... */}, // Checked

@@ -2,11 +2,13 @@ import Router from '@koa/router';
 import {assert} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
-import koaBody from 'koa-body';
+import koaBody_ from 'koa-body';
 import fetch from 'node-fetch';
 
-import {startApp} from './helpers';
-import {createSdk, Schema, Sdk} from './tables-sdk.gen';
+import {startApp} from './helpers.js';
+import {createSdk, Schema, Sdk} from './tables-sdk.gen.js';
+
+const koaBody = koaBody_.default ?? koaBody_;
 
 describe('tables', () => {
   let sdk: Sdk<typeof fetch, 'application/json', 'application/json'>;
@@ -19,13 +21,11 @@ describe('tables', () => {
     server = await startApp(app);
     const addr = server.address();
     assert(addr, 'Missing server address');
-    sdk = createSdk(
-      typeof addr == 'string' ? addr : `http://localhost:${addr.port}`,
-      {
-        defaultAccept: 'application/json',
-        fetch,
-      }
-    );
+    sdk = createSdk({
+      address: addr,
+      defaultAccept: 'application/json',
+      fetch,
+    });
   });
 
   afterAll(() => {

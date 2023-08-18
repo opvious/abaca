@@ -10,12 +10,15 @@ import {
 } from './mime-types.js';
 import {MimeType, OperationTypes} from './operations.js';
 
-export interface CreateSdkOptionsFor<
+export interface SdkConfigFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
   M extends MimeType = typeof JSON_MIME_TYPE,
   A extends MimeType = typeof DEFAULT_ACCEPT
 > {
+  /** API server address. */
+  readonly address: Address;
+
   /** Global request headers, overridable in individual requests. */
   readonly headers?: RequestHeaders;
 
@@ -45,6 +48,14 @@ export interface CreateSdkOptionsFor<
    * which do not have any declared content and throw an error otherwise.
    */
   readonly coercer?: Coercer<F>;
+}
+
+type Address = string | URL | AddressInfo;
+
+interface AddressInfo {
+  // net.AddressInfo
+  readonly address: string;
+  readonly port: number;
 }
 
 export type RequestHeaders = Record<string, string>;

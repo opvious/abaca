@@ -6,6 +6,7 @@ import {
   contextualAction,
   newCommand,
   overridingVersion,
+  parseDocumentUri,
   resolveDocument,
   summarizeDocument,
   writeOutput,
@@ -25,12 +26,13 @@ export function resolveCommand(): Command {
     )
     .option('--skip-document-validation', 'bypass schema validation')
     .action(
-      contextualAction(async function (pl, opts) {
+      contextualAction(async function (uri, opts) {
         const {spinner} = this;
 
         spinner.start('Resolving document...');
+        const url = parseDocumentUri(uri);
         const doc = await resolveDocument({
-          path: pl,
+          url,
           loaderRoot: opts.loaderRoot,
           skipSchemaValidation: opts.skipDocumentValidation,
         });

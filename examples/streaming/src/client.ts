@@ -8,7 +8,8 @@ import {createSdk, Sdk} from './sdk.gen.js';
 export type MessagesSdk = Sdk<typeof fetch>;
 
 export function messagesSdk(address: net.AddressInfo): MessagesSdk {
-  return createSdk(address, {
+  return createSdk({
+    address,
     fetch,
     decoders: {
       'application/json-seq': (res) => {

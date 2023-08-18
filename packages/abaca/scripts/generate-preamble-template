@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Utility step to generate the final preamble template. This is used to provide
+# additionaly type-safety when developing the preamble.
+
 set -o nounset
 set -o errexit
 set -o pipefail
@@ -9,15 +12,15 @@ __dirname="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 preamble_imports="$__dirname/../../abaca-runtime/src"
 
-preamble_template="$__dirname/../resources/preamble/index.tpl.ts"
+preamble_template="$__dirname/../resources/preamble/index.ts"
 
 main() {
-  local dst="$__dirname/../resources/preamble/index.gen.ts"
+  local dst="$__dirname/../resources/templates/preamble.gen.eta"
   cat \
       "$preamble_imports/common.ts" \
       "$preamble_imports/operations.ts" \
       "$preamble_imports/mime-types.ts" \
-      "$preamble_imports/options.ts" \
+      "$preamble_imports/config.ts" \
       "$preamble_template" \
     | sed -E \
       -e '/^import \{$/,/^\} from/d' \

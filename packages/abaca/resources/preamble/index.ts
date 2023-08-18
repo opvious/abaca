@@ -3,7 +3,6 @@ import {
   BaseFetch,
   ByMimeType,
   Coercer,
-  CreateSdkOptionsFor,
   Decoder,
   DEFAULT_ACCEPT,
   Encoder,
@@ -28,6 +27,7 @@ import {
   ResponseMimeTypes,
   ResponsesMatchingMimeType,
   ResponsesType,
+  SdkConfigFor,
   SplitMimeTypes,
   TEXT_MIME_TYPE,
   Values,
@@ -220,12 +220,6 @@ type SdkFunction<O, I, F, A extends MimeType> = {} extends I
     ) => Output<O, Exact<I, X> extends never ? X : {}, F, A>
   : <X extends I>(args: X) => Output<O, X, F, A>;
 
-// Copy of net.AddressInfo to avoid the import
-interface AddressInfo {
-  readonly port: number;
-  readonly address: string;
-}
-
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch,
@@ -233,13 +227,13 @@ export function createSdkFor<
   A extends MimeType = typeof DEFAULT_ACCEPT
 >(
   operations: OperationDefinitions<O>,
-  target: string | URL | AddressInfo,
-  opts?: CreateSdkOptionsFor<O, F, M, A>
+  config: SdkConfigFor<O, F, M, A>
 ): SdkFor<O, F, M, A> {
-  const realFetch: BaseFetch = (opts?.fetch as any) ?? fetch;
-  const defaultContentType = opts?.defaultContentType ?? JSON_MIME_TYPE;
-  const defaultAccept = opts?.defaultAccept ?? DEFAULT_ACCEPT;
+  const realFetch: BaseFetch = (config.fetch as any) ?? fetch;
+  const defaultContentType = config.defaultContentType ?? JSON_MIME_TYPE;
+  const defaultAccept = config.defaultAccept ?? DEFAULT_ACCEPT;
 
+  const target = config.address;
   const root =
     typeof target == 'string' || target instanceof URL
       ? target.toString().replace(/\/+$/, '')
@@ -247,19 +241,19 @@ export function createSdkFor<
           target.address.includes(':') ? `[${target.address}]` : target.address
         }:${target.port}`;
 
-  const base: any = opts?.options ?? {};
-  const baseHeaders = opts?.headers;
-  const coercer: Coercer<any> = opts?.coercer ?? defaultCoercer;
+  const base: any = config.options ?? {};
+  const baseHeaders = config.headers;
+  const coercer: Coercer<any> = config.coercer ?? defaultCoercer;
 
   const encoders = ByMimeType.create(fallbackEncoder);
   encoders.add(JSON_MIME_TYPE, jsonEncoder);
   encoders.add(TEXT_MIME_TYPE, textEncoder);
-  encoders.addAll(opts?.encoders as any);
+  encoders.addAll(config.encoders as any);
 
   const decoders = ByMimeType.create(fallbackDecoder);
   decoders.add(JSON_MIME_TYPE, jsonDecoder);
   decoders.add(TEXT_MIME_TYPE, textDecoder);
-  decoders.addAll(opts?.decoders as any);
+  decoders.addAll(config.decoders as any);
 
   const fetchers: any = {};
   for (const [id, op] of Object.entries<OperationDefinition>(operations)) {
