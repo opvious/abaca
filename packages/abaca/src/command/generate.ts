@@ -26,25 +26,28 @@ export function generateCommand(): Command {
   return newCommand()
     .command('generate')
     .alias('g')
-    .description('generate types and client SDK from an OpenAPI specification')
-    .argument('<path|url>', 'path or URL to OpenAPI document (v3.0 or v3.1)')
+    .description(
+      'generate types and client SDK from an OpenAPI specification (3.x)'
+    )
+    .argument('<path|url>', 'path or URL to OpenAPI document')
+    .option(
+      '-a, --default-address <url>',
+      'default address to use when instantiating the SDK (default: ' +
+        'the first static server URL defined in the document, if any)'
+    )
+    .option(
+      '-d, --document-output <path>',
+      'also output the consolidated, fully resolved, OpenAPI document to ' +
+        'this path'
+    )
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option(
       '-t, --streaming-content-types <types>',
       'comma-separated list of content-types which contain streamed data. ' +
-        'request and responses with these types will expect async iterables',
+        'request and responses with these types will be wrapped in async ' +
+        'iterables',
       JSON_SEQ_MIME_TYPE
-    )
-    .option(
-      '-d, --document-output <path>',
-      'also output a consolidated and fully-resolved document at this path. ' +
-        'this document is equivalent to the input and easier to export'
-    )
-    .option(
-      '-a, --default-address <url>',
-      'default address to use when instantiating the SDK. this will ' +
-        'override any first server defined in the document' // TODO
     )
     .option(
       '-v, --document-version <version>',
@@ -95,6 +98,7 @@ export function generateCommand(): Command {
             .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
             .replace(/export /g, ''),
           serverAddresses,
+          defaultAddress: opts.defaultAddress,
         });
         spinner.succeed(
           `Generated SDK. [operations=${Object.keys(operations).length}, ` +

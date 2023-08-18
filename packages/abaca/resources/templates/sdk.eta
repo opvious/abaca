@@ -6,9 +6,34 @@
 
 const allOperations = <%= JSON.stringify(it.operations, null, 2) %> as const;
 
-<%~ include("./type-exports.eta") %>
+export type {operations as Operations};
 
-<% if (it.serverAddresses.length) { %>
+export type Schemas = components['schemas'];
+
+export type Schema<K extends keyof Schemas> = Schemas[K];
+
+export type RequestBody<
+  K extends keyof operations,
+  M extends MimeType = typeof JSON_MIME_TYPE
+> = RequestBodyFor<operations[K], M>;
+
+export type RequestParameters<
+  K extends keyof operations
+> = RequestParametersFor<operations[K]>;
+
+export type ResponseData<
+  K extends keyof operations,
+  C extends keyof operations[K]['responses'] = keyof operations[K]['responses'],
+  M extends MimeType = typeof JSON_MIME_TYPE
+> = ResponseDataFor<operations[K], C, M>;
+
+export type Sdk<
+  F extends BaseFetch = typeof fetch,
+  M extends string = typeof JSON_MIME_TYPE,
+  A extends MimeType = typeof DEFAULT_ACCEPT
+> = SdkFor<operations, F, M, A>;
+
+<% if (it.defaultAddress || it.serverAddresses.length) { %>
 <%~ include("./smart-factory.eta", it) %>
 <% } else { %>
 <%~ include("./default-factory.eta") %>
