@@ -16,6 +16,6 @@ export function createSdk<
   const config =
     typeof arg == 'string' || arg instanceof URL || (arg && 'port' in arg)
       ? {address: arg}
-      : {address: serverAddresses[0], ...arg};
+      : {address: <%= JSON.stringify(it.defaultAddress || it.serverAddresses[0]) %>, ...arg};
   return createSdkFor<operations, F, M, A>(allOperations, config);
 }
