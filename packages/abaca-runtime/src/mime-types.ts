@@ -15,9 +15,9 @@ export type WithMimeTypeGlobs<M extends MimeType> =
 
 export const FALLBACK_MIME_TYPE = '*/*';
 
+export const FORM_MIME_TYPE = 'application/x-www-form-urlencoded';
 export const JSON_MIME_TYPE = 'application/json';
 export const JSON_SEQ_MIME_TYPE = 'application/json-seq';
-export const FORM_MIME_TYPE = 'application/x-www-form-urlencoded';
 export const OCTET_STREAM_MIME_TIME = 'application/octet-stream';
 
 export const MULTIPART_MIME_TYPE = 'multipart/*';

@@ -155,12 +155,6 @@ export async function resolveOpenapiDocument<
   }
   tel.logger.debug('Generated stripped document.');
 
-  // Generate operation IDs if requested
-  if (opts?.generateOperationIds && stripped.paths) {
-    const count = generateOperationIds(stripped.paths);
-    tel.logger.debug('Generated %s operation ID(s).', count);
-  }
-
   // Check the schema again now that all references have been resolved
   assertIsOpenapiDocument(stripped, {
     versions: opts?.versions,
@@ -182,34 +176,8 @@ export interface ResolveOpenapiDocumentOptions<V> {
   readonly skipSchemaValidation?: boolean;
   /** Skip any defined webhook operations */
   readonly ignoreWebhooks?: boolean;
-  /** Generate IDs for operations which do not have one */
-  readonly generateOperationIds?: boolean;
   /** Telemetry instance */
   readonly telemetry?: Telemetry;
-}
-
-const verbs = new Set([
-  'get',
-  'put',
-  'post',
-  'delete',
-  'options',
-  'head',
-  'patch',
-  'trace',
-]);
-
-function generateOperationIds(paths: OpenapiDocument['paths']): number {
-  let count = 0;
-  for (const [path, ops] of Object.entries(paths ?? {})) {
-    for (const [key, op] of Object.entries<any>(ops)) {
-      if (verbs.has(key) && !op.operationId) {
-        op.operationId = `${path}#${key}`;
-        count += 1;
-      }
-    }
-  }
-  return count;
 }
 
 class Embedder {

@@ -97,7 +97,7 @@ export type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
   >;
 };
 
-export type Encoder<B, F extends BaseFetch = typeof fetch> = (
+export type Encoder<B = any, F extends BaseFetch = typeof fetch> = (
   body: B,
   ctx: EncoderContext<F>
 ) => AsyncOrSync<BodyInitFor<F>>;
@@ -118,7 +118,7 @@ export type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
   >;
 };
 
-export type Decoder<R, F extends BaseFetch = typeof fetch> = (
+export type Decoder<R = any, F extends BaseFetch = typeof fetch> = (
   res: ResponseFor<F>,
   ctx: DecoderContext<F>
 ) => AsyncOrSync<R>;

@@ -62,7 +62,11 @@ export const textEncoder: KoaEncoder = (data, ctx) => {
   ctx.body = data;
 };
 
-export const formDecoder: KoaDecoder = (ctx) => coBody.form(ctx.req);
+export const formDecoder: KoaDecoder = async (ctx) => {
+  const res = await coBody.form(ctx.req);
+  console.log(res);
+  return res;
+};
 
 export const multipartFormDecoder: KoaDecoder = (ctx) =>
   withTypedEmitter<MultipartListeners<any>>(async (ee) => {

@@ -8,12 +8,14 @@ import {
   DEFAULT_ACCEPT,
   Encoder,
   Exact,
+  FORM_MIME_TYPE,
   Get,
   Has,
   isResponseTypeValid,
   JSON_MIME_TYPE,
   Lookup,
   MimeType,
+  MULTIPART_FORM_MIME_TYPE,
   OperationDefinition,
   OperationDefinitions,
   OperationType,
@@ -36,16 +38,39 @@ import {
   WithMimeTypeGlobs,
 } from 'abaca-runtime';
 
-const jsonEncoder: Encoder<any> = (body) => JSON.stringify(body);
-const jsonDecoder: Decoder<any> = (res) => res.json();
+const jsonEncoder: Encoder = (body) => JSON.stringify(body);
+const jsonDecoder: Decoder = (res) => res.json();
 
-const textEncoder: Encoder<any> = (body) => (body == null ? '' : '' + body);
-const textDecoder: Decoder<any> = (res) => res.text();
+const textEncoder: Encoder = (body) => (body == null ? '' : '' + body);
+const textDecoder: Decoder = (res) => res.text();
 
-const fallbackEncoder: Encoder<any> = (_body, ctx) => {
+// This doesn't supported nested objects. See also
+// https://stackoverflow.com/a/37562814 for information on why we can return the
+// params directly.
+const formEncoder: Encoder = (body) => {
+  const params = new URLSearchParams();
+  for (const [key, val] of Object.entries(body)) {
+    if (Array.isArray(val)) {
+      for (const elem of val) {
+        params.append(key, '' + elem);
+      }
+    } else {
+      params.set(key, '' + val);
+    }
+  }
+  return params;
+};
+
+const multipartFormEncoder: Encoder = (_body) => {
+  const form = new FormData();
+  // TODO: Implement.
+  return form;
+};
+
+const fallbackEncoder: Encoder = (_body, ctx) => {
   throw new Error('Unsupported request content-type: ' + ctx.contentType);
 };
-const fallbackDecoder: Decoder<any> = (_res, ctx) => {
+const fallbackDecoder: Decoder = (_res, ctx) => {
   throw new Error('Unsupported response content-type: ' + ctx.contentType);
 };
 
@@ -247,6 +272,8 @@ export function createSdkFor<
   const coercer: Coercer<any> = config.coercer ?? defaultCoercer;
 
   const encoders = ByMimeType.create(fallbackEncoder);
+  encoders.add(MULTIPART_FORM_MIME_TYPE, multipartFormEncoder);
+  encoders.add(FORM_MIME_TYPE, formEncoder);
   encoders.add(JSON_MIME_TYPE, jsonEncoder);
   encoders.add(TEXT_MIME_TYPE, textEncoder);
   encoders.addAll(config.encoders as any);

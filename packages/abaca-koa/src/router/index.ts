@@ -129,10 +129,11 @@ export function createOperationsRouter<
   encoders.addAll(args.encoders as any);
 
   const registry = new Registry();
-  const defs = extractOperationDefinitions(
-    typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
-    (schema, env) => void registry.register(schema, env)
-  );
+  const defs = extractOperationDefinitions({
+    document: typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
+    onSchema: (schema, env) => void registry.register(schema, env),
+    generateIds: true,
+  });
 
   const router = new Router<any>().use(async (ctx, next) => {
     try {

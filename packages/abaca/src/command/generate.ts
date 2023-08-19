@@ -3,7 +3,11 @@ import {localPath} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {commaSeparated} from '@opvious/stl-utils/strings';
 import {extractOperationDefinitions} from 'abaca-openapi';
-import {JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
+import {
+  DEFAULT_ACCEPT,
+  JSON_MIME_TYPE,
+  JSON_SEQ_MIME_TYPE,
+} from 'abaca-runtime';
 import {Command} from 'commander';
 import {Eta} from 'eta';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';
@@ -32,7 +36,7 @@ export function generateCommand(): Command {
     .argument('<path|url>', 'path or URL to OpenAPI document')
     .option(
       '-a, --default-address <url>',
-      'default address to use when instantiating the SDK (default: ' +
+      'default address used when instantiating the SDK (default: ' +
         'the first static server URL defined in the document, if any)'
     )
     .option(
@@ -55,10 +59,19 @@ export function generateCommand(): Command {
         'if the `--document-output` option is used'
     )
     .option(
+      '--default-accept <type>',
+      'default accept header used in requests',
+      DEFAULT_ACCEPT // TODO: Use
+    )
+    .option(
+      '--default-content-type <type>',
+      'default content-type header used in requests',
+      JSON_MIME_TYPE // TODO: Use
+    )
+    .option(
       '--generate-operation-ids',
       'automatically generate IDs for operations which do not have one. ' +
-        'the generated ID is `<path>#<verb>`, for example `/pets#post`. by ' +
-        'these operations are skipped'
+        'the generated ID form is `<path>#<verb>`, for example `/pets#post`'
     )
     .option(
       '--skip-document-validation',
@@ -75,7 +88,6 @@ export function generateCommand(): Command {
           url,
           loaderRoot: opts.loaderRoot,
           skipSchemaValidation: opts.skipDocumentValidation,
-          generateOperationIds: opts.generateOperationIds,
         });
         const {pathCount, schemaCount} = summarizeDocument(doc);
         spinner.succeed(
@@ -84,7 +96,10 @@ export function generateCommand(): Command {
 
         spinner.start('Generating SDK...');
         const streamingTypes = commaSeparated(opts.streamingContentTypes);
-        const operations = extractOperationDefinitions(doc);
+        const operations = extractOperationDefinitions({
+          document: doc,
+          generateIds: opts.generateOperationIds,
+        });
         const serverAddresses = extractServerAddresses(doc, url);
         const types = await generateTypes(doc, streamingTypes);
         const eta = new Eta({

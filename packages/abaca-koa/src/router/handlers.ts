@@ -77,6 +77,7 @@ export interface MultipartListeners<O> {
   part(part: MultipartPart<O>): void;
   done(): void;
 }
+
 export type MultipartPart<O> = Values<{
   readonly [K in keyof O]-?: NonNullable<O[K]> extends Blob
     ? {

@@ -2,11 +2,7 @@ import events from 'events';
 import http from 'http';
 import Koa from 'koa';
 
-import {
-  createRouter,
-  createSdk,
-  Sdk,
-} from '../src/index.js';
+import {createRouter, createSdk, Sdk} from '../src/index.js';
 
 let server: http.Server;
 let sdk: Sdk;
@@ -22,18 +18,32 @@ afterAll(() => {
   server.close();
 });
 
-test('upload', async () => {
-  sdk.upload({
+test('upload urlencoded', async () => {
+  const res = await sdk.upload({
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
     },
     body: {
-      name: 'aa',
-      signature: new Blob(['abc']),
+      name: 'ann',
+      tags: ['a', 'b', 'c'],
+      // TODO: Check why other fields are allowed here
     },
   });
+  expect(res.code).toEqual(204);
 });
 
-// type B = RequestBody<'upload', 'application/x-www-form-urlencoded'>;
-// const b: B = {
-// };
+test('upload multipart', async () => {
+  const res = await sdk.upload({
+    headers: {
+      'content-type': 'multipart/form-data',
+    },
+    body: {
+      metadata: {
+        name: 'ann',
+        tags: ['a', 'b', 'c'],
+      },
+      logoImage: new Blob(['abcd']),
+    },
+  });
+  expect(res.code).toEqual(204);
+});
