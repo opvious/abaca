@@ -8,7 +8,7 @@ import {Writable} from 'ts-essentials';
 
 const koaBody = koaBody_.default ?? koaBody_;
 
-import {startApp, touch} from './helpers.js';
+import {startApp} from './helpers.js';
 import {
   createSdk,
   RequestBody,
@@ -36,6 +36,17 @@ describe('pets', () => {
 
   afterAll(() => {
     server?.close();
+  });
+
+  test('no-argument 200 code', async () => {
+    const res = await sdk.listPets();
+    switch (res.code) {
+      case 200:
+        expect<ReadonlyArray<Schema<'Pet'>>>(res.data).toEqual([]);
+        break;
+      default:
+        throw unexpected(res);
+    }
   });
 
   test('empty argument 200 code', async () => {
@@ -88,17 +99,6 @@ describe('pets', () => {
         expect(res.code).toEqual('default');
         expect(res.raw.status).toEqual(406);
         expect<Schema<'Error'>>(res.data).toBeUndefined();
-    }
-  });
-
-  test('no-argument 200 request', async () => {
-    const res = await sdk.listPets();
-    switch (res.code) {
-      case 200:
-        expect<ReadonlyArray<Schema<'Pet'>>>(res.data).toEqual([]);
-        break;
-      default:
-        throw unexpected(res);
     }
   });
 
@@ -168,10 +168,10 @@ describe('pets', () => {
     const res = await sdk.getPetAge({params: {petId: 'hi'}});
     switch (res.code) {
       case 200:
-        touch<number>(res.data);
+        assertType<number>(res.data);
         throw unexpected(res);
       case 400:
-        touch<string>(res.data);
+        assertType<string>(res.data);
         throw unexpected(res);
       case 404:
         break;
@@ -189,13 +189,13 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
-        touch<number>(res.data);
+        assertType<number>(res.data);
         throw unexpected(res);
       case 400:
-        touch<undefined>(res.data);
+        assertType<undefined>(res.data);
         throw unexpected(res);
       case 404:
-        touch<undefined>(res.data);
+        assertType<undefined>(res.data);
         break;
       case 'default':
         throw unexpected(res);
@@ -211,13 +211,13 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
-        touch<undefined>(res.data);
+        assertType<undefined>(res.data);
         throw unexpected(res);
       case 400:
-        touch<string>(res.data);
+        assertType<string>(res.data);
         throw unexpected(res);
       case 404:
-        touch<undefined>(res.data);
+        assertType<undefined>(res.data);
         break;
       case 'default':
         throw unexpected(res);

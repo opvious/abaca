@@ -7,6 +7,7 @@ import {
   DEFAULT_ACCEPT,
   JSON_MIME_TYPE,
   JSON_SEQ_MIME_TYPE,
+  OperationDefinition,
 } from 'abaca-runtime';
 import {Command} from 'commander';
 import {Eta} from 'eta';
@@ -101,7 +102,11 @@ export function generateCommand(): Command {
           generateIds: opts.generateOperationIds,
         });
         const serverAddresses = extractServerAddresses(doc, url);
-        const types = await generateTypes(doc, streamingTypes);
+        const types = await generateTypes({
+          document: doc,
+          streamingTypes,
+          operations,
+        });
         const eta = new Eta({
           autoEscape: false,
           views: localPath(resourceLoader.localUrl('templates')),
@@ -139,16 +144,70 @@ export function generateCommand(): Command {
     );
 }
 
-async function generateTypes(
-  doc: Document,
-  stypes: ReadonlyArray<string>
-): Promise<{
+enum SchemaFormat {
+  BINARY = 'binary',
+  NEVER = 'never',
+}
+
+async function generateTypes(args: {
+  readonly document: Document;
+  readonly streamingTypes: ReadonlyArray<string>;
+  readonly operations: {readonly [id: string]: OperationDefinition};
+}): Promise<{
   readonly source: string;
   readonly count: number;
 }> {
-  // We must clone the document since `openapi-typescript` will mutate it (for
-  // example to filter `x-` properties) and `doc` contains immutable nodes.
-  const cloned = JSON.parse(JSON.stringify(doc));
+  const {streamingTypes} = args;
+
+  // We clone the document to mutate it since `doc` contains immutable nodes.
+  // Note also that `openapi-typescript` may mutate it (for example to filter
+  // `x-` properties).
+  const cloned = JSON.parse(JSON.stringify(args.document));
+
+  // Add operation IDs in case any were generated and add fake properties to
+  // request bodies to enable "oneof" behavior.
+  for (const [id, def] of Object.entries(args.operations)) {
+    const item = cloned.paths[def.path][def.method];
+    if (item.operationId) {
+      assert(
+        item.operationId === id,
+        'Inconsistent operation ID: %s != %s',
+        id,
+        item.operationId
+      );
+    } else {
+      item.operationId = id;
+    }
+
+    ifPresent(item.requestBody?.content, (content) => {
+      const values = Object.values<any>(content);
+
+      // Figure out all possible field names for object schemas
+      const fields = new Set<string>();
+      for (const {schema} of values) {
+        if (schema.type !== 'object') {
+          continue;
+        }
+        for (const field of Object.keys(schema.properties)) {
+          fields.add(field);
+        }
+      }
+
+      // Pad all object schemas with fields that they don't have to be able to
+      // generate `never` types below.
+      for (const {schema} of values) {
+        if (schema.type !== 'object') {
+          continue;
+        }
+        for (const field of fields) {
+          schema.properties[field] ??= {
+            type: 'null',
+            format: SchemaFormat.NEVER,
+          };
+        }
+      }
+    });
+  }
 
   // postTransform can be called multiple times for a given path, we need to
   // keep track of the last time it runs to correctly wrap it later on. This
@@ -157,12 +216,19 @@ async function generateTypes(
   const lastGenerated = new Map<string, string>();
   const nonStreaming = await generate({
     transform(schema) {
-      return schema.format === 'binary' ? 'Blob' : undefined;
+      switch (schema.format) {
+        case SchemaFormat.BINARY:
+          return 'Blob';
+        case SchemaFormat.NEVER:
+          return 'never';
+        default:
+          return undefined;
+      }
     },
     postTransform(gen, opts) {
       count++;
       const {path} = opts;
-      if (isStreamingPath(path, stypes)) {
+      if (isStreamingPath(path, streamingTypes)) {
         lastGenerated.set(path, gen);
       }
       return gen;

@@ -109,7 +109,7 @@ interface CommonInput<F> {
 }
 
 type MaybeBodyInput<B, F extends BaseFetch, M> = [B] extends [undefined]
-  ? {readonly body: never}
+  ? {}
   : undefined extends B
   ? BodyInput<Exclude<B, undefined>, F, M> | {readonly body: never}
   : BodyInput<B, F, M>;

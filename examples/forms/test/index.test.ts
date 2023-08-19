@@ -20,13 +20,10 @@ afterAll(() => {
 
 test('upload urlencoded', async () => {
   const res = await sdk.upload({
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-    },
+    headers: {'content-type': 'application/x-www-form-urlencoded'},
     body: {
       name: 'ann',
       tags: ['a', 'b', 'c'],
-      // TODO: Check why other fields are allowed here
     },
   });
   expect(res.code).toEqual(204);
@@ -34,9 +31,7 @@ test('upload urlencoded', async () => {
 
 test('upload multipart', async () => {
   const res = await sdk.upload({
-    headers: {
-      'content-type': 'multipart/form-data',
-    },
+    headers: {'content-type': 'multipart/form-data'},
     body: {
       metadata: {
         name: 'ann',

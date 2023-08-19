@@ -79,7 +79,9 @@ export interface MultipartListeners<O> {
 }
 
 export type MultipartPart<O> = Values<{
-  readonly [K in keyof O]-?: NonNullable<O[K]> extends Blob
+  readonly [K in keyof O]-?: NonNullable<O[K]> extends never
+    ? never
+    : NonNullable<O[K]> extends Blob
     ? {
         readonly kind: 'stream';
         readonly name: K;
