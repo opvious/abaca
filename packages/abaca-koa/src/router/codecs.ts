@@ -7,8 +7,8 @@ import {
   AsyncOrSync,
   BodiesMatchingMimeType,
   JSON_MIME_TYPE,
+  OCTET_STREAM_MIME_TIME,
   OperationTypes,
-  PLAIN_MIME_TYPE,
   WithMimeTypeGlobs,
 } from 'abaca-runtime';
 import busboy from 'busboy';
@@ -17,7 +17,7 @@ import Koa from 'koa';
 import stream from 'stream';
 
 import {MultipartListeners} from './handlers.js';
-import {errors} from './index.errors.js';
+import {errors, requestErrors} from './index.errors.js';
 
 export type KoaDecodersFor<O extends OperationTypes, S = {}> = {
   readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: KoaDecoder<
@@ -62,42 +62,68 @@ export const textEncoder: KoaEncoder = (data, ctx) => {
   ctx.body = data;
 };
 
-export const formDecoder: KoaDecoder = async (ctx) => {
-  const res = await coBody.form(ctx.req);
-  console.log(res);
-  return res;
-};
+export const formDecoder: KoaDecoder = (ctx) => coBody.form(ctx.req);
 
 export const multipartFormDecoder: KoaDecoder = (ctx) =>
   withTypedEmitter<MultipartListeners<any>>(async (ee) => {
     const bb = busboy({headers: ctx.headers})
-      .on('error', (err) => void ee.emit('error', err))
-      .on('field', (name, data, info) => {
-        let value;
+      .on('error', (cause) => {
+        const err = requestErrors.unreadableBody(cause);
+        ee.emit('error', errors.invalidRequest(err));
+      })
+      .on('field', (name, value) => {
+        ee.emit('part', {kind: 'field', name, field: value});
+      })
+      .on('file', (name, stream, info) => {
         switch (info.mimeType) {
           case JSON_MIME_TYPE:
-            value = JSON.parse(data);
+            jsonValue(stream, (err, field) => {
+              if (err) {
+                bb.destroy(err);
+                return;
+              }
+              ee.emit('part', {kind: 'field', name, field});
+            });
             break;
-          case PLAIN_MIME_TYPE:
-            value = data;
+          case OCTET_STREAM_MIME_TIME:
+            ee.emit('part', {kind: 'stream', name, stream});
             break;
           default: {
-            const err = errors.unreadableRequestType(info.mimeType);
-            ee.emit('error', statusErrors.unimplemented(err));
+            bb.destroy();
+            const err = requestErrors.unsupportedContentType(info.mimeType);
+            ee.emit('error', errors.invalidRequest(err));
           }
         }
-        ee.emit('part', {kind: 'field', name, value});
-      })
-      .on('file', (name, stream) => {
-        ee.emit('part', {kind: 'stream', name, stream});
       })
       .on('close', () => void ee.emit('done'));
 
     ctx.req
       .on('error', (err) => void bb.destroy(err))
-      .on('aborted', () => bb.destroy(new Error('Request aborted')))
+      .on('aborted', () => bb.destroy())
       // We don't use `stream.pipeline` to avoid destroying the request stream.
       // Destroying one causes Koa to output an error to stdout and abort the
       // response before we could handle termination ourselves.
       .pipe(bb);
   });
+
+// Listening to a stream's data event is faster than async iteration.
+// https://github.com/nodejs/node/issues/31979
+function jsonValue(
+  readable: stream.Readable,
+  cb: (err?: Error, val?: any) => void
+): void {
+  const chunks: Buffer[] = [];
+  readable
+    .on('error', cb)
+    .on('data', (chunk) => void chunks.push(chunk))
+    .on('end', () => {
+      let val;
+      try {
+        val = JSON.parse(Buffer.concat(chunks).toString());
+      } catch (err: any) {
+        cb(err);
+        return;
+      }
+      cb(undefined, val);
+    });
+}

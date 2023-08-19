@@ -22,7 +22,7 @@ export async function createRouter(): Promise<Router> {
             ctx.request.body.on('part', (part) => {
               switch (part.name) {
                 case 'metadata':
-                  console.log(`Got metadata. [name=${part.value.name}]`);
+                  console.log(`Got metadata. [name=${part.field.name}]`);
                   break;
                 case 'logoImage':
                   part.stream.resume(); // Consume the stream.

@@ -40,5 +40,6 @@ test('upload multipart', async () => {
       logoImage: new Blob(['abcd']),
     },
   });
+  console.log(res);
   expect(res.code).toEqual(204);
 });

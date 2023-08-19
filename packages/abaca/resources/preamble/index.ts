@@ -61,9 +61,19 @@ const formEncoder: Encoder = (body) => {
   return params;
 };
 
-const multipartFormEncoder: Encoder = (_body) => {
+const multipartFormEncoder: Encoder = (body) => {
   const form = new FormData();
-  // TODO: Implement.
+  if (!body || typeof body != 'object') {
+    throw new Error('Unsupported multipart-form input: ' + body);
+  }
+  for (const [key, val] of Object.entries(body)) {
+    form.set(
+      key,
+      typeof val == 'string' || val instanceof Blob
+        ? val
+        : new Blob([JSON.stringify(val)], {type: JSON_MIME_TYPE})
+    );
+  }
   return form;
 };
 
@@ -326,7 +336,7 @@ export function createSdkFor<
           options: init?.options,
         });
       }
-      if (body === undefined) {
+      if (body === undefined || body instanceof FormData) {
         delete headers['content-type'];
       }
 

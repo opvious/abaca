@@ -32,6 +32,7 @@ import {
   TEXT_MIME_TYPE,
 } from 'abaca-runtime';
 import {default as ajv} from 'ajv';
+import events from 'events';
 import stream from 'stream';
 
 import {packageInfo, routerPath} from '../common.js';
@@ -47,7 +48,7 @@ import {
   textDecoder,
   textEncoder,
 } from './codecs.js';
-import {KoaHandlersFor} from './handlers.js';
+import {KoaHandlersFor, Multipart} from './handlers.js';
 import codes, {errors, requestErrors} from './index.errors.js';
 
 export {KoaDecoder, KoaEncoder} from './codecs.js';
@@ -202,6 +203,21 @@ export function createOperationsRouter<
               registry.validateRequestBody(b, oid, qtype);
               return b;
             });
+          } else if (body instanceof events.EventEmitter) {
+            const obj: {[name: string]: unknown} = {};
+            const mpart = body as Multipart;
+            mpart
+              .on('part', (part) => {
+                // TODO: Validate fields eagerly here.
+                obj[part.name] = part.kind === 'field' ? part.field : '';
+              })
+              .on('done', () => {
+                try {
+                  registry.validateRequestBody(obj, oid, qtype);
+                } catch (err) {
+                  mpart.emit('error', err);
+                }
+              });
           } else {
             registry.validateRequestBody(body, oid, qtype);
           }
@@ -269,8 +285,11 @@ function defaultHandlerContext(obj: any): unknown {
 }
 
 class Registry {
-  private readonly params = new Ajv({coerceTypes: true});
-  private readonly bodies = new Ajv();
+  // We enable coercion both for parameters and (soon) plain-text bodies.
+  private readonly ajv = new Ajv({
+    coerceTypes: true,
+    formats: {binary: true},
+  });
 
   register(schema: any, env: OperationHookEnv): void {
     const {operationId, target} = env;
@@ -278,7 +297,7 @@ class Registry {
       const {name} = target;
       const key = schemaKey(operationId, name);
       // Nest within an object to enable coercion and better error reporting.
-      this.params.addSchema(
+      this.ajv.addSchema(
         {
           type: 'object',
           properties: {[name]: schema ?? {type: 'string'}},
@@ -289,7 +308,7 @@ class Registry {
     } else {
       const code = 'code' in target ? target.code : undefined;
       const key = schemaKey(operationId, bodySchemaSuffix(target.type, code));
-      this.bodies.addSchema(schema, key);
+      this.ajv.addSchema(schema, key);
     }
   }
 
@@ -298,7 +317,7 @@ class Registry {
     oid: string,
     def: OperationDefinition
   ): void {
-    const {params} = this;
+    const {ajv} = this;
     for (const [name, pdef] of Object.entries(def.parameters)) {
       let str: unknown;
       switch (pdef.location) {
@@ -321,7 +340,7 @@ class Registry {
         continue;
       }
       const key = schemaKey(oid, name);
-      const validate = params.getSchema(key);
+      const validate = ajv.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
       ifPresent(incompatibleValueError(validate, {value: obj}), (err) => {
@@ -333,7 +352,7 @@ class Registry {
 
   validateRequestBody(body: unknown, oid: string, type: string): void {
     const key = schemaKey(oid, bodySchemaSuffix(type));
-    const validate = this.bodies.getSchema(key);
+    const validate = this.ajv.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     ifPresent(incompatibleValueError(validate, {value: body}), (err) => {
       throw errors.invalidRequest(requestErrors.invalidBody(err));
@@ -347,7 +366,7 @@ class Registry {
     code: ResponseCode
   ): void {
     const key = schemaKey(oid, bodySchemaSuffix(type, code));
-    const validate = this.bodies.getSchema(key);
+    const validate = this.ajv.getSchema(key);
     assert(validate, 'Missing response schema', key);
     if (
       (validate.schema as any).type === 'string' &&

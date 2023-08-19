@@ -71,7 +71,9 @@ type ContextWithBody<B> = Values<{
   };
 }>;
 
-export type Multipart<O> = TypedEmitter<MultipartListeners<O>>;
+export type Multipart<O = {readonly [name: string]: unknown}> = TypedEmitter<
+  MultipartListeners<O>
+>;
 
 export interface MultipartListeners<O> {
   part(part: MultipartPart<O>): void;
@@ -91,7 +93,7 @@ export type MultipartPart<O> = Values<{
     : {
         readonly kind: 'field';
         readonly name: K;
-        readonly value: O[K];
+        readonly field: O[K];
       };
 }>;
 
