@@ -105,6 +105,7 @@ export type Encoder<B, F extends BaseFetch = typeof fetch> = (
 export type BodyInitFor<F> = Lookup<RequestInitFor<F>, 'body'>;
 
 export interface EncoderContext<F> {
+  readonly operationId: string;
   readonly contentType: string;
   readonly headers: RequestHeaders;
   readonly options?: RequestOptions<F>;
@@ -130,6 +131,7 @@ export type ResponseFor<F> = F extends (
   : never;
 
 export interface DecoderContext<F> {
+  readonly operationId: string;
   readonly contentType: string;
   readonly headers: RequestHeaders;
   readonly options?: RequestOptions<F>;

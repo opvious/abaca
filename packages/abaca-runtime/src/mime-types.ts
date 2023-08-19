@@ -1,7 +1,8 @@
-import {Has, KeysOfValues, Lookup, Values} from './common.js';
+import {Get, Has, KeysOfValues, Lookup, Values} from './common.js';
 import {
   MimeType,
   OperationDefinition,
+  OperationType,
   OperationTypes,
   ResponseCode,
   ResponsesType,
@@ -12,11 +13,18 @@ export type WithMimeTypeGlobs<M extends MimeType> =
   | MimeTypePrefixes<M>
   | '*/*';
 
+export const FALLBACK_MIME_TYPE = '*/*';
+
 export const JSON_MIME_TYPE = 'application/json';
 export const JSON_SEQ_MIME_TYPE = 'application/json-seq';
-export const TEXT_MIME_TYPE = 'text/*';
+export const FORM_MIME_TYPE = 'application/x-www-form-urlencoded';
+export const OCTET_STREAM_MIME_TIME = 'application/octet-stream';
+
+export const MULTIPART_MIME_TYPE = 'multipart/*';
+export const MULTIPART_FORM_MIME_TYPE = 'multipart/form-data';
+
 export const PLAIN_MIME_TYPE = 'text/plain';
-export const FALLBACK_MIME_TYPE = '*/*';
+export const TEXT_MIME_TYPE = 'text/*';
 
 export type MimeTypePrefixes<M extends MimeType> =
   M extends `${infer P}/${infer _S}` ? `${P}/*` : never;
@@ -84,19 +92,23 @@ export class ByMimeType<V> {
   }
 }
 
-export type AllBodyMimeTypes<O extends OperationTypes> = Values<{
-  [K in keyof O]: keyof Lookup<O[K]['requestBody'], 'content'>;
-}> &
+export type BodyContent<O extends OperationType> = Exclude<
+  Lookup<O, 'requestBody'>,
+  undefined
+>['content'];
+
+export type BodyMimeTypes<O extends OperationType> = keyof BodyContent<O> &
   MimeType;
 
+export type AllBodyMimeTypes<O extends OperationTypes> = Values<{
+  [K in keyof O]: BodyMimeTypes<O[K]>;
+}>;
+
 export type BodiesMatchingMimeType<
-  O extends OperationTypes,
+  O extends OperationTypes<keyof O & string>,
   G extends MimeType
 > = Values<{
-  [K in keyof O]: ValuesMatchingMimeTypes<
-    Lookup<O[K]['requestBody'], 'content'>,
-    G
-  >;
+  [K in keyof O]: ValuesMatchingMimeTypes<BodyContent<O[K]>, G>;
 }>;
 
 export const DEFAULT_ACCEPT = 'application/json;q=1, text/*;q=0.5';
@@ -107,8 +119,11 @@ export type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> =
   }> &
     MimeType;
 
-export type ResponseMimeTypes<R extends ResponsesType> = KeysOfValues<{
-  [C in keyof R]: R[C] extends Has<'content', infer O> ? O : never;
+export type ResponseMimeTypes<
+  R extends ResponsesType,
+  C extends keyof R = keyof R
+> = KeysOfValues<{
+  [P in C]: Get<R[P], 'content'>;
 }> &
   MimeType;
 

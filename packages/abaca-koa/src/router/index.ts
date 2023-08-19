@@ -2,8 +2,6 @@ import Router from '@koa/router';
 import {
   absurd,
   assert,
-  errorFactories,
-  errorMessage,
   isStandardError,
   statusErrors,
 } from '@opvious/stl-errors';
@@ -15,7 +13,6 @@ import {
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {
   extractOperationDefinitions,
-  IncompatibleValueError,
   incompatibleValueError,
   OpenapiDocument,
   OperationHookEnv,
@@ -23,9 +20,11 @@ import {
 } from 'abaca-openapi';
 import {
   ByMimeType,
+  FORM_MIME_TYPE,
   isResponseTypeValid,
   JSON_MIME_TYPE,
   MimeType,
+  MULTIPART_FORM_MIME_TYPE,
   OperationDefinition,
   OperationTypes,
   ResponseClauseMatcher,
@@ -37,21 +36,19 @@ import stream from 'stream';
 
 import {packageInfo, routerPath} from '../common.js';
 import {
+  fallbackDecoder,
+  fallbackEncoder,
+  formDecoder,
   jsonDecoder,
   jsonEncoder,
-  KoaDecoder,
   KoaDecodersFor,
-  KoaEncoder,
   KoaEncodersFor,
+  multipartFormDecoder,
   textDecoder,
   textEncoder,
 } from './codecs.js';
-import {
-  DefaultOperationContext,
-  DefaultOperationTypes,
-  KoaHandlersFor,
-} from './handlers.js';
-import {codes, errors} from './index.errors.js';
+import {KoaHandlersFor} from './handlers.js';
+import codes, {errors, requestErrors} from './index.errors.js';
 
 export {KoaDecoder, KoaEncoder} from './codecs.js';
 export {
@@ -61,56 +58,11 @@ export {
   KoaValuesFor,
 } from './handlers.js';
 
-const [requestErrors] = errorFactories({
-  definitions: {
-    unacceptable: () => ({
-      message:
-        'Request must accept at least one content type for each response code',
-      tags: {status: 406},
-    }),
-    missingParameter: (name: string) => ({
-      message: `Parameter ${name} is required but was missing`,
-      tags: {status: 400},
-    }),
-    invalidParameter: (name: string, cause: IncompatibleValueError) => ({
-      message: `Invalid parameter ${name}: ` + cause.message,
-      tags: {status: 400, name, ...cause.tags},
-      cause,
-    }),
-    unsupportedContentType: (type: string) => ({
-      message: `Content-type ${type} is not supported`,
-      tags: {status: 415},
-    }),
-    missingBody: () => ({
-      message: 'This operation expects a body but none was found',
-      tags: {status: 400},
-    }),
-    unexpectedBody: () => ({
-      message:
-        'This operation does not support requests with a body. Please make ' +
-        'sure that the request does not have a body or `content-type` ' +
-        'header.',
-      tags: {status: 400},
-    }),
-    unreadableBody: (cause: unknown) => ({
-      message: 'Body could not be decoded: ' + errorMessage(cause),
-      tags: {status: 400},
-      cause,
-    }),
-    invalidBody: (cause: IncompatibleValueError) => ({
-      message: 'Invalid body: ' + cause.message,
-      tags: {status: 400, ...cause.tags},
-      cause,
-    }),
-  },
-  prefix: 'ERR_REQUEST_',
-});
-
 const Ajv = ajv.default ?? ajv;
 
 /** Creates a type-safe router for operations defined in the document */
 export function createOperationsRouter<
-  O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
+  O extends OperationTypes<keyof O & string>,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 >(args: {
@@ -133,7 +85,7 @@ export function createOperationsRouter<
    * Fallback route handler used when no handler exists for a given operation.
    * By default no route will be added in this case.
    */
-  readonly fallback?: (ctx: DefaultOperationContext<S>) => Promise<void>;
+  readonly fallback?: (ctx: Router.RouterContext<S>) => Promise<void>;
 
   /** Default response data content-type. Defaults to `application/json`. */
   readonly defaultType?: M;
@@ -164,9 +116,9 @@ export function createOperationsRouter<
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const rethrow = !args.handleInvalidRequests;
 
-  const decoders = ByMimeType.create<KoaDecoder<any, any> | undefined>(
-    undefined
-  );
+  const decoders = ByMimeType.create(fallbackDecoder);
+  decoders.add(MULTIPART_FORM_MIME_TYPE, multipartFormDecoder);
+  decoders.add(FORM_MIME_TYPE, formDecoder);
   decoders.add(JSON_MIME_TYPE, jsonDecoder);
   decoders.add(TEXT_MIME_TYPE, textDecoder);
   decoders.addAll(args.decoders as any);
@@ -310,10 +262,6 @@ export function createOperationsRouter<
   return router;
 }
 
-const fallbackEncoder: KoaEncoder<any, any> = (_data, ctx) => {
-  throw errors.unwritableResponseType(ctx.type);
-};
-
 function defaultHandlerContext(obj: any): unknown {
   const name = obj?.constructor?.name;
   return name == null || name === 'Object' ? undefined : obj;
@@ -345,7 +293,7 @@ class Registry {
   }
 
   injectParameters(
-    ctx: DefaultOperationContext,
+    ctx: Router.RouterContext,
     oid: string,
     def: OperationDefinition
   ): void {

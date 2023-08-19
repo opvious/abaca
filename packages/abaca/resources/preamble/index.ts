@@ -1,6 +1,7 @@
 import {
   acceptedMimeTypes,
   BaseFetch,
+  BodyMimeTypes,
   ByMimeType,
   Coercer,
   Decoder,
@@ -82,10 +83,10 @@ interface CommonInput<F> {
   readonly options?: RequestOptions<F>;
 }
 
-type MaybeBodyInput<B, F extends BaseFetch, M> = undefined extends B
-  ? {}
-  : B extends undefined
-  ? BodyInput<Exclude<B, undefined>, F, M> | {}
+type MaybeBodyInput<B, F extends BaseFetch, M> = [B] extends [undefined]
+  ? {readonly body: never}
+  : undefined extends B
+  ? BodyInput<Exclude<B, undefined>, F, M> | {readonly body: never}
   : BodyInput<B, F, M>;
 
 type BodyInput<B, F extends BaseFetch, M> =
@@ -292,6 +293,7 @@ export function createSdkFor<
       if (rawBody !== undefined) {
         const encode = encoder ?? encoders.getBest(requestType);
         body = await encode(rawBody, {
+          operationId: id,
           contentType: requestType,
           headers,
           options: init?.options,
@@ -327,6 +329,7 @@ export function createSdkFor<
       if (responseType) {
         const decode = decoder ?? decoders.getBest(responseType);
         data = await decode(res, {
+          operationId: id,
           contentType: responseType,
           headers,
           options: init?.options,
@@ -351,8 +354,8 @@ function formatPath(p: string, o: Record<string, unknown>): string {
 
 export type RequestBodyFor<
   O extends OperationType,
-  M extends MimeType = typeof JSON_MIME_TYPE
-> = Get<Lookup<Lookup<O, 'requestBody'>, 'content'>, M>;
+  M extends BodyMimeTypes<O> = BodyMimeTypes<O>
+> = Lookup<Lookup<Lookup<O, 'requestBody'>, 'content'>, M, never>;
 
 export type RequestParametersFor<O extends OperationType> = Lookup<
   O['parameters'],
@@ -367,5 +370,8 @@ type Iterated<V> = V extends AsyncIterable<infer I> ? I : V;
 export type ResponseDataFor<
   O extends OperationType,
   C extends keyof O['responses'],
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends ResponseMimeTypes<O['responses'], C> = ResponseMimeTypes<
+    O['responses'],
+    C
+  >
 > = Iterated<Get<Lookup<O['responses'][C], 'content'>, M>>;

@@ -45,6 +45,31 @@ importers:
         specifier: ^0.34.1
         version: 0.34.1
 
+  examples/forms:
+    dependencies:
+      '@opvious/stl-errors':
+        specifier: '*'
+        version: 0.21.38
+      abaca-koa:
+        specifier: workspace:*
+        version: link:../../packages/abaca-koa
+      abaca-openapi:
+        specifier: workspace:*
+        version: link:../../packages/abaca-openapi
+    devDependencies:
+      '@types/koa':
+        specifier: ^2.13.1
+        version: 2.13.5
+      '@types/koa__router':
+        specifier: ^8.0.11
+        version: 8.0.11
+      abaca:
+        specifier: workspace:*
+        version: link:../../packages/abaca
+      koa:
+        specifier: ^2.13.1
+        version: 2.14.1
+
   examples/json:
     dependencies:
       abaca-koa:
@@ -201,6 +226,9 @@ importers:
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
+      busboy:
+        specifier: ^1.6.0
+        version: 1.6.0
       co-body:
         specifier: ^6.1.0
         version: 6.1.0
@@ -217,6 +245,9 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1
     devDependencies:
+      '@types/busboy':
+        specifier: ^1.5.0
+        version: 1.5.0
       '@types/co-body':
         specifier: ^6.1.0
         version: 6.1.0
@@ -993,6 +1024,12 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
+      '@types/node': 18.14.0
+    dev: true
+
+  /@types/busboy@1.5.0:
+    resolution: {integrity: sha512-ncOOhwmyFDW76c/Tuvv9MA9VGYUCn8blzyWmzYELcNGDb0WXWLSmFi7hJq25YdRBYJrmMBB5jZZwUjlJe9HCjQ==}
+    dependencies:
       '@types/node': 18.14.0
     dev: true
 

@@ -1,0 +1,45 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Forms
+paths:
+  /:
+    post:
+      summary: Upload data using a form
+      operationId: upload
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Metadata'
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - metadata
+                - logoImage
+              properties:
+                metadata:
+                  $ref: '#/components/schemas/Metadata'
+                logoImage:
+                  type: string
+                  format: binary
+                coverImage:
+                  type: string
+                  format: binary
+      responses:
+        '204':
+          description: Successfully uploaded
+components:
+  schemas:
+    Metadata:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string

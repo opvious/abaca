@@ -1,0 +1,35 @@
+{
+  "name": "abaca-example-forms",
+  "private": true,
+  "version": "0.7.1",
+  "repository": "github:opvious/abaca",
+  "description": "Form submission example using Abaca",
+  "author": "Opvious Engineering <oss@opvious.io>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "lib/",
+    "resources/"
+  ],
+  "exports": "./lib/index.js",
+  "scripts": {
+    "build": "tsc -p src",
+    "clean": "rm -rf lib node_modules out",
+    "fix": "prettier --write",
+    "gen": "abaca g resources/openapi.yaml -o src/sdk.gen.ts",
+    "prepare": "pnpm run gen && pnpm run build",
+    "test": "vitest",
+    "watch": "tsc -b -w src"
+  },
+  "dependencies": {
+    "@opvious/stl-errors": "*",
+    "abaca-koa": "workspace:*",
+    "abaca-openapi": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.13.1",
+    "@types/koa__router": "^8.0.11",
+    "abaca": "workspace:*",
+    "koa": "^2.13.1"
+  }
+}

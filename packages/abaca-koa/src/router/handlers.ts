@@ -1,9 +1,12 @@
+import {TypedEmitter} from '@opvious/stl-utils/events';
 import {
   AsyncOrSync,
   Get,
   JSON_MIME_TYPE,
   Lookup,
   MimeType,
+  MimeTypePrefixes,
+  MULTIPART_MIME_TYPE,
   OperationType,
   OperationTypes,
   ResponsesType,
@@ -13,7 +16,7 @@ import Koa from 'koa';
 import stream from 'stream';
 
 export type KoaHandlersFor<
-  O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
+  O extends OperationTypes<keyof O & string>,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 > = {
@@ -21,27 +24,10 @@ export type KoaHandlersFor<
 };
 
 export type KoaHandlerFor<
-  O extends OperationType = DefaultOperationType,
+  O extends OperationType,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 > = (ctx: KoaContext<O, S>) => AsyncOrSync<KoaValue<O, M>>;
-
-export interface DefaultOperationTypes {
-  readonly [id: string]: DefaultOperationType;
-}
-
-export type DefaultOperationType = OperationType<
-  ResponsesType,
-  DefaultParametersType
->;
-
-interface DefaultParametersType {
-  readonly path: UnknownRecord;
-  readonly query: UnknownRecord;
-  readonly headers: UnknownRecord;
-}
-
-type UnknownRecord = Record<string, unknown>;
 
 export type KoaContextsFor<
   O extends OperationTypes<keyof O & string>,
@@ -55,33 +41,56 @@ type KoaContext<O extends OperationType, S = {}> = Koa.ParameterizedContext<
   ContextFor<O>
 >;
 
-export type DefaultOperationContext<S = {}> = KoaContext<
-  DefaultOperationType,
-  S
+type MaybeBodyContent<O extends OperationType> = Lookup<
+  Lookup<O, 'requestBody'>,
+  'content'
 >;
 
-type ContextFor<O extends OperationType> = ContextForBody<OperationBody<O>> &
+type ContextFor<O extends OperationType> = ContextForBody<MaybeBodyContent<O>> &
   ContextWithParams<OperationParams<O>>;
 
-type ContextForBody<B> = undefined extends B
-  ? {}
-  : B extends undefined
-  ? ContextWithBody<Exclude<B, undefined>> | {}
+type ContextForBody<B> = [B] extends [undefined]
+  ? ContextWithoutBody
+  : undefined extends B
+  ? ContextWithBody<Exclude<B, undefined>> | ContextWithoutBody
   : ContextWithBody<B>;
 
+interface ContextWithoutBody {
+  readonly request: {readonly type: ''};
+}
+
 type ContextWithBody<B> = Values<{
-  [M in keyof B]: {
+  [M in keyof B & MimeType]: {
     readonly request: {
       readonly type: M;
-      readonly body: B[M];
+      readonly body: MimeTypePrefixes<M> &
+        typeof MULTIPART_MIME_TYPE extends never
+        ? B[M]
+        : Multipart<B[M]>;
     };
   };
 }>;
 
-type OperationBody<O extends OperationType> = Lookup<
-  Lookup<O, 'requestBody'>,
-  'content'
->;
+export type Multipart<O> = TypedEmitter<MultipartListeners<O>>;
+
+export interface MultipartListeners<O> {
+  part(part: MultipartPart<O>): void;
+  done(): void;
+}
+export type MultipartPart<O> = Values<{
+  readonly [K in keyof O]-?: NonNullable<O[K]> extends Blob
+    ? {
+        readonly kind: 'stream';
+        readonly name: K;
+        readonly stream: stream.Readable;
+        // TODO: Add metadata
+      }
+    : {
+        readonly kind: 'field';
+        readonly name: K;
+        readonly value: O[K];
+      };
+}>;
 
 interface ContextWithParams<P> {
   readonly params: LookupObject<P, 'path'> &

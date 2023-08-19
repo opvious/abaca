@@ -141,6 +141,9 @@ async function generateTypes(
   let count = 0;
   const lastGenerated = new Map<string, string>();
   const nonStreaming = await generate({
+    transform(schema) {
+      return schema.format === 'binary' ? 'Blob' : undefined;
+    },
     postTransform(gen, opts) {
       count++;
       const {path} = opts;
