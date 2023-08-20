@@ -8,6 +8,7 @@ paths:
       summary: Upload data using a form
       operationId: upload
       requestBody:
+        required: true
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -18,6 +19,7 @@ paths:
               required:
                 - metadata
                 - logoImage
+              additionalProperties: true
               properties:
                 metadata:
                   $ref: '#/components/schemas/Metadata'

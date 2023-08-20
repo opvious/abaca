@@ -1,5 +1,5 @@
 import {statusErrors} from '@opvious/stl-errors';
-import {withTypedEmitter} from '@opvious/stl-utils/events';
+import {EventConsumer, withTypedEmitter} from '@opvious/stl-utils/events';
 import {
   AllBodyMimeTypes,
   AllResponseMimeTypes,
@@ -16,7 +16,6 @@ import * as coBody from 'co-body';
 import Koa from 'koa';
 import stream from 'stream';
 
-import {MultipartListeners} from './handlers.js';
 import {errors, requestErrors} from './index.errors.js';
 
 export type KoaDecodersFor<O extends OperationTypes, S = {}> = {
@@ -64,29 +63,29 @@ export const textEncoder: KoaEncoder = (data, ctx) => {
 
 export const formDecoder: KoaDecoder = (ctx) => coBody.form(ctx.req);
 
-export const multipartFormDecoder: KoaDecoder = (ctx) =>
-  withTypedEmitter<MultipartListeners<any>>(async (ee) => {
+export const multipartFormDecoder: KoaDecoder<MultipartForm> = (ctx) =>
+  withTypedEmitter<MultipartFormListeners>((ee) => {
     const bb = busboy({headers: ctx.headers})
       .on('error', (cause) => {
         const err = requestErrors.unreadableBody(cause);
         ee.emit('error', errors.invalidRequest(err));
       })
-      .on('field', (name, value) => {
-        ee.emit('part', {kind: 'field', name, field: value});
+      .on('field', (name, val) => {
+        ee.emit('value', name, val);
       })
       .on('file', (name, stream, info) => {
         switch (info.mimeType) {
           case JSON_MIME_TYPE:
-            jsonValue(stream, (err, field) => {
+            jsonValue(stream, (err, val) => {
               if (err) {
                 bb.destroy(err);
                 return;
               }
-              ee.emit('part', {kind: 'field', name, field});
+              ee.emit('value', name, val);
             });
             break;
           case OCTET_STREAM_MIME_TIME:
-            ee.emit('part', {kind: 'stream', name, stream});
+            ee.emit('stream', name, stream);
             break;
           default: {
             bb.destroy();
@@ -105,6 +104,14 @@ export const multipartFormDecoder: KoaDecoder = (ctx) =>
       // response before we could handle termination ourselves.
       .pipe(bb);
   });
+
+export type MultipartForm = EventConsumer<MultipartFormListeners>;
+
+interface MultipartFormListeners {
+  value(name: string, data: any): void;
+  stream(name: string, data: stream.Readable): void;
+  done(): void;
+}
 
 // Listening to a stream's data event is faster than async iteration.
 // https://github.com/nodejs/node/issues/31979

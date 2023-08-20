@@ -1,4 +1,4 @@
-import {TypedEmitter} from '@opvious/stl-utils/events';
+import {EventConsumer} from '@opvious/stl-utils/events';
 import {
   AsyncOrSync,
   Get,
@@ -71,31 +71,44 @@ type ContextWithBody<B> = Values<{
   };
 }>;
 
-export type Multipart<O = {readonly [name: string]: unknown}> = TypedEmitter<
-  MultipartListeners<O>
->;
+export type Multipart<O = unknown> = EventConsumer<MultipartListeners<O>>;
 
-export interface MultipartListeners<O> {
-  part(part: MultipartPart<O>): void;
+export interface MultipartListeners<O = unknown> {
+  property(
+    prop: unknown extends O ? AdditionalMultipartProperty : MultipartProperty<O>
+  ): void;
+  additionalProperty(prop: AdditionalMultipartProperty): void;
   done(): void;
 }
 
-export type MultipartPart<O> = Values<{
-  readonly [K in keyof O]-?: NonNullable<O[K]> extends never
+type MultipartProperty<O> = Values<{
+  readonly [K in keyof O as string extends K
     ? never
-    : NonNullable<O[K]> extends Blob
-    ? {
-        readonly kind: 'stream';
-        readonly name: K;
-        readonly stream: stream.Readable;
-        // TODO: Add metadata
-      }
-    : {
-        readonly kind: 'field';
-        readonly name: K;
-        readonly field: O[K];
-      };
+    : K]-?: MultipartPropertyValue<K, Exclude<O[K], undefined>>;
 }>;
+
+type MultipartPropertyValue<N, V> = V extends never
+  ? never
+  : V extends Blob
+  ? MultipartStreamProperty<N>
+  : MultipartFieldProperty<N, V>;
+
+export type AdditionalMultipartProperty =
+  | MultipartFieldProperty
+  | MultipartStreamProperty;
+
+export interface MultipartFieldProperty<N = string, V = unknown> {
+  readonly kind: 'field';
+  readonly name: N;
+  readonly field: V;
+}
+
+export interface MultipartStreamProperty<N = string> {
+  readonly kind: 'stream';
+  readonly name: N;
+  readonly stream: stream.Readable;
+  // TODO: Add metadata
+}
 
 interface ContextWithParams<P> {
   readonly params: LookupObject<P, 'path'> &

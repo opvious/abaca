@@ -4,17 +4,13 @@ import {
   AllResponseMimeTypes,
   AllResponsesMatchingMimeType,
   BodiesMatchingMimeType,
-  DEFAULT_ACCEPT,
-  JSON_MIME_TYPE,
   WithMimeTypeGlobs,
 } from './mime-types.js';
 import {MimeType, OperationTypes} from './operations.js';
 
 export interface SdkConfigFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
+  F extends BaseFetch = typeof fetch
 > {
   /** API server address. */
   readonly address: Address;
@@ -36,12 +32,6 @@ export interface SdkConfigFor<
 
   /** Global response decoders. */
   readonly decoders?: DecodersFor<O, F>;
-
-  /** Default content-type used for request bodies. */
-  readonly defaultContentType?: M;
-
-  /** Default accept header value. */
-  readonly defaultAccept?: A;
 
   /**
    * Unexpected response coercion. The default will ignore bodies of responses

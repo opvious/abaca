@@ -40,6 +40,18 @@ test('upload multipart', async () => {
       logoImage: new Blob(['abcd']),
     },
   });
-  console.log(res);
   expect(res.code).toEqual(204);
+});
+
+test('upload multipart unexpected fields', async () => {
+  const res = await sdk.upload({
+    headers: {'content-type': 'multipart/form-data'},
+    body: {
+      // @ts-expect-error unexpected name field
+      metadata: {nam: 'ann'},
+      name: 'unexpected',
+      logoImage: new Blob(['abcd']),
+    },
+  });
+  expect(res.raw.status).toEqual(400);
 });

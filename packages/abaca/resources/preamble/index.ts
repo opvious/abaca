@@ -6,6 +6,7 @@ import {
   Coercer,
   Decoder,
   DEFAULT_ACCEPT,
+  DEFAULT_CONTENT_TYPE,
   Encoder,
   Exact,
   FORM_MIME_TYPE,
@@ -37,6 +38,9 @@ import {
   ValuesMatchingMimeTypes,
   WithMimeTypeGlobs,
 } from 'abaca-runtime';
+
+type DA = typeof DEFAULT_ACCEPT;
+type DM = typeof DEFAULT_CONTENT_TYPE;
 
 const jsonEncoder: Encoder = (body) => JSON.stringify(body);
 const jsonDecoder: Decoder = (res) => res.json();
@@ -101,15 +105,10 @@ const defaultCoercer: Coercer<BaseFetch> = async (res, ctx) => {
   );
 };
 
-type Input<
-  O,
-  F extends BaseFetch,
-  M extends MimeType,
-  A extends MimeType
-> = O extends OperationType<infer R, infer P>
+type Input<O, F extends BaseFetch> = O extends OperationType<infer R, infer P>
   ? CommonInput<F> &
-      MaybeBodyInput<Lookup<Lookup<O, 'requestBody'>, 'content'>, F, M> &
-      MaybeAcceptInput<R, F, A> &
+      MaybeBodyInput<Lookup<Lookup<O, 'requestBody'>, 'content'>, F> &
+      MaybeAcceptInput<R, F> &
       MaybeParamInput<P>
   : never;
 
@@ -118,21 +117,21 @@ interface CommonInput<F> {
   readonly options?: RequestOptions<F>;
 }
 
-type MaybeBodyInput<B, F extends BaseFetch, M> = [B] extends [undefined]
+type MaybeBodyInput<B, F extends BaseFetch> = [B] extends [undefined]
   ? {}
   : undefined extends B
-  ? BodyInput<Exclude<B, undefined>, F, M> | {readonly body: never}
-  : BodyInput<B, F, M>;
+  ? BodyInput<Exclude<B, undefined>, F> | {readonly body: never}
+  : BodyInput<B, F>;
 
-type BodyInput<B, F extends BaseFetch, M> =
-  | DefaultBodyInput<B, F, M>
+type BodyInput<B, F extends BaseFetch> =
+  | DefaultBodyInput<B, F>
   | CustomBodyInput<B, F>;
 
-type DefaultBodyInput<B, F extends BaseFetch, M> = M extends keyof B
+type DefaultBodyInput<B, F extends BaseFetch> = DM extends keyof B
   ? {
-      readonly headers?: {'content-type'?: M};
-      readonly body: B[M];
-      readonly encoder?: Encoder<B[M], F>;
+      readonly headers?: {'content-type'?: DM};
+      readonly body: B[DM];
+      readonly encoder?: Encoder<B[DM], F>;
     }
   : never;
 
@@ -146,24 +145,22 @@ type CustomBodyInput<B, F extends BaseFetch> = Values<{
 
 type MaybeAcceptInput<
   R extends ResponsesType,
-  F extends BaseFetch,
-  M extends MimeType
+  F extends BaseFetch
 > = Values<R> extends never
   ? {}
   :
-      | DefaultAcceptInput<R, F, M>
+      | DefaultAcceptInput<R, F>
       | SimpleAcceptInput<R, F>
       | CustomAcceptInput<R, F>;
 
 type DefaultAcceptInput<
   R extends ResponsesType,
-  F extends BaseFetch,
-  A extends MimeType
-> = SplitMimeTypes<A> & ResponseMimeTypes<R> extends never
+  F extends BaseFetch
+> = SplitMimeTypes<DA> & ResponseMimeTypes<R> extends never
   ? never
   : {
-      readonly headers?: {readonly accept?: A};
-      readonly decoder?: AcceptDecoder<R, F, A>;
+      readonly headers?: {readonly accept?: DA};
+      readonly decoder?: AcceptDecoder<R, F, DA>;
     };
 
 type SimpleAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
@@ -198,8 +195,8 @@ type MaybeParam<V> = keyof V extends never
   ? {readonly params?: V}
   : {readonly params: V};
 
-type Output<O, X, F, A extends MimeType> = O extends OperationType<infer R>
-  ? CommonOutput<F> & DataOutput<GetHeader<X, 'accept', A> & MimeType, R>
+type Output<O, X, F> = O extends OperationType<infer R>
+  ? CommonOutput<F> & DataOutput<GetHeader<X, 'accept', DA> & MimeType, R>
   : never;
 
 type GetHeader<X, H extends string, D> = X extends HasHeader<H, infer V>
@@ -240,34 +237,28 @@ type MaybeUnknownOutput<R extends ResponsesType> = 'default' extends keyof R
 
 type SdkFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
+  F extends BaseFetch = typeof fetch
 > = {
-  readonly [K in keyof O]: SdkFunction<O[K], Input<O[K], F, M, A>, F, A>;
+  readonly [K in keyof O]: SdkFunction<O[K], Input<O[K], F>, F>;
 };
 
 // We use this convoluted approach instead of a union of overloaded function
 // interfaces (or types) to allow reference lookups to see-through this
 // definition and link directly to the underlying operation type.
-type SdkFunction<O, I, F, A extends MimeType> = {} extends I
+type SdkFunction<O, I, F> = {} extends I
   ? <X extends I = I>(
       args?: X
-    ) => Output<O, Exact<I, X> extends never ? X : {}, F, A>
-  : <X extends I>(args: X) => Output<O, X, F, A>;
+    ) => Output<O, Exact<I, X> extends never ? X : {}, F>
+  : <X extends I>(args: X) => Output<O, X, F>;
 
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
+  F extends BaseFetch = typeof fetch
 >(
   operations: OperationDefinitions<O>,
-  config: SdkConfigFor<O, F, M, A>
-): SdkFor<O, F, M, A> {
+  config: SdkConfigFor<O, F>
+): SdkFor<O, F> {
   const realFetch: BaseFetch = (config.fetch as any) ?? fetch;
-  const defaultContentType = config.defaultContentType ?? JSON_MIME_TYPE;
-  const defaultAccept = config.defaultAccept ?? DEFAULT_ACCEPT;
 
   const target = config.address;
   const root =
@@ -316,8 +307,9 @@ export function createSdkFor<
         }
       }
 
-      const accept = init?.headers?.['accept'] ?? defaultAccept;
-      const requestType = init?.headers?.['content-type'] ?? defaultContentType;
+      const accept = init?.headers?.['accept'] ?? DEFAULT_ACCEPT;
+      const requestType =
+        init?.headers?.['content-type'] ?? DEFAULT_CONTENT_TYPE;
       const headers = {
         ...baseHeaders,
         ...init?.headers,

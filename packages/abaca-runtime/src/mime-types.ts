@@ -111,8 +111,6 @@ export type BodiesMatchingMimeType<
   [K in keyof O]: ValuesMatchingMimeTypes<BodyContent<O[K]>, G>;
 }>;
 
-export const DEFAULT_ACCEPT = 'application/json;q=1, text/*;q=0.5';
-
 export type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> =
   Values<{
     [K in keyof O]: ResponseMimeTypes<O[K]['responses']>;

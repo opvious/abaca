@@ -10,6 +10,7 @@ import {
   isAsyncIterable,
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
+import {withTypedEmitter} from '@opvious/stl-utils/events';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {
   extractOperationDefinitions,
@@ -31,7 +32,7 @@ import {
   ResponseCode,
   TEXT_MIME_TYPE,
 } from 'abaca-runtime';
-import {default as ajv} from 'ajv';
+import ajv_, {ValidateFunction} from 'ajv';
 import events from 'events';
 import stream from 'stream';
 
@@ -44,12 +45,13 @@ import {
   jsonEncoder,
   KoaDecodersFor,
   KoaEncodersFor,
+  MultipartForm,
   multipartFormDecoder,
   textDecoder,
   textEncoder,
 } from './codecs.js';
-import {KoaHandlersFor, Multipart} from './handlers.js';
 import codes, {errors, requestErrors} from './index.errors.js';
+import {KoaHandlersFor, Multipart, MultipartListeners} from './types.js';
 
 export {KoaDecoder, KoaEncoder} from './codecs.js';
 export {
@@ -57,9 +59,9 @@ export {
   KoaHandlerFor,
   KoaHandlersFor,
   KoaValuesFor,
-} from './handlers.js';
+} from './types.js';
 
-const Ajv = ajv.default ?? ajv;
+const Ajv = ajv_.default ?? ajv_;
 
 /** Creates a type-safe router for operations defined in the document */
 export function createOperationsRouter<
@@ -204,20 +206,7 @@ export function createOperationsRouter<
               return b;
             });
           } else if (body instanceof events.EventEmitter) {
-            const obj: {[name: string]: unknown} = {};
-            const mpart = body as Multipart;
-            mpart
-              .on('part', (part) => {
-                // TODO: Validate fields eagerly here.
-                obj[part.name] = part.kind === 'field' ? part.field : '';
-              })
-              .on('done', () => {
-                try {
-                  registry.validateRequestBody(obj, oid, qtype);
-                } catch (err) {
-                  mpart.emit('error', err);
-                }
-              });
+            body = registry.translateMultipartFormBody(body);
           } else {
             registry.validateRequestBody(body, oid, qtype);
           }
@@ -289,6 +278,7 @@ class Registry {
   private readonly ajv = new Ajv({
     coerceTypes: true,
     formats: {binary: true},
+    allErrors: true,
   });
 
   register(schema: any, env: OperationHookEnv): void {
@@ -351,12 +341,66 @@ class Registry {
   }
 
   validateRequestBody(body: unknown, oid: string, type: string): void {
-    const key = schemaKey(oid, bodySchemaSuffix(type));
-    const validate = this.ajv.getSchema(key);
-    assert(validate, 'Missing request body schema', key);
+    const validate = this.bodyValidator(oid, type);
     ifPresent(incompatibleValueError(validate, {value: body}), (err) => {
       throw errors.invalidRequest(requestErrors.invalidBody(err));
     });
+  }
+
+  translateMultipartFormBody(_form: MultipartForm): Multipart {
+    return withTypedEmitter<MultipartListeners>((_ee) => {
+      // _ee.emit('property', {kind: 'field', name: 'foo', field: 123});
+      _ee.emit('property', {kind: 'field', name: 'foo', field: 123});
+      // const obj: {[name: string]: unknown} = {};
+      // const mpart = body as Multipart<any>;
+      // mpart
+      //   .on('part', (part) => {
+      //     const {kind, name} = part;
+      //     const field = kind === 'field' ? part.field : '';
+      //     try {
+      //       registry.validateRequestBodyField(field, oid, qtype, name);
+      //     } catch (err) {
+      //       mpart.emit('error', err);
+      //       return;
+      //     }
+      //     console.log('PART', name);
+      //     obj[name] = field;
+      //   })
+      //   .on('done', () => {
+      //     try {
+      //       registry.validateRequestBody(obj, oid, qtype);
+      //     } catch (err) {
+      //       mpart.emit('error', err);
+      //     }
+      //   });
+    });
+  }
+
+  validateRequestBodyField(
+    field: unknown,
+    oid: string,
+    type: string,
+    name: string
+  ): void {
+    const validate = this.bodyValidator(oid, type);
+    console.log('VALIDATING FIELD', name, field);
+    const err = incompatibleValueError(validate, {
+      value: {[name]: field},
+      errorObjectFilter: (obj) => {
+        console.log(obj);
+        return obj.schemaPath !== '#/required';
+      },
+    });
+    if (err) {
+      throw errors.invalidRequest(requestErrors.invalidBody(err));
+    }
+  }
+
+  private bodyValidator(oid: string, type: string): ValidateFunction {
+    const key = schemaKey(oid, bodySchemaSuffix(type));
+    const validate = this.ajv.getSchema(key);
+    assert(validate, 'Missing request body schema', key);
+    return validate;
   }
 
   validateResponse(

@@ -1,17 +1,13 @@
 export type SdkConfig<
-  F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
-> = SdkConfigFor<operations, F, M, A>;
+  F extends BaseFetch = typeof fetch
+> = SdkConfigFor<operations, F>;
 
 export function createSdk<
-  F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
->(arg: Address | SdkConfig<F, M, A>): Sdk<F, M, A> {
+  F extends BaseFetch = typeof fetch
+>(arg: Address | SdkConfig<F>): Sdk<F> {
   const config =
     typeof arg == 'string' || arg instanceof URL || (arg && 'port' in arg)
       ? {address: arg}
       : arg;
-  return createSdkFor<operations, F, M, A>(allOperations, config);
+  return createSdkFor<operations, F>(allOperations, config);
 }

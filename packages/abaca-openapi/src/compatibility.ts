@@ -117,7 +117,7 @@ class RealSchemaCompatibilityChecker<S>
  * errors. The `value` option can be used to execute the predicate beforehand.
  */
 export function incompatibleValueError(
-  fn: CompatibilityPredicate<unknown>,
+  pred: CompatibilityPredicate<unknown>,
   opts?: {
     /**
      * Value to call the predicate with. If unspecified, errors from the
@@ -131,14 +131,20 @@ export function incompatibleValueError(
      * has already been called with it.
      */
     readonly skipValidation?: boolean;
+    /**
+     * Filter for validation errors applied before determining whether the
+     * validation failed. This can be used to ignore certain errors.
+     */
+    readonly errorObjectFilter?: (obj: ErrorObject) => boolean;
   }
 ): IncompatibleValueError | undefined {
   if (opts && !opts.skipValidation && 'value' in opts) {
-    fn(opts.value);
+    pred(opts.value);
   }
-  return fn.errors?.length
-    ? errors.incompatibleValue(fn.errors, opts?.value)
-    : undefined;
+  const errs =
+    ifPresent(opts?.errorObjectFilter, (fn) => pred.errors?.filter(fn)) ??
+    pred.errors;
+  return errs?.length ? errors.incompatibleValue(errs, opts?.value) : undefined;
 }
 
 /** Schema mismatch error */

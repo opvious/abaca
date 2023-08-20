@@ -36,17 +36,28 @@ export function generateCommand(): Command {
     )
     .argument('<path|url>', 'path or URL to OpenAPI document')
     .option(
-      '-a, --default-address <url>',
-      'default address used when instantiating the SDK (default: ' +
-        'the first static server URL defined in the document, if any)'
-    )
-    .option(
       '-d, --document-output <path>',
       'also output the consolidated, fully resolved, OpenAPI document to ' +
         'this path'
     )
+    .option(
+      // TODO: Implement
+      '-f, --filter <filter>',
+      'filter which operations to include in the SDK. the filter is applied ' +
+        'to the (potentially generated) operation ID and can include globs. ' +
+        'for example `account*=y` would only inlcude operations with ID ' +
+        'starting with `account`',
+      'y'
+    )
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
+    .option(
+      // TODO: Implement
+      '-s, --schema-filter <filter>',
+      'filter which component schemas to generate a type for. the filter is ' +
+        'applied to each schema\'s name and can include globs',
+      'n'
+    )
     .option(
       '-t, --streaming-content-types <types>',
       'comma-separated list of content-types which contain streamed data. ' +
@@ -62,15 +73,20 @@ export function generateCommand(): Command {
     .option(
       '--default-accept <type>',
       'default accept header used in requests',
-      DEFAULT_ACCEPT // TODO: Use
+      DEFAULT_ACCEPT
+    )
+    .option(
+      '--default-address <url>',
+      'default address used when instantiating the SDK (default: ' +
+        'the first static server URL defined in the document, if any)'
     )
     .option(
       '--default-content-type <type>',
       'default content-type header used in requests',
-      JSON_MIME_TYPE // TODO: Use
+      JSON_MIME_TYPE
     )
     .option(
-      '--generate-operation-ids',
+      '--generate-ids',
       'automatically generate IDs for operations which do not have one. ' +
         'the generated ID form is `<path>#<verb>`, for example `/pets#post`'
     )
@@ -78,6 +94,11 @@ export function generateCommand(): Command {
       '--skip-document-validation',
       'bypass input OpenAPI specification schema validation. this may cause ' +
         'unexpected results'
+    )
+    .option(
+      '--strict-additional-properties',
+      'only allow additional properties when explicitly allowed in an ' +
+        'object\'s schema'
     )
     .action(
       contextualAction(async function (uri, opts) {
@@ -106,6 +127,7 @@ export function generateCommand(): Command {
           document: doc,
           streamingTypes,
           operations,
+          additionalProperties: !opts.strictAdditionalProperties,
         });
         const eta = new Eta({
           autoEscape: false,
@@ -118,7 +140,9 @@ export function generateCommand(): Command {
             .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
             .replace(/export /g, ''),
           serverAddresses,
+          defaultAccept: opts.defaultAccept,
           defaultAddress: opts.defaultAddress,
+          defaultContentType: opts.defaultContentType,
         });
         spinner.succeed(
           `Generated SDK. [operations=${Object.keys(operations).length}, ` +
@@ -153,11 +177,12 @@ async function generateTypes(args: {
   readonly document: Document;
   readonly streamingTypes: ReadonlyArray<string>;
   readonly operations: {readonly [id: string]: OperationDefinition};
+  readonly additionalProperties: boolean;
 }): Promise<{
   readonly source: string;
   readonly count: number;
 }> {
-  const {streamingTypes} = args;
+  const {streamingTypes, additionalProperties} = args;
 
   // We clone the document to mutate it since `doc` contains immutable nodes.
   // Note also that `openapi-typescript` may mutate it (for example to filter
@@ -216,6 +241,9 @@ async function generateTypes(args: {
   const lastGenerated = new Map<string, string>();
   const nonStreaming = await generate({
     transform(schema) {
+      if ('type' in schema && schema.type === 'object') {
+        schema.additionalProperties ??= additionalProperties;
+      }
       switch (schema.format) {
         case SchemaFormat.BINARY:
           return 'Blob';
