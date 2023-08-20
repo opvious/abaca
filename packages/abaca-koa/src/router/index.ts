@@ -415,6 +415,10 @@ class Registry {
     const {logger} = this.telemetry;
     const ee = typedEmitter<MultipartListeners>();
 
+    // Object used to accumulate properties as they get decoded. They are
+    // validated one by one and at the very end, to make sure the object as a
+    // whole is not missing any required data.
+    const obj: {[name: string]: unknown} = {};
     const onDone = (): void => {
       try {
         this.validateRequestBody(obj, oid, contentType);
@@ -435,7 +439,6 @@ class Registry {
       }
     );
 
-    const obj: {[name: string]: unknown} = {};
     const emitProperty = (prop: AdditionalMultipartProperty): void => {
       const {kind, name} = prop;
       const key = schemaKey(oid, {
