@@ -11,7 +11,7 @@ import {
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
 import {typedEmitter} from '@opvious/stl-utils/events';
-import {atMostOnce,ifPresent} from '@opvious/stl-utils/functions';
+import {atMostOnce, ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {
   extractOperationDefinitions,
@@ -29,6 +29,7 @@ import {
   MimeType,
   MULTIPART_FORM_MIME_TYPE,
   MULTIPART_MIME_TYPE,
+  OCTET_STREAM_MIME_TIME,
   OperationDefinition,
   OperationTypes,
   ResponseClauseMatcher,
@@ -208,15 +209,17 @@ export function createOperationsRouter<
           } catch (err) {
             throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
-          if (body instanceof stream.Readable) {
-            registry.validateRequestBody('', oid, qtype);
+          if (isAsyncIterable(body)) {
+            if (qtype === OCTET_STREAM_MIME_TIME) {
+              registry.validateRequestBody('', oid, qtype);
+            } else {
+              body = mapAsyncIterable(body, (b) => {
+                registry.validateRequestBody(b, oid, qtype);
+                return b;
+              });
+            }
           } else if (body instanceof events.EventEmitter) {
             body = registry.translateRequestBody(body, oid, qtype);
-          } else if (isAsyncIterable(body)) {
-            body = mapAsyncIterable(body, (b) => {
-              registry.validateRequestBody(b, oid, qtype);
-              return b;
-            });
           } else {
             registry.validateRequestBody(body, oid, qtype);
           }
@@ -230,7 +233,6 @@ export function createOperationsRouter<
           await fallback(ctx);
           return;
         }
-
         const res = await handler.call(handlerContext, ctx);
         const status = typeof res == 'number' ? res : res.status ?? 200;
 

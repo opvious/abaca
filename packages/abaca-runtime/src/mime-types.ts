@@ -97,8 +97,8 @@ export type BodyContent<O extends OperationType> = Exclude<
   undefined
 >['content'];
 
-export type BodyMimeTypes<O extends OperationType> = keyof BodyContent<O> &
-  MimeType;
+export type BodyMimeTypes<O extends OperationType> =
+  BodyContent<O> extends never ? never : keyof BodyContent<O> & MimeType;
 
 export type AllBodyMimeTypes<O extends OperationTypes> = Values<{
   [K in keyof O]: BodyMimeTypes<O[K]>;
