@@ -120,7 +120,7 @@ export function generateCommand(): Command {
         const streamingTypes = commaSeparated(opts.streamingContentTypes);
         const operations = extractOperationDefinitions({
           document: doc,
-          generateIds: opts.generateOperationIds,
+          generateIds: opts.generateIds,
         });
         const serverAddresses = extractServerAddresses(doc, url);
         const types = await generateTypes({
