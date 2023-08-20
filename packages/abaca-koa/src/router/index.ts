@@ -10,8 +10,9 @@ import {
   isAsyncIterable,
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
-import {withTypedEmitter} from '@opvious/stl-utils/events';
-import {ifPresent} from '@opvious/stl-utils/functions';
+import {typedEmitter} from '@opvious/stl-utils/events';
+import {atMostOnce,ifPresent} from '@opvious/stl-utils/functions';
+import {KindAmong} from '@opvious/stl-utils/objects';
 import {
   extractOperationDefinitions,
   incompatibleValueError,
@@ -21,18 +22,20 @@ import {
 } from 'abaca-openapi';
 import {
   ByMimeType,
+  contentTypeMatches,
   FORM_MIME_TYPE,
   isResponseTypeValid,
   JSON_MIME_TYPE,
   MimeType,
   MULTIPART_FORM_MIME_TYPE,
+  MULTIPART_MIME_TYPE,
   OperationDefinition,
   OperationTypes,
   ResponseClauseMatcher,
   ResponseCode,
   TEXT_MIME_TYPE,
 } from 'abaca-runtime';
-import ajv_, {ValidateFunction} from 'ajv';
+import ajv_ from 'ajv';
 import events from 'events';
 import stream from 'stream';
 
@@ -51,7 +54,12 @@ import {
   textEncoder,
 } from './codecs.js';
 import codes, {errors, requestErrors} from './index.errors.js';
-import {KoaHandlersFor, Multipart, MultipartListeners} from './types.js';
+import {
+  AdditionalMultipartProperty,
+  KoaHandlersFor,
+  Multipart,
+  MultipartListeners,
+} from './types.js';
 
 export {KoaDecoder, KoaEncoder} from './codecs.js';
 export {
@@ -131,7 +139,7 @@ export function createOperationsRouter<
   encoders.add(TEXT_MIME_TYPE, textEncoder);
   encoders.addAll(args.encoders as any);
 
-  const registry = new Registry();
+  const registry = new Registry(tel);
   const defs = extractOperationDefinitions({
     document: typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
     onSchema: (schema, env) => void registry.register(schema, env),
@@ -200,13 +208,15 @@ export function createOperationsRouter<
           } catch (err) {
             throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
-          if (isAsyncIterable(body)) {
+          if (body instanceof stream.Readable) {
+            registry.validateRequestBody('', oid, qtype);
+          } else if (body instanceof events.EventEmitter) {
+            body = registry.translateRequestBody(body, oid, qtype);
+          } else if (isAsyncIterable(body)) {
             body = mapAsyncIterable(body, (b) => {
               registry.validateRequestBody(b, oid, qtype);
               return b;
             });
-          } else if (body instanceof events.EventEmitter) {
-            body = registry.translateMultipartFormBody(body);
           } else {
             registry.validateRequestBody(body, oid, qtype);
           }
@@ -274,32 +284,80 @@ function defaultHandlerContext(obj: any): unknown {
 }
 
 class Registry {
-  // We enable coercion both for parameters and (soon) plain-text bodies.
   private readonly ajv = new Ajv({
-    coerceTypes: true,
+    coerceTypes: true, // Needed for parameters
     formats: {binary: true},
-    allErrors: true,
   });
+  constructor(private readonly telemetry: Telemetry) {}
 
   register(schema: any, env: OperationHookEnv): void {
-    const {operationId, target} = env;
-    if (target.kind === 'parameter') {
-      const {name} = target;
-      const key = schemaKey(operationId, name);
-      // Nest within an object to enable coercion and better error reporting.
-      this.ajv.addSchema(
-        {
-          type: 'object',
-          properties: {[name]: schema ?? {type: 'string'}},
-          required: [name],
-        },
-        key
-      );
-    } else {
-      const code = 'code' in target ? target.code : undefined;
-      const key = schemaKey(operationId, bodySchemaSuffix(target.type, code));
-      this.ajv.addSchema(schema, key);
+    const {operationId: oid, target} = env;
+    switch (target.kind) {
+      case 'parameter':
+        this.registerParameter(oid, target.name, schema);
+        break;
+      case 'requestBody':
+        this.registerRequestBody(oid, target.type, schema);
+        break;
+      case 'response':
+        this.registerResponseBody(oid, target.type, target.code, schema);
+        break;
+      default:
+        throw absurd(target);
     }
+  }
+
+  private registerParameter(oid: string, name: string, schema: any): void {
+    // Nest within an object to enable coercion and better error reporting.
+    this.ajv.addSchema(
+      {
+        type: 'object',
+        properties: {[name]: schema ?? {type: 'string'}},
+        required: [name],
+      },
+      schemaKey(oid, {kind: 'parameter', name})
+    );
+  }
+
+  private registerRequestBody(
+    oid: string,
+    contentType: string,
+    schema: any
+  ): void {
+    const key = schemaKey(oid, {kind: 'requestBody', contentType});
+    this.ajv.addSchema(schema, key);
+
+    // Add individual multipart properties to be able to validate them as they
+    // are streamed in.
+    if (contentTypeMatches(contentType, [MULTIPART_MIME_TYPE])) {
+      assert(
+        schema.type === 'object',
+        'Non-object multipart request body: %j',
+        schema
+      );
+      for (const [name, propSchema] of Object.entries<any>(
+        schema.properties ?? {}
+      )) {
+        const propKey = schemaKey(oid, {
+          kind: 'requestBodyProperty',
+          contentType,
+          name,
+        });
+        this.ajv.addSchema(propSchema, propKey);
+      }
+    }
+  }
+
+  private registerResponseBody(
+    oid: string,
+    contentType: string,
+    code: ResponseCode,
+    schema: any
+  ): void {
+    this.ajv.addSchema(
+      schema,
+      schemaKey(oid, {kind: 'responseBody', code, contentType})
+    );
   }
 
   injectParameters(
@@ -329,7 +387,7 @@ class Registry {
         }
         continue;
       }
-      const key = schemaKey(oid, name);
+      const key = schemaKey(oid, {kind: 'parameter', name});
       const validate = ajv.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
@@ -340,76 +398,99 @@ class Registry {
     }
   }
 
-  validateRequestBody(body: unknown, oid: string, type: string): void {
-    const validate = this.bodyValidator(oid, type);
+  validateRequestBody(body: unknown, oid: string, contentType: string): void {
+    const key = schemaKey(oid, {kind: 'requestBody', contentType});
+    const validate = this.ajv.getSchema(key);
+    assert(validate, 'Missing request body schema', key);
     ifPresent(incompatibleValueError(validate, {value: body}), (err) => {
       throw errors.invalidRequest(requestErrors.invalidBody(err));
     });
   }
 
-  translateMultipartFormBody(_form: MultipartForm): Multipart {
-    return withTypedEmitter<MultipartListeners>((_ee) => {
-      // _ee.emit('property', {kind: 'field', name: 'foo', field: 123});
-      _ee.emit('property', {kind: 'field', name: 'foo', field: 123});
-      // const obj: {[name: string]: unknown} = {};
-      // const mpart = body as Multipart<any>;
-      // mpart
-      //   .on('part', (part) => {
-      //     const {kind, name} = part;
-      //     const field = kind === 'field' ? part.field : '';
-      //     try {
-      //       registry.validateRequestBodyField(field, oid, qtype, name);
-      //     } catch (err) {
-      //       mpart.emit('error', err);
-      //       return;
-      //     }
-      //     console.log('PART', name);
-      //     obj[name] = field;
-      //   })
-      //   .on('done', () => {
-      //     try {
-      //       registry.validateRequestBody(obj, oid, qtype);
-      //     } catch (err) {
-      //       mpart.emit('error', err);
-      //     }
-      //   });
-    });
-  }
-
-  validateRequestBodyField(
-    field: unknown,
+  translateRequestBody(
+    form: MultipartForm,
     oid: string,
-    type: string,
-    name: string
-  ): void {
-    const validate = this.bodyValidator(oid, type);
-    console.log('VALIDATING FIELD', name, field);
-    const err = incompatibleValueError(validate, {
-      value: {[name]: field},
-      errorObjectFilter: (obj) => {
-        console.log(obj);
-        return obj.schemaPath !== '#/required';
-      },
-    });
-    if (err) {
-      throw errors.invalidRequest(requestErrors.invalidBody(err));
-    }
-  }
+    contentType: string
+  ): Multipart {
+    const {logger} = this.telemetry;
+    const ee = typedEmitter<MultipartListeners>();
 
-  private bodyValidator(oid: string, type: string): ValidateFunction {
-    const key = schemaKey(oid, bodySchemaSuffix(type));
-    const validate = this.ajv.getSchema(key);
-    assert(validate, 'Missing request body schema', key);
-    return validate;
+    const onDone = (): void => {
+      try {
+        this.validateRequestBody(obj, oid, contentType);
+      } catch (err) {
+        onError(err);
+        return;
+      }
+      ee.emit('done');
+    };
+
+    const onError = atMostOnce(
+      (err) => {
+        form.removeListener('done', onDone);
+        ee.emit('error', err);
+      },
+      (err) => {
+        logger.debug({err}, 'Ignoring subsequent multipart body error.');
+      }
+    );
+
+    const obj: {[name: string]: unknown} = {};
+    const emitProperty = (prop: AdditionalMultipartProperty): void => {
+      const {kind, name} = prop;
+      const key = schemaKey(oid, {
+        kind: 'requestBodyProperty',
+        contentType,
+        name,
+      });
+      const val = kind === 'field' ? prop.field : '';
+      const validate = this.ajv.getSchema(key);
+      try {
+        if (!validate) {
+          if (ee.listenerCount('additionalProperty')) {
+            ee.emit('additionalProperty', prop);
+          } else if (kind === 'stream') {
+            // Consume the stream to allow decoding to proceed
+            prop.stream.resume();
+          }
+          return;
+        }
+        ifPresent(incompatibleValueError(validate, {value: val}), (cause) => {
+          const err = requestErrors.invalidMultipartProperty(name, cause);
+          throw errors.invalidRequest(err);
+        });
+        ee.emit('property', prop);
+      } catch (err) {
+        onError(err);
+      }
+      obj[name] = val;
+    };
+
+    form
+      .on('error', (err) => void onError(err))
+      .on('value', (name, val) => {
+        emitProperty({name, kind: 'field', field: val});
+      })
+      .on('stream', (name, stream) => {
+        emitProperty({name, kind: 'stream', stream});
+      });
+
+    ee.on('newListener', (name) => {
+      if (name === 'done' && !form.listenerCount('done')) {
+        form.on('done', onDone);
+      }
+    });
+
+    return ee;
   }
 
   validateResponse(
     data: unknown,
     oid: string,
-    type: string,
+    contentType: string,
     code: ResponseCode
   ): void {
-    const key = schemaKey(oid, bodySchemaSuffix(type, code));
+    const key = schemaKey(oid, {kind: 'responseBody', contentType, code});
     const validate = this.ajv.getSchema(key);
     assert(validate, 'Missing response schema', key);
     if (
@@ -424,10 +505,30 @@ class Registry {
   }
 }
 
-function schemaKey(oid: string, suffix: string): string {
-  return `${oid}#${suffix}`;
+function schemaKey(oid: string, qual: SchemaQualifier): string {
+  let suffix: string;
+  switch (qual.kind) {
+    case 'parameter':
+      suffix = `/p/${qual.name}`;
+      break;
+    case 'requestBody':
+      suffix = `/q/${qual.contentType}`;
+      break;
+    case 'requestBodyProperty':
+      suffix = `/q/${qual.contentType}/${qual.name}`;
+      break;
+    case 'responseBody':
+      suffix = `/a/${qual.contentType}/${qual.code}`;
+      break;
+    default:
+      throw absurd(qual);
+  }
+  return oid + suffix;
 }
 
-function bodySchemaSuffix(type: MimeType, code?: ResponseCode): string {
-  return code == null ? type : `${type}@${code}`;
-}
+type SchemaQualifier = KindAmong<{
+  parameter: {readonly name: string};
+  requestBody: {readonly contentType: MimeType};
+  requestBodyProperty: {readonly contentType: MimeType; readonly name: string};
+  responseBody: {readonly contentType: MimeType; readonly code: ResponseCode};
+}>;

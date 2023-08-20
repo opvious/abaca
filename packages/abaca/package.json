@@ -38,9 +38,9 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-bootstrap": "^0.21.38",
-    "@opvious/stl-errors": "^0.21.38",
-    "@opvious/stl-utils": "^0.21.38",
+    "@opvious/stl-bootstrap": "^0.21.39",
+    "@opvious/stl-errors": "^0.21.39",
+    "@opvious/stl-utils": "^0.21.39",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "commander": "^10.0.0",

@@ -45,7 +45,7 @@ export type ValuesMatchingMimeTypes<O, G extends MimeType> = Values<{
     : O[M];
 }>;
 
-function contentTypeMatches(
+export function contentTypeMatches(
   exact: MimeType,
   accepted: Iterable<MimeType>
 ): boolean {

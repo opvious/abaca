@@ -78,6 +78,14 @@ const [requestErrors] = errorFactories({
       tags: {status: 400, ...cause.tags},
       cause,
     }),
+    invalidMultipartProperty: (
+      name: string,
+      cause: IncompatibleValueError
+    ) => ({
+      message: `Invalid multipart property ${name}: ${cause.message}`,
+      tags: {status: 400, name, ...cause.tags},
+      cause,
+    }),
   },
   prefix: 'ERR_REQUEST_',
 });
