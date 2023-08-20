@@ -4,17 +4,13 @@ import {
   AllResponseMimeTypes,
   AllResponsesMatchingMimeType,
   BodiesMatchingMimeType,
-  DEFAULT_ACCEPT,
-  JSON_MIME_TYPE,
   WithMimeTypeGlobs,
 } from './mime-types.js';
 import {MimeType, OperationTypes} from './operations.js';
 
 export interface SdkConfigFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch,
-  M extends MimeType = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
+  F extends BaseFetch = typeof fetch
 > {
   /** API server address. */
   readonly address: Address;
@@ -36,12 +32,6 @@ export interface SdkConfigFor<
 
   /** Global response decoders. */
   readonly decoders?: DecodersFor<O, F>;
-
-  /** Default content-type used for request bodies. */
-  readonly defaultContentType?: M;
-
-  /** Default accept header value. */
-  readonly defaultAccept?: A;
 
   /**
    * Unexpected response coercion. The default will ignore bodies of responses
@@ -97,7 +87,7 @@ export type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
   >;
 };
 
-export type Encoder<B, F extends BaseFetch = typeof fetch> = (
+export type Encoder<B = any, F extends BaseFetch = typeof fetch> = (
   body: B,
   ctx: EncoderContext<F>
 ) => AsyncOrSync<BodyInitFor<F>>;
@@ -105,6 +95,7 @@ export type Encoder<B, F extends BaseFetch = typeof fetch> = (
 export type BodyInitFor<F> = Lookup<RequestInitFor<F>, 'body'>;
 
 export interface EncoderContext<F> {
+  readonly operationId: string;
   readonly contentType: string;
   readonly headers: RequestHeaders;
   readonly options?: RequestOptions<F>;
@@ -117,7 +108,7 @@ export type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
   >;
 };
 
-export type Decoder<R, F extends BaseFetch = typeof fetch> = (
+export type Decoder<R = any, F extends BaseFetch = typeof fetch> = (
   res: ResponseFor<F>,
   ctx: DecoderContext<F>
 ) => AsyncOrSync<R>;
@@ -130,6 +121,7 @@ export type ResponseFor<F> = F extends (
   : never;
 
 export interface DecoderContext<F> {
+  readonly operationId: string;
   readonly contentType: string;
   readonly headers: RequestHeaders;
   readonly options?: RequestOptions<F>;

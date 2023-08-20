@@ -2,8 +2,6 @@ import Router from '@koa/router';
 import {
   absurd,
   assert,
-  errorFactories,
-  errorMessage,
   isStandardError,
   statusErrors,
 } from '@opvious/stl-errors';
@@ -12,10 +10,11 @@ import {
   isAsyncIterable,
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
-import {ifPresent} from '@opvious/stl-utils/functions';
+import {typedEmitter} from '@opvious/stl-utils/events';
+import {atMostOnce, ifPresent} from '@opvious/stl-utils/functions';
+import {KindAmong} from '@opvious/stl-utils/objects';
 import {
   extractOperationDefinitions,
-  IncompatibleValueError,
   incompatibleValueError,
   OpenapiDocument,
   OperationHookEnv,
@@ -23,35 +22,45 @@ import {
 } from 'abaca-openapi';
 import {
   ByMimeType,
+  contentTypeMatches,
+  FORM_MIME_TYPE,
   isResponseTypeValid,
   JSON_MIME_TYPE,
   MimeType,
+  MULTIPART_FORM_MIME_TYPE,
+  MULTIPART_MIME_TYPE,
+  OCTET_STREAM_MIME_TIME,
   OperationDefinition,
   OperationTypes,
   ResponseClauseMatcher,
   ResponseCode,
   TEXT_MIME_TYPE,
 } from 'abaca-runtime';
-import {default as ajv} from 'ajv';
+import ajv_ from 'ajv';
+import events from 'events';
 import stream from 'stream';
 
 import {packageInfo, routerPath} from '../common.js';
 import {
+  fallbackDecoder,
+  fallbackEncoder,
+  formDecoder,
   jsonDecoder,
   jsonEncoder,
-  KoaDecoder,
   KoaDecodersFor,
-  KoaEncoder,
   KoaEncodersFor,
+  MultipartForm,
+  multipartFormDecoder,
   textDecoder,
   textEncoder,
 } from './codecs.js';
+import codes, {errors, requestErrors} from './index.errors.js';
 import {
-  DefaultOperationContext,
-  DefaultOperationTypes,
+  AdditionalMultipartProperty,
   KoaHandlersFor,
-} from './handlers.js';
-import {codes, errors} from './index.errors.js';
+  Multipart,
+  MultipartListeners,
+} from './types.js';
 
 export {KoaDecoder, KoaEncoder} from './codecs.js';
 export {
@@ -59,58 +68,13 @@ export {
   KoaHandlerFor,
   KoaHandlersFor,
   KoaValuesFor,
-} from './handlers.js';
+} from './types.js';
 
-const [requestErrors] = errorFactories({
-  definitions: {
-    unacceptable: () => ({
-      message:
-        'Request must accept at least one content type for each response code',
-      tags: {status: 406},
-    }),
-    missingParameter: (name: string) => ({
-      message: `Parameter ${name} is required but was missing`,
-      tags: {status: 400},
-    }),
-    invalidParameter: (name: string, cause: IncompatibleValueError) => ({
-      message: `Invalid parameter ${name}: ` + cause.message,
-      tags: {status: 400, name, ...cause.tags},
-      cause,
-    }),
-    unsupportedContentType: (type: string) => ({
-      message: `Content-type ${type} is not supported`,
-      tags: {status: 415},
-    }),
-    missingBody: () => ({
-      message: 'This operation expects a body but none was found',
-      tags: {status: 400},
-    }),
-    unexpectedBody: () => ({
-      message:
-        'This operation does not support requests with a body. Please make ' +
-        'sure that the request does not have a body or `content-type` ' +
-        'header.',
-      tags: {status: 400},
-    }),
-    unreadableBody: (cause: unknown) => ({
-      message: 'Body could not be decoded: ' + errorMessage(cause),
-      tags: {status: 400},
-      cause,
-    }),
-    invalidBody: (cause: IncompatibleValueError) => ({
-      message: 'Invalid body: ' + cause.message,
-      tags: {status: 400, ...cause.tags},
-      cause,
-    }),
-  },
-  prefix: 'ERR_REQUEST_',
-});
-
-const Ajv = ajv.default ?? ajv;
+const Ajv = ajv_.default ?? ajv_;
 
 /** Creates a type-safe router for operations defined in the document */
 export function createOperationsRouter<
-  O extends OperationTypes<keyof O & string> = DefaultOperationTypes,
+  O extends OperationTypes<keyof O & string>,
   S = {},
   M extends MimeType = typeof JSON_MIME_TYPE
 >(args: {
@@ -133,7 +97,7 @@ export function createOperationsRouter<
    * Fallback route handler used when no handler exists for a given operation.
    * By default no route will be added in this case.
    */
-  readonly fallback?: (ctx: DefaultOperationContext<S>) => Promise<void>;
+  readonly fallback?: (ctx: Router.RouterContext<S>) => Promise<void>;
 
   /** Default response data content-type. Defaults to `application/json`. */
   readonly defaultType?: M;
@@ -164,9 +128,9 @@ export function createOperationsRouter<
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const rethrow = !args.handleInvalidRequests;
 
-  const decoders = ByMimeType.create<KoaDecoder<any, any> | undefined>(
-    undefined
-  );
+  const decoders = ByMimeType.create(fallbackDecoder);
+  decoders.add(MULTIPART_FORM_MIME_TYPE, multipartFormDecoder);
+  decoders.add(FORM_MIME_TYPE, formDecoder);
   decoders.add(JSON_MIME_TYPE, jsonDecoder);
   decoders.add(TEXT_MIME_TYPE, textDecoder);
   decoders.addAll(args.decoders as any);
@@ -176,11 +140,12 @@ export function createOperationsRouter<
   encoders.add(TEXT_MIME_TYPE, textEncoder);
   encoders.addAll(args.encoders as any);
 
-  const registry = new Registry();
-  const defs = extractOperationDefinitions(
-    typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
-    (schema, env) => void registry.register(schema, env)
-  );
+  const registry = new Registry(tel);
+  const defs = extractOperationDefinitions({
+    document: typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
+    onSchema: (schema, env) => void registry.register(schema, env),
+    generateIds: true,
+  });
 
   const router = new Router<any>().use(async (ctx, next) => {
     try {
@@ -245,10 +210,16 @@ export function createOperationsRouter<
             throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
           if (isAsyncIterable(body)) {
-            body = mapAsyncIterable(body, (b) => {
-              registry.validateRequestBody(b, oid, qtype);
-              return b;
-            });
+            if (qtype === OCTET_STREAM_MIME_TIME) {
+              registry.validateRequestBody('', oid, qtype);
+            } else {
+              body = mapAsyncIterable(body, (b) => {
+                registry.validateRequestBody(b, oid, qtype);
+                return b;
+              });
+            }
+          } else if (body instanceof events.EventEmitter) {
+            body = registry.translateRequestBody(body, oid, qtype);
           } else {
             registry.validateRequestBody(body, oid, qtype);
           }
@@ -262,7 +233,6 @@ export function createOperationsRouter<
           await fallback(ctx);
           return;
         }
-
         const res = await handler.call(handlerContext, ctx);
         const status = typeof res == 'number' ? res : res.status ?? 200;
 
@@ -310,46 +280,94 @@ export function createOperationsRouter<
   return router;
 }
 
-const fallbackEncoder: KoaEncoder<any, any> = (_data, ctx) => {
-  throw errors.unwritableResponseType(ctx.type);
-};
-
 function defaultHandlerContext(obj: any): unknown {
   const name = obj?.constructor?.name;
   return name == null || name === 'Object' ? undefined : obj;
 }
 
 class Registry {
-  private readonly params = new Ajv({coerceTypes: true});
-  private readonly bodies = new Ajv();
+  private readonly ajv = new Ajv({
+    coerceTypes: true, // Needed for parameters
+    formats: {binary: true},
+  });
+  constructor(private readonly telemetry: Telemetry) {}
 
   register(schema: any, env: OperationHookEnv): void {
-    const {operationId, target} = env;
-    if (target.kind === 'parameter') {
-      const {name} = target;
-      const key = schemaKey(operationId, name);
-      // Nest within an object to enable coercion and better error reporting.
-      this.params.addSchema(
-        {
-          type: 'object',
-          properties: {[name]: schema ?? {type: 'string'}},
-          required: [name],
-        },
-        key
-      );
-    } else {
-      const code = 'code' in target ? target.code : undefined;
-      const key = schemaKey(operationId, bodySchemaSuffix(target.type, code));
-      this.bodies.addSchema(schema, key);
+    const {operationId: oid, target} = env;
+    switch (target.kind) {
+      case 'parameter':
+        this.registerParameter(oid, target.name, schema);
+        break;
+      case 'requestBody':
+        this.registerRequestBody(oid, target.type, schema);
+        break;
+      case 'response':
+        this.registerResponseBody(oid, target.type, target.code, schema);
+        break;
+      default:
+        throw absurd(target);
     }
   }
 
+  private registerParameter(oid: string, name: string, schema: any): void {
+    // Nest within an object to enable coercion and better error reporting.
+    this.ajv.addSchema(
+      {
+        type: 'object',
+        properties: {[name]: schema ?? {type: 'string'}},
+        required: [name],
+      },
+      schemaKey(oid, {kind: 'parameter', name})
+    );
+  }
+
+  private registerRequestBody(
+    oid: string,
+    contentType: string,
+    schema: any
+  ): void {
+    const key = schemaKey(oid, {kind: 'requestBody', contentType});
+    this.ajv.addSchema(schema, key);
+
+    // Add individual multipart properties to be able to validate them as they
+    // are streamed in.
+    if (contentTypeMatches(contentType, [MULTIPART_MIME_TYPE])) {
+      assert(
+        schema.type === 'object',
+        'Non-object multipart request body: %j',
+        schema
+      );
+      for (const [name, propSchema] of Object.entries<any>(
+        schema.properties ?? {}
+      )) {
+        const propKey = schemaKey(oid, {
+          kind: 'requestBodyProperty',
+          contentType,
+          name,
+        });
+        this.ajv.addSchema(propSchema, propKey);
+      }
+    }
+  }
+
+  private registerResponseBody(
+    oid: string,
+    contentType: string,
+    code: ResponseCode,
+    schema: any
+  ): void {
+    this.ajv.addSchema(
+      schema,
+      schemaKey(oid, {kind: 'responseBody', code, contentType})
+    );
+  }
+
   injectParameters(
-    ctx: DefaultOperationContext,
+    ctx: Router.RouterContext,
     oid: string,
     def: OperationDefinition
   ): void {
-    const {params} = this;
+    const {ajv} = this;
     for (const [name, pdef] of Object.entries(def.parameters)) {
       let str: unknown;
       switch (pdef.location) {
@@ -371,8 +389,8 @@ class Registry {
         }
         continue;
       }
-      const key = schemaKey(oid, name);
-      const validate = params.getSchema(key);
+      const key = schemaKey(oid, {kind: 'parameter', name});
+      const validate = ajv.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
       ifPresent(incompatibleValueError(validate, {value: obj}), (err) => {
@@ -382,23 +400,103 @@ class Registry {
     }
   }
 
-  validateRequestBody(body: unknown, oid: string, type: string): void {
-    const key = schemaKey(oid, bodySchemaSuffix(type));
-    const validate = this.bodies.getSchema(key);
+  validateRequestBody(body: unknown, oid: string, contentType: string): void {
+    const key = schemaKey(oid, {kind: 'requestBody', contentType});
+    const validate = this.ajv.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     ifPresent(incompatibleValueError(validate, {value: body}), (err) => {
       throw errors.invalidRequest(requestErrors.invalidBody(err));
     });
   }
 
+  translateRequestBody(
+    form: MultipartForm,
+    oid: string,
+    contentType: string
+  ): Multipart {
+    const {logger} = this.telemetry;
+    const ee = typedEmitter<MultipartListeners>();
+
+    // Object used to accumulate properties as they get decoded. They are
+    // validated one by one and at the very end, to make sure the object as a
+    // whole is not missing any required data.
+    const obj: {[name: string]: unknown} = {};
+    const onDone = (): void => {
+      try {
+        this.validateRequestBody(obj, oid, contentType);
+      } catch (err) {
+        onError(err);
+        return;
+      }
+      ee.emit('done');
+    };
+
+    const onError = atMostOnce(
+      (err) => {
+        form.removeListener('done', onDone);
+        ee.emit('error', err);
+      },
+      (err) => {
+        logger.debug({err}, 'Ignoring subsequent multipart body error.');
+      }
+    );
+
+    const emitProperty = (prop: AdditionalMultipartProperty): void => {
+      const {kind, name} = prop;
+      const key = schemaKey(oid, {
+        kind: 'requestBodyProperty',
+        contentType,
+        name,
+      });
+      const val = kind === 'field' ? prop.field : '';
+      const validate = this.ajv.getSchema(key);
+      try {
+        if (!validate) {
+          if (ee.listenerCount('additionalProperty')) {
+            ee.emit('additionalProperty', prop);
+          } else if (kind === 'stream') {
+            // Consume the stream to allow decoding to proceed
+            prop.stream.resume();
+          }
+          return;
+        }
+        ifPresent(incompatibleValueError(validate, {value: val}), (cause) => {
+          const err = requestErrors.invalidMultipartProperty(name, cause);
+          throw errors.invalidRequest(err);
+        });
+        ee.emit('property', prop);
+      } catch (err) {
+        onError(err);
+      }
+      obj[name] = val;
+    };
+
+    form
+      .on('error', (err) => void onError(err))
+      .on('value', (name, val) => {
+        emitProperty({name, kind: 'field', field: val});
+      })
+      .on('stream', (name, stream) => {
+        emitProperty({name, kind: 'stream', stream});
+      });
+
+    ee.on('newListener', (name) => {
+      if (name === 'done' && !form.listenerCount('done')) {
+        form.on('done', onDone);
+      }
+    });
+
+    return ee;
+  }
+
   validateResponse(
     data: unknown,
     oid: string,
-    type: string,
+    contentType: string,
     code: ResponseCode
   ): void {
-    const key = schemaKey(oid, bodySchemaSuffix(type, code));
-    const validate = this.bodies.getSchema(key);
+    const key = schemaKey(oid, {kind: 'responseBody', contentType, code});
+    const validate = this.ajv.getSchema(key);
     assert(validate, 'Missing response schema', key);
     if (
       (validate.schema as any).type === 'string' &&
@@ -412,10 +510,30 @@ class Registry {
   }
 }
 
-function schemaKey(oid: string, suffix: string): string {
-  return `${oid}#${suffix}`;
+function schemaKey(oid: string, qual: SchemaQualifier): string {
+  let suffix: string;
+  switch (qual.kind) {
+    case 'parameter':
+      suffix = `/p/${qual.name}`;
+      break;
+    case 'requestBody':
+      suffix = `/q/${qual.contentType}`;
+      break;
+    case 'requestBodyProperty':
+      suffix = `/q/${qual.contentType}/${qual.name}`;
+      break;
+    case 'responseBody':
+      suffix = `/a/${qual.contentType}/${qual.code}`;
+      break;
+    default:
+      throw absurd(qual);
+  }
+  return oid + suffix;
 }
 
-function bodySchemaSuffix(type: MimeType, code?: ResponseCode): string {
-  return code == null ? type : `${type}@${code}`;
-}
+type SchemaQualifier = KindAmong<{
+  parameter: {readonly name: string};
+  requestBody: {readonly contentType: MimeType};
+  requestBodyProperty: {readonly contentType: MimeType; readonly name: string};
+  responseBody: {readonly contentType: MimeType; readonly code: ResponseCode};
+}>;

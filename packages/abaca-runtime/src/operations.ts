@@ -54,9 +54,9 @@ type OperationMethod =
 export interface OperationDefinition {
   readonly path: string;
   readonly method: OperationMethod;
-  readonly parameters: Record<string, ParameterDefinition>;
+  readonly parameters: {readonly [name: string]: ParameterDefinition};
   readonly body?: BodyDefinition;
-  readonly responses: Record<ResponseCode, ReadonlyArray<MimeType>>;
+  readonly responses: {readonly [code: ResponseCode]: ReadonlyArray<MimeType>};
 }
 
 export interface ParameterDefinition {

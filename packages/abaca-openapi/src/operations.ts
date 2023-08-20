@@ -19,15 +19,19 @@ export type OpenapiOperation<D extends OpenapiDocument> =
     : OpenAPIV3_1.OperationObject;
 
 /** The input document must be fully resolved. */
-export function extractOperationDefinitions(
-  doc: OpenapiDocument,
-  hook?: (schema: any, env: OperationHookEnv) => void
-): Record<string, OperationDefinition> {
+export function extractOperationDefinitions(args: {
+  readonly document: OpenapiDocument;
+  readonly onSchema?: (schema: any, env: OperationHookEnv) => void;
+  readonly generateIds?: boolean;
+}): Record<string, OperationDefinition> {
+  const {generateIds, onSchema} = args;
   const defs: Record<string, OperationDefinition> = {};
-  for (const [path, item] of Object.entries(doc.paths ?? {})) {
+  for (const [path, item] of Object.entries(args.document.paths ?? {})) {
     for (const method of allOperationMethods) {
       const op = item?.[method];
-      const operationId = op?.operationId;
+      const operationId =
+        op?.operationId ??
+        (op && generateIds ? `${path}#${method}` : undefined);
       if (!operationId) {
         continue;
       }
@@ -45,8 +49,8 @@ export function extractOperationDefinitions(
         const required = !!param.required;
         const location = param.in;
         params[param.name] = {location, required};
-        if (hook) {
-          hook(param.schema, {
+        if (onSchema) {
+          onSchema(param.schema, {
             operationId,
             target: {kind: 'parameter', name: param.name},
           });
@@ -74,8 +78,8 @@ export function extractOperationDefinitions(
     const ret: MimeType[] = [];
     for (const [key, val] of Object.entries<any>(obj)) {
       ret.push(key);
-      if (hook) {
-        hook(val.schema, {operationId, target: {...target, type: key}});
+      if (onSchema) {
+        onSchema(val.schema, {operationId, target: {...target, type: key}});
       }
     }
     return ret;

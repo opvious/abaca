@@ -9,7 +9,7 @@ describe('extract operation definitions', () => {
   test('null hook', async () => {
     const {contents} = await loader.load('pets.openapi.yaml');
     const doc = YAML.parse(contents);
-    const defs = sut.extractOperationDefinitions(doc);
+    const defs = sut.extractOperationDefinitions({document: doc});
     expect(defs).toEqual({
       listPets: {
         path: '/pets',

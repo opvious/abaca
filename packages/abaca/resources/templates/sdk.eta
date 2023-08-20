@@ -1,5 +1,9 @@
 // Do not edit, this file was auto-generated (Abaca <%= it.version %>)
 
+const DEFAULT_ACCEPT = <%= JSON.stringify(it.defaultAccept) %>;
+
+const DEFAULT_CONTENT_TYPE = <%= JSON.stringify(it.defaultContentType) %>;
+
 <%~ include("./preamble.gen.eta") %>
 
 <%= it.typeSource %>
@@ -14,7 +18,7 @@ export type Schema<K extends keyof Schemas> = Schemas[K];
 
 export type RequestBody<
   K extends keyof operations,
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends BodyMimeTypes<operations[K]> = BodyMimeTypes<operations[K]>
 > = RequestBodyFor<operations[K], M>;
 
 export type RequestParameters<
@@ -24,14 +28,10 @@ export type RequestParameters<
 export type ResponseData<
   K extends keyof operations,
   C extends keyof operations[K]['responses'] = keyof operations[K]['responses'],
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends ResponseMimeTypes<operations[K]['responses'], C> = ResponseMimeTypes<operations[K]['responses'], C>
 > = ResponseDataFor<operations[K], C, M>;
 
-export type Sdk<
-  F extends BaseFetch = typeof fetch,
-  M extends string = typeof JSON_MIME_TYPE,
-  A extends MimeType = typeof DEFAULT_ACCEPT
-> = SdkFor<operations, F, M, A>;
+export type Sdk<F extends BaseFetch = typeof fetch> = SdkFor<operations, F>;
 
 <% if (it.defaultAddress || it.serverAddresses.length) { %>
 <%~ include("./smart-factory.eta", it) %>

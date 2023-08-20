@@ -7,7 +7,7 @@ import {createSdk, Sdk} from './sdk.gen.js';
 
 export type MessagesSdk = Sdk<typeof fetch>;
 
-export function messagesSdk(address: net.AddressInfo): MessagesSdk {
+export function messagesSdk(address: net.AddressInfo | string): MessagesSdk {
   return createSdk({
     address,
     fetch,

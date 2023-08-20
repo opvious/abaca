@@ -8,7 +8,7 @@ An [OpenAPI][] SDK generator with (very) strong type guarantees and minimal
 boilerplate.
 
 + Exports dependency-free, single-file client SDKs with a tiny runtime footprint
-+ Supports custom `fetch` implementations, arbitrary content-types, streaming,
++ Supports arbitrary content-types, streaming, custom `fetch` implementations,
   and more
 + Provides [Koa][] integrations for server routing and proxying
 
@@ -19,19 +19,23 @@ First, generate the SDK from an OpenAPI specification (URL or local path):
 
 ```sh
 abaca generate \
-  https://petstore3.swagger.io/api/v3/openapi.json \
+  https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml \
   --output src/sdk.gen.ts
 ```
 
-Then simply import the generated file in your code to benefit from strongly
-typed fetch methods for all operations defined in the specification:
+Then simply import the generated file in your code to access strongly typed
+fetch methods for all operations defined in the specification:
 
 ```typescript
 import {createSdk} from './sdk.gen.js'; // Generated SDK
 
-const sdk = createSdk('https://petstore3.swagger.io/api/v3');
+const sdk = createSdk({ // SDK-wide options (common headers, ...)
+  headers: {authorization: `Bearer sk_test_your_key`},
+});
 
-const res = await sdk.getPetById({params: {petId: 1}}); // Typed request
+const res = await sdk.GetAccounts({ // Typed request (body, parameters, ...)
+  params: {limit: 5},
+});
 switch (res.code) { // Typed response code
   case 200:
     console.log(`Pet is named ${res.data.name}`); // Narrowed response data type

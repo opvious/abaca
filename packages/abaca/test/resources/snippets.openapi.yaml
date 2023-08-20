@@ -1,0 +1,43 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: Test snippets
+paths:
+  /optional-body:
+    post:
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OptionalBodyMetadata'
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - metadata
+                - logoImage
+              properties:
+                metadata:
+                  $ref: '#/components/schemas/OptionalBodyMetadata'
+                logoImage:
+                  type: string
+                  format: binary
+                coverImage:
+                  type: string
+                  format: binary
+      responses:
+        '204':
+          description: Successfully uploaded
+components:
+  schemas:
+    OptionalBodyMetadata:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string

@@ -1,9 +1,9 @@
 {
-  "name": "abaca-example-streaming",
+  "name": "abaca-example-forms",
   "private": true,
   "version": "0.8.0",
   "repository": "github:opvious/abaca",
-  "description": "Streaming example using Abaca",
+  "description": "Form submission example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
   "license": "Apache-2.0",
   "type": "module",
@@ -22,10 +22,9 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
+    "@opvious/stl-errors": "^0.21.39",
     "abaca-koa": "workspace:*",
-    "abaca-openapi": "workspace:*",
-    "json-text-sequence": "^1.0.1",
-    "node-fetch": "^3.3.1"
+    "abaca-openapi": "workspace:*"
   },
   "devDependencies": {
     "@types/koa": "^2.13.1",

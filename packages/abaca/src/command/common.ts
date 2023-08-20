@@ -46,7 +46,6 @@ export async function resolveDocument(args: {
   readonly url: URL;
   readonly loaderRoot: PathLike;
   readonly skipSchemaValidation?: boolean;
-  readonly generateOperationIds?: boolean;
 }): Promise<Document> {
   const loader = ResourceLoader.create({root: args.loaderRoot});
 
@@ -63,7 +62,6 @@ export async function resolveDocument(args: {
       versions,
       skipSchemaValidation: args.skipSchemaValidation,
       ignoreWebhooks: true,
-      generateOperationIds: args.generateOperationIds,
       telemetry,
     });
   } catch (err) {
