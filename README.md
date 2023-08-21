@@ -47,10 +47,10 @@ switch (res.code) { // Typed response code
 Take a look at the following examples to see how Abaca handles various
 use-cases:
 
-+ [Simple JSON API](/examples/json)
-+ [Streaming API (client-side, server-side, and
-  bi-directional)](/examples/streaming)
-+ [API with multiple content-types](/examples/multi-content)
++ [JSON API](/examples/json)
++ [Form and file uploads](/examples/forms-and-files)
++ [On-demand streaming](/examples/on-demand-streaming)
++ [Multiple content-type endpoints](/examples/multi-content-types)
 
 
 ## Packages

@@ -1,9 +1,9 @@
 {
-  "name": "abaca-example-multi-content",
+  "name": "abaca-example-forms-and-files",
   "private": true,
-  "version": "0.8.1",
+  "version": "0.8.2",
   "repository": "github:opvious/abaca",
-  "description": "Multi content-type example using Abaca",
+  "description": "Form submission example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
   "license": "Apache-2.0",
   "type": "module",
@@ -22,6 +22,7 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
+    "@opvious/stl-errors": "^0.21.39",
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*"
   },

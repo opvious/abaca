@@ -2,7 +2,9 @@ import Router from '@koa/router';
 import {absurd} from '@opvious/stl-errors';
 import {createOperationsRouter} from 'abaca-koa';
 import {loadOpenapiDocument} from 'abaca-openapi';
+import crypto from 'crypto';
 import events from 'events';
+import stream from 'stream';
 
 import {Operations} from './sdk.gen.js';
 
@@ -11,7 +13,11 @@ export async function createRouter(): Promise<Router> {
   return createOperationsRouter<Operations>({
     document,
     handlers: {
-      upload: async (ctx) => {
+      uploadData: async (ctx) => {
+        const sha = await computeSha(ctx.request.body);
+        return {type: 'text/plain', data: sha};
+      },
+      uploadForm: async (ctx) => {
         switch (ctx.request.type) {
           case 'application/x-www-form-urlencoded': {
             const metadata = ctx.request.body; // Metadata type
@@ -19,19 +25,16 @@ export async function createRouter(): Promise<Router> {
             break;
           }
           case 'multipart/form-data': {
-            ctx.request.body.on('property', (prop) => {
+            ctx.request.body.on('property', async (prop) => {
               switch (prop.name) {
                 case 'metadata':
                   console.log(`Got metadata. [name=${prop.field.name}]`);
                   break;
-                case 'logoImage':
-                  prop.stream.resume(); // Consume the stream
-                  console.log('Got logo image.');
+                case 'logoImage': {
+                  const sha = await computeSha(prop.stream);
+                  console.log(`Got logo image. [sha=${sha}]`);
                   break;
-                case 'coverImage':
-                  prop.stream.resume(); // Consume the stream
-                  console.log('Got cover image.');
-                  break;
+                }
                 default:
                   throw absurd(prop);
               }
@@ -47,4 +50,11 @@ export async function createRouter(): Promise<Router> {
     },
     handleInvalidRequests: true,
   });
+}
+
+async function computeSha(readable: stream.Readable): Promise<string> {
+  const hash = crypto.createHash('sha256');
+  readable.pipe(hash);
+  await events.once(hash, 'readable');
+  return hash.read().toString('hex');
 }

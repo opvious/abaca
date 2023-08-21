@@ -18,8 +18,17 @@ afterAll(() => {
   server.close();
 });
 
-test('upload urlencoded', async () => {
-  const res = await sdk.upload({
+test('upload binary data', async () => {
+  const res = await sdk.uploadData({
+    headers: {'content-type': 'application/octet-stream'},
+    body: new Blob(['some-binary-data']),
+  });
+  assert(res.code === 200);
+  expect(res.data).toContain('a489');
+});
+
+test('upload urlencoded form', async () => {
+  const res = await sdk.uploadForm({
     headers: {'content-type': 'application/x-www-form-urlencoded'},
     body: {
       name: 'ann',
@@ -29,8 +38,8 @@ test('upload urlencoded', async () => {
   expect(res.code).toEqual(204);
 });
 
-test('upload multipart', async () => {
-  const res = await sdk.upload({
+test('upload multipart form', async () => {
+  const res = await sdk.uploadForm({
     headers: {'content-type': 'multipart/form-data'},
     body: {
       metadata: {
@@ -43,8 +52,8 @@ test('upload multipart', async () => {
   expect(res.code).toEqual(204);
 });
 
-test('upload multipart unexpected fields', async () => {
-  const res = await sdk.upload({
+test('upload multipart form with unexpected fields', async () => {
+  const res = await sdk.uploadForm({
     headers: {'content-type': 'multipart/form-data'},
     body: {
       // @ts-expect-error unexpected name field
