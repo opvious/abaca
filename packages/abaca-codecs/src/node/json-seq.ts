@@ -1,20 +1,24 @@
+import {assert} from '@opvious/stl-errors';
 import {Decoder, Encoder} from 'abaca-runtime';
 import jsonSeq from 'json-text-sequence';
 import fetch from 'node-fetch';
 import stream from 'stream';
 
-export function jsonSeqDecoder<V = any>(): Decoder<
+/** Decoder for `application/json-seq` content-types */
+export function jsonSeqDecoder<V = unknown>(): Decoder<
   AsyncIterable<V>,
   typeof fetch
 > {
   return (res) => {
     const parser = new jsonSeq.Parser();
-    res.body!.pipe(parser);
+    assert(res.body, 'Missing response body');
+    res.body.pipe(parser);
     return parser;
   };
 }
 
-export function jsonSeqEncoder<V = any>(): Encoder<
+/** Encoder for `application/json-seq` content-types */
+export function jsonSeqEncoder<V = unknown>(): Encoder<
   AsyncIterable<V>,
   typeof fetch
 > {

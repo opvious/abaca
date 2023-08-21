@@ -202,6 +202,9 @@ importers:
 
   packages/abaca-codecs:
     dependencies:
+      '@opvious/stl-errors':
+        specifier: ^0.21.40
+        version: 0.21.40
       abaca-runtime:
         specifier: workspace:*
         version: link:../abaca-runtime
