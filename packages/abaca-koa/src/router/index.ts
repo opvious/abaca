@@ -423,7 +423,9 @@ class Registry {
     contentType: string
   ): Multipart {
     const {logger} = this.telemetry;
-    const ee = typedEmitter<MultipartListeners>();
+    // We capture rejections to make it easier for callers to use async
+    // listeners for property events.
+    const ee = typedEmitter<MultipartListeners>({captureRejections: true});
 
     // Object used to accumulate properties as they get decoded. They are
     // validated one by one and at the very end, to make sure the object as a

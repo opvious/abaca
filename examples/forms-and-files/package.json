@@ -22,7 +22,7 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.21.39",
+    "@opvious/stl-errors": "^0.21.40",
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*"
   },

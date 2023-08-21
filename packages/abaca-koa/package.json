@@ -36,9 +36,9 @@
   "dependencies": {
     "@koa/router": "^10.1.1",
     "@opentelemetry/api": "~1.4.1",
-    "@opvious/stl-errors": "^0.21.39",
-    "@opvious/stl-telemetry": "^0.21.39",
-    "@opvious/stl-utils": "^0.21.39",
+    "@opvious/stl-errors": "^0.21.40",
+    "@opvious/stl-telemetry": "^0.21.40",
+    "@opvious/stl-utils": "^0.21.40",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "ajv": "^8.12.0",
