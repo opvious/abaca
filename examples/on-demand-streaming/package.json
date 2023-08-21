@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-on-demand-streaming",
   "private": true,
-  "version": "0.8.2",
+  "version": "0.8.3",
   "repository": "github:opvious/abaca",
   "description": "Streaming example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -22,9 +22,9 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
+    "abaca-codecs": "workspace:*",
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*",
-    "json-text-sequence": "^1.0.1",
     "node-fetch": "^3.3.1"
   },
   "devDependencies": {

@@ -6,17 +6,25 @@ import {
   AllResponsesMatchingMimeType,
   AsyncOrSync,
   BodiesMatchingMimeType,
+  ByMimeType,
+  FORM_MIME_TYPE,
   JSON_MIME_TYPE,
+  JSON_SEQ_MIME_TYPE,
+  MULTIPART_FORM_MIME_TYPE,
   OCTET_STREAM_MIME_TIME,
   OperationTypes,
+  TEXT_MIME_TYPE,
   WithMimeTypeGlobs,
 } from 'abaca-runtime';
 import busboy from 'busboy';
 import * as coBody from 'co-body';
+import jsonSeq from 'json-text-sequence';
 import Koa from 'koa';
 import stream from 'stream';
 
 import {errors, requestErrors} from './index.errors.js';
+
+// Types
 
 export type KoaDecodersFor<O extends OperationTypes, S = {}> = {
   readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: KoaDecoder<
@@ -41,35 +49,39 @@ export type KoaEncoder<D = any, S = {}> = (
   ctx: Koa.ParameterizedContext<S>
 ) => AsyncOrSync<void>;
 
-export const fallbackDecoder: KoaDecoder = (ctx) => {
-  throw statusErrors.unimplemented(errors.unreadableRequestType(ctx.type));
-};
+// Implementations
 
-export const fallbackEncoder: KoaEncoder = (_data, ctx) => {
-  throw errors.unwritableResponseType(ctx.type);
-};
+export function defaultDecoders(): ByMimeType<KoaDecoder> {
+  const ret = ByMimeType.create<KoaDecoder>((ctx) => {
+    throw statusErrors.unimplemented(errors.unreadableRequestType(ctx.type));
+  });
+  ret.add(FORM_MIME_TYPE, (ctx) => coBody.form(ctx.req));
+  ret.add(JSON_MIME_TYPE, (ctx) => coBody.json(ctx.req));
+  ret.add(JSON_SEQ_MIME_TYPE, jsonSeqDecoder);
+  ret.add(MULTIPART_FORM_MIME_TYPE, multipartFormDecoder);
+  ret.add(OCTET_STREAM_MIME_TIME, (ctx) => ctx.req);
+  ret.add(TEXT_MIME_TYPE, (ctx) => coBody.text(ctx.req));
+  return ret;
+}
 
-export const jsonDecoder: KoaDecoder = (ctx) => coBody.json(ctx.req);
+export function defaultEncoders(): ByMimeType<KoaEncoder> {
+  const ret = ByMimeType.create<KoaEncoder>((_data, ctx) => {
+    throw errors.unwritableResponseType(ctx.type);
+  });
+  ret.add(JSON_MIME_TYPE, (data, ctx) => {
+    ctx.body = JSON.stringify(data);
+  });
+  ret.add(JSON_SEQ_MIME_TYPE, jsonSeqEncoder);
+  ret.add(OCTET_STREAM_MIME_TIME, (data, ctx) => {
+    ctx.body = data;
+  });
+  ret.add(TEXT_MIME_TYPE, (data, ctx) => {
+    ctx.body = data;
+  });
+  return ret;
+}
 
-export const jsonEncoder: KoaEncoder = (data, ctx) => {
-  ctx.body = JSON.stringify(data);
-};
-
-export const textDecoder: KoaDecoder<string> = (ctx) => coBody.text(ctx.req);
-
-export const textEncoder: KoaEncoder = (data, ctx) => {
-  ctx.body = data;
-};
-
-export const binaryDecoder: KoaDecoder<stream.Readable> = (ctx) => ctx.req;
-
-export const binaryEncoder: KoaEncoder<stream.Readable> = (data, ctx) => {
-  ctx.body = data;
-};
-
-export const formDecoder: KoaDecoder = (ctx) => coBody.form(ctx.req);
-
-export const multipartFormDecoder: KoaDecoder<MultipartForm> = (ctx) => {
+const multipartFormDecoder: KoaDecoder<MultipartForm> = (ctx) => {
   const ee = typedEmitter<MultipartFormListeners>();
 
   const bb = busboy({headers: ctx.headers})
@@ -156,3 +168,15 @@ function jsonValue(
       cb(undefined, val);
     });
 }
+
+const jsonSeqDecoder: KoaDecoder<AsyncIterable<unknown>> = (ctx) => {
+  const decoder = new jsonSeq.Parser();
+  ctx.req.pipe(decoder);
+  return decoder;
+};
+
+const jsonSeqEncoder: KoaEncoder<AsyncIterable<unknown>> = (iter, ctx) => {
+  const encoder = new jsonSeq.Generator();
+  stream.Readable.from(iter).pipe(encoder);
+  ctx.body = encoder;
+};

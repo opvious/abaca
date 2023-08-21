@@ -50,12 +50,13 @@ use-cases:
 + [JSON API](/examples/json)
 + [Form and file uploads](/examples/forms-and-files)
 + [On-demand streaming](/examples/on-demand-streaming)
-+ [Multiple content-type endpoints](/examples/multi-content-types)
++ [Multi-content-type endpoints](/examples/multi-content-types)
 
 
 ## Packages
 
 + [`abaca`](/packages/abaca), client SDK generator CLI
++ [`abaca-codecs`](/packages/abaca-codecs), common client decoders and encoders
 + [`abaca-koa`](/packages/abaca-koa), Koa integrations for server routing and
   proxying
 + [`abaca-openapi`](/packages/abaca-openapi), OpenAPI tools (specification

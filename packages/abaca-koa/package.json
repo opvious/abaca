@@ -1,6 +1,6 @@
 {
   "name": "abaca-koa",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "repository": "github:opvious/abaca",
   "description": "Abaca Koa integrations",
   "keywords": [
@@ -45,6 +45,7 @@
     "busboy": "^1.6.0",
     "co-body": "^6.1.0",
     "http-proxy": "^1.18.1",
+    "json-text-sequence": "^1.0.1",
     "koa-compose": "^4.1.0",
     "openapi-types": "^12.1.0",
     "yaml": "^2.3.1"
@@ -58,7 +59,6 @@
     "@types/koa__router": "^8.0.11",
     "abaca": "workspace:*",
     "inlinable": "^0.2.6",
-    "json-text-sequence": "^1.0.1",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
     "node-fetch": "^3.3.1"
