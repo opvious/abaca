@@ -23,7 +23,7 @@ afterAll(() => {
 });
 
 test('list no pets', async () => {
-  const res = await sdk.listPets();
+  const res = await sdk.listPets({});
 
   assert(res.code === 200);
   // Response data (body) type is narrowed to list of pets after code assertion
@@ -32,7 +32,10 @@ test('list no pets', async () => {
 });
 
 test('creates and fetches a pet', async () => {
-  const createRes = await sdk.createPet({body: {name: 'Fido'}});
+  const createRes = await sdk.createPet({
+    body: {name: ''},
+    // fo: 123,
+  });
 
   assert(createRes.code === 201);
   // Response data type is narrowed to a pet here

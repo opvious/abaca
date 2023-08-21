@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-multi-content-types",
   "private": true,
-  "version": "0.8.3",
+  "version": "0.8.4",
   "repository": "github:opvious/abaca",
   "description": "Multi content-type example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
