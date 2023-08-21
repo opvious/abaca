@@ -65,7 +65,9 @@ type ContextWithBody<B> = Values<{
       readonly type: M;
       readonly body: MimeTypePrefixes<M> &
         typeof MULTIPART_MIME_TYPE extends never
-        ? B[M]
+        ? B[M] extends Blob
+          ? stream.Readable
+          : B[M]
         : Multipart<B[M]>;
     };
   };

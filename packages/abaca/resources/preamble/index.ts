@@ -160,7 +160,7 @@ type MaybeAcceptInput<
 type DefaultAcceptInput<
   R extends ResponsesType,
   F extends BaseFetch
-> = SplitMimeTypes<DA> & ResponseMimeTypes<R> extends never
+> = SplitMimeTypes<DA> & WithMimeTypeGlobs<ResponseMimeTypes<R>> extends never
   ? never
   : {
       readonly headers?: {readonly accept?: DA};

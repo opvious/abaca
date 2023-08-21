@@ -1,6 +1,6 @@
 {
   "name": "abaca-openapi",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "repository": "github:opvious/abaca",
   "description": "Abaca OpenAPI utilities",
   "keywords": [
@@ -26,9 +26,9 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.21.39",
-    "@opvious/stl-telemetry": "^0.21.39",
-    "@opvious/stl-utils": "^0.21.39",
+    "@opvious/stl-errors": "^0.21.40",
+    "@opvious/stl-telemetry": "^0.21.40",
+    "@opvious/stl-utils": "^0.21.40",
     "@stoplight/json-ref-resolver": "^3.1.5",
     "abaca-runtime": "workspace:*",
     "ajv": "^8.12.0",

@@ -3,10 +3,28 @@ info:
   version: 1.0.0
   title: Forms
 paths:
-  /:
+  /data:
+    post:
+      summary: Upload binary data
+      operationId: uploadData
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Successfully uploaded
+          content:
+            text/plain:
+              schema:
+                type: string
+  /form:
     post:
       summary: Upload data using a form
-      operationId: upload
+      operationId: uploadForm
       requestBody:
         required: true
         content:
@@ -18,15 +36,10 @@ paths:
               type: object
               required:
                 - metadata
-                - logoImage
-              additionalProperties: true
               properties:
                 metadata:
                   $ref: '#/components/schemas/Metadata'
                 logoImage:
-                  type: string
-                  format: binary
-                coverImage:
                   type: string
                   format: binary
       responses:
