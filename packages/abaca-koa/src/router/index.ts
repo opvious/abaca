@@ -42,6 +42,8 @@ import stream from 'stream';
 
 import {packageInfo, routerPath} from '../common.js';
 import {
+  binaryDecoder,
+  binaryEncoder,
   fallbackDecoder,
   fallbackEncoder,
   formDecoder,
@@ -129,14 +131,16 @@ export function createOperationsRouter<
   const rethrow = !args.handleInvalidRequests;
 
   const decoders = ByMimeType.create(fallbackDecoder);
-  decoders.add(MULTIPART_FORM_MIME_TYPE, multipartFormDecoder);
   decoders.add(FORM_MIME_TYPE, formDecoder);
   decoders.add(JSON_MIME_TYPE, jsonDecoder);
+  decoders.add(MULTIPART_FORM_MIME_TYPE, multipartFormDecoder);
+  decoders.add(OCTET_STREAM_MIME_TIME, binaryDecoder);
   decoders.add(TEXT_MIME_TYPE, textDecoder);
   decoders.addAll(args.decoders as any);
 
   const encoders = ByMimeType.create(fallbackEncoder);
   encoders.add(JSON_MIME_TYPE, jsonEncoder);
+  encoders.add(OCTET_STREAM_MIME_TIME, binaryEncoder);
   encoders.add(TEXT_MIME_TYPE, textEncoder);
   encoders.addAll(args.encoders as any);
 
@@ -209,18 +213,20 @@ export function createOperationsRouter<
           } catch (err) {
             throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
-          if (isAsyncIterable(body)) {
-            if (qtype === OCTET_STREAM_MIME_TIME) {
-              registry.validateRequestBody('', oid, qtype);
-            } else {
-              body = mapAsyncIterable(body, (b) => {
-                registry.validateRequestBody(b, oid, qtype);
-                return b;
-              });
-            }
+          if (body instanceof stream.Readable && !body.readableObjectMode) {
+            // Binary mode stream
+            registry.validateRequestBody(body, oid, qtype);
+          } else if (isAsyncIterable(body)) {
+            // Object-mode stream or native iterable
+            body = mapAsyncIterable(body, (b) => {
+              registry.validateRequestBody(b, oid, qtype);
+              return b;
+            });
           } else if (body instanceof events.EventEmitter) {
+            // Multipart instance
             body = registry.translateRequestBody(body, oid, qtype);
           } else {
+            // Decoded value
             registry.validateRequestBody(body, oid, qtype);
           }
           Object.assign(ctx.request, {body});
@@ -404,7 +410,9 @@ class Registry {
     const key = schemaKey(oid, {kind: 'requestBody', contentType});
     const validate = this.ajv.getSchema(key);
     assert(validate, 'Missing request body schema', key);
-    ifPresent(incompatibleValueError(validate, {value: body}), (err) => {
+    const value =
+      Buffer.isBuffer(body) || body instanceof stream.Readable ? '' : body;
+    ifPresent(incompatibleValueError(validate, {value}), (err) => {
       throw errors.invalidRequest(requestErrors.invalidBody(err));
     });
   }
@@ -498,13 +506,9 @@ class Registry {
     const key = schemaKey(oid, {kind: 'responseBody', contentType, code});
     const validate = this.ajv.getSchema(key);
     assert(validate, 'Missing response schema', key);
-    if (
-      (validate.schema as any).type === 'string' &&
-      (Buffer.isBuffer(data) || data instanceof stream.Readable)
-    ) {
-      return; // Let binary data through.
-    }
-    ifPresent(incompatibleValueError(validate, {value: data}), (err) => {
+    const value =
+      Buffer.isBuffer(data) || data instanceof stream.Readable ? '' : data;
+    ifPresent(incompatibleValueError(validate, {value}), (err) => {
       throw errors.invalidResponseData(err);
     });
   }

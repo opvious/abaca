@@ -1,7 +1,7 @@
 import {assert} from '@opvious/stl-errors';
 import {localPath} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {commaSeparated} from '@opvious/stl-utils/strings';
+import {commaSeparated, GlobMapper} from '@opvious/stl-utils/strings';
 import {extractOperationDefinitions} from 'abaca-openapi';
 import {
   DEFAULT_ACCEPT,
@@ -41,8 +41,7 @@ export function generateCommand(): Command {
         'this path'
     )
     .option(
-      // TODO: Implement
-      '-f, --filter <filter>',
+      '-i, --include <globs>',
       'filter which operations to include in the SDK. the filter is applied ' +
         'to the (potentially generated) operation ID and can include globs. ' +
         'for example `account*=y` would only inlcude operations with ID ' +
@@ -52,8 +51,7 @@ export function generateCommand(): Command {
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option(
-      // TODO: Implement
-      '-s, --schema-filter <filter>',
+      '-s, --include-schemas <globs>',
       'filter which component schemas to generate a type for. the filter is ' +
         'applied to each schema\'s name and can include globs',
       'n'
@@ -103,6 +101,10 @@ export function generateCommand(): Command {
     .action(
       contextualAction(async function (uri, opts) {
         const {spinner} = this;
+
+        // TODO: Use these globs
+        const _includeOps = GlobMapper.predicating(opts.include);
+        const _includeSchemas = GlobMapper.predicating(opts.includeSchemas);
 
         spinner.start('Resolving document...');
         const url = parseDocumentUri(uri);

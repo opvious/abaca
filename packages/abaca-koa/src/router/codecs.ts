@@ -55,9 +55,15 @@ export const jsonEncoder: KoaEncoder = (data, ctx) => {
   ctx.body = JSON.stringify(data);
 };
 
-export const textDecoder: KoaDecoder = (ctx) => coBody.text(ctx.req);
+export const textDecoder: KoaDecoder<string> = (ctx) => coBody.text(ctx.req);
 
 export const textEncoder: KoaEncoder = (data, ctx) => {
+  ctx.body = data;
+};
+
+export const binaryDecoder: KoaDecoder<stream.Readable> = (ctx) => ctx.req;
+
+export const binaryEncoder: KoaEncoder<stream.Readable> = (data, ctx) => {
   ctx.body = data;
 };
 
