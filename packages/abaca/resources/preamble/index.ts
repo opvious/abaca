@@ -17,6 +17,7 @@ import {
   Lookup,
   MimeType,
   MULTIPART_FORM_MIME_TYPE,
+  OCTET_STREAM_MIME_TIME,
   OperationDefinition,
   OperationDefinitions,
   OperationType,
@@ -42,11 +43,14 @@ import {
 type DA = typeof DEFAULT_ACCEPT;
 type DM = typeof DEFAULT_CONTENT_TYPE;
 
+const binaryEncoder: Encoder<Blob> = (body) => body;
+const binaryDecoder: Decoder<Blob> = (res) => res.blob();
+
 const jsonEncoder: Encoder = (body) => JSON.stringify(body);
 const jsonDecoder: Decoder = (res) => res.json();
 
 const textEncoder: Encoder = (body) => (body == null ? '' : '' + body);
-const textDecoder: Decoder = (res) => res.text();
+const textDecoder: Decoder<string> = (res) => res.text();
 
 // This doesn't supported nested objects. See also
 // https://stackoverflow.com/a/37562814 for information on why we can return the
@@ -84,7 +88,7 @@ const multipartFormEncoder: Encoder = (body) => {
 const fallbackEncoder: Encoder = (_body, ctx) => {
   throw new Error('Unsupported request content-type: ' + ctx.contentType);
 };
-const fallbackDecoder: Decoder = (_res, ctx) => {
+const fallbackDecoder: Decoder<never> = (_res, ctx) => {
   throw new Error('Unsupported response content-type: ' + ctx.contentType);
 };
 
@@ -272,15 +276,17 @@ export function createSdkFor<
   const baseHeaders = config.headers;
   const coercer: Coercer<any> = config.coercer ?? defaultCoercer;
 
-  const encoders = ByMimeType.create(fallbackEncoder);
+  const encoders = ByMimeType.create<Encoder>(fallbackEncoder);
   encoders.add(MULTIPART_FORM_MIME_TYPE, multipartFormEncoder);
   encoders.add(FORM_MIME_TYPE, formEncoder);
   encoders.add(JSON_MIME_TYPE, jsonEncoder);
+  encoders.add(OCTET_STREAM_MIME_TIME, binaryEncoder);
   encoders.add(TEXT_MIME_TYPE, textEncoder);
   encoders.addAll(config.encoders as any);
 
-  const decoders = ByMimeType.create(fallbackDecoder);
+  const decoders = ByMimeType.create<Decoder>(fallbackDecoder);
   decoders.add(JSON_MIME_TYPE, jsonDecoder);
+  decoders.add(OCTET_STREAM_MIME_TIME, binaryDecoder);
   decoders.add(TEXT_MIME_TYPE, textDecoder);
   decoders.addAll(config.decoders as any);
 

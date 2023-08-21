@@ -1,6 +1,6 @@
 {
   "name": "abaca-koa",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "repository": "github:opvious/abaca",
   "description": "Abaca Koa integrations",
   "keywords": [
@@ -26,8 +26,9 @@
     "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
     "gen-test-pets": "abaca g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
+    "gen-test-snippets": "abaca g test/resources/snippets.openapi.yaml -o test/snippets-sdk.gen.ts --generate-ids",
     "gen-test-tables": "abaca g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
-    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-tables",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables",
     "prepare": "pnpm run build && inlinable e",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src"

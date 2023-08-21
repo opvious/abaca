@@ -1,0 +1,22 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: Test snippets
+paths:
+  /binary-echo:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: Received and sent back
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
