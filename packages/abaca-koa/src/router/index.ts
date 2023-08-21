@@ -21,20 +21,15 @@ import {
   parseOpenapiDocument,
 } from 'abaca-openapi';
 import {
-  ByMimeType,
   contentTypeMatches,
-  FORM_MIME_TYPE,
   isResponseTypeValid,
   JSON_MIME_TYPE,
   MimeType,
-  MULTIPART_FORM_MIME_TYPE,
   MULTIPART_MIME_TYPE,
-  OCTET_STREAM_MIME_TIME,
   OperationDefinition,
   OperationTypes,
   ResponseClauseMatcher,
   ResponseCode,
-  TEXT_MIME_TYPE,
 } from 'abaca-runtime';
 import ajv_ from 'ajv';
 import events from 'events';
@@ -42,19 +37,11 @@ import stream from 'stream';
 
 import {packageInfo, routerPath} from '../common.js';
 import {
-  binaryDecoder,
-  binaryEncoder,
-  fallbackDecoder,
-  fallbackEncoder,
-  formDecoder,
-  jsonDecoder,
-  jsonEncoder,
+  defaultDecoders,
+  defaultEncoders,
   KoaDecodersFor,
   KoaEncodersFor,
   MultipartForm,
-  multipartFormDecoder,
-  textDecoder,
-  textEncoder,
 } from './codecs.js';
 import codes, {errors, requestErrors} from './index.errors.js';
 import {
@@ -130,18 +117,10 @@ export function createOperationsRouter<
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const rethrow = !args.handleInvalidRequests;
 
-  const decoders = ByMimeType.create(fallbackDecoder);
-  decoders.add(FORM_MIME_TYPE, formDecoder);
-  decoders.add(JSON_MIME_TYPE, jsonDecoder);
-  decoders.add(MULTIPART_FORM_MIME_TYPE, multipartFormDecoder);
-  decoders.add(OCTET_STREAM_MIME_TIME, binaryDecoder);
-  decoders.add(TEXT_MIME_TYPE, textDecoder);
+  const decoders = defaultDecoders();
   decoders.addAll(args.decoders as any);
 
-  const encoders = ByMimeType.create(fallbackEncoder);
-  encoders.add(JSON_MIME_TYPE, jsonEncoder);
-  encoders.add(OCTET_STREAM_MIME_TIME, binaryEncoder);
-  encoders.add(TEXT_MIME_TYPE, textEncoder);
+  const encoders = defaultEncoders();
   encoders.addAll(args.encoders as any);
 
   const registry = new Registry(tel);

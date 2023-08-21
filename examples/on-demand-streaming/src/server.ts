@@ -1,8 +1,6 @@
 import Router from '@koa/router';
 import {createOperationsRouter} from 'abaca-koa';
 import {loadOpenapiDocument} from 'abaca-openapi';
-import jsonSeq from 'json-text-sequence';
-import stream from 'stream';
 import {setTimeout} from 'timers/promises';
 
 import {Operations, Schema} from './sdk.gen.js';
@@ -40,20 +38,6 @@ export async function messagesRouter(): Promise<Router> {
           }
         }
         return {type: 'application/json-seq', data: messages()};
-      },
-    },
-    decoders: {
-      'application/json-seq': (ctx) => {
-        const decoder = new jsonSeq.Parser();
-        ctx.req.pipe(decoder);
-        return decoder;
-      },
-    },
-    encoders: {
-      'application/json-seq': (iter, ctx) => {
-        const encoder = new jsonSeq.Generator();
-        stream.Readable.from(iter).pipe(encoder);
-        ctx.body = encoder;
       },
     },
   });

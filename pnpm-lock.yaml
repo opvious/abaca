@@ -116,15 +116,15 @@ importers:
 
   examples/on-demand-streaming:
     dependencies:
+      abaca-codecs:
+        specifier: workspace:*
+        version: link:../../packages/abaca-codecs
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
       abaca-openapi:
         specifier: workspace:*
         version: link:../../packages/abaca-openapi
-      json-text-sequence:
-        specifier: ^1.0.1
-        version: 1.0.1
       node-fetch:
         specifier: ^3.3.1
         version: 3.3.1
@@ -200,6 +200,18 @@ importers:
         specifier: ^9.3.0
         version: 9.3.0(typescript@5.1.6)
 
+  packages/abaca-codecs:
+    dependencies:
+      abaca-runtime:
+        specifier: workspace:*
+        version: link:../abaca-runtime
+      json-text-sequence:
+        specifier: ^1.0.1
+        version: 1.0.1
+      node-fetch:
+        specifier: ^3.3.1
+        version: 3.3.1
+
   packages/abaca-koa:
     dependencies:
       '@koa/router':
@@ -235,6 +247,9 @@ importers:
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
+      json-text-sequence:
+        specifier: ^1.0.1
+        version: 1.0.1
       koa-compose:
         specifier: ^4.1.0
         version: 4.1.0
@@ -269,9 +284,6 @@ importers:
       inlinable:
         specifier: ^0.2.6
         version: 0.2.6
-      json-text-sequence:
-        specifier: ^1.0.1
-        version: 1.0.1
       koa:
         specifier: ^2.13.1
         version: 2.14.1
@@ -967,6 +979,7 @@ packages:
   /@sovpro/delimited-stream@1.1.0:
     resolution: {integrity: sha512-kQpk267uxB19X3X2T1mvNMjyvIEonpNSHrMlK5ZaBU6aZxw7wPbpgKJOjHN3+/GPVpXgAV9soVT2oyHpLkLtyw==}
     engines: {node: '>= 8'}
+    dev: false
 
   /@stoplight/json-ref-resolver@3.1.5:
     resolution: {integrity: sha512-uaKLITor7UF+JBtI84zs3aOWM0L79zp7w9TrBTwPtx5SLbaQQ4HadDKgX5yhFOLMApLdhwhiftF4c0GFanOxGg==}
@@ -2680,6 +2693,7 @@ packages:
     engines: {node: '>=12.20.0'}
     dependencies:
       '@sovpro/delimited-stream': 1.1.0
+    dev: false
 
   /jsonc-parser@2.2.1:
     resolution: {integrity: sha512-o6/yDBYccGvTz1+QFevz6l6OBZ2+fMVu2JZ9CIhzsYRX4mjaK5IyX9eldUdCmga16zlgQxyrj5pt9kzuj2C02w==}

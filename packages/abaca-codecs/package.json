@@ -1,8 +1,8 @@
 {
-  "name": "abaca-runtime",
+  "name": "abaca-codecs",
   "version": "0.8.3",
   "repository": "github:opvious/abaca",
-  "description": "Abaca runtime utilities",
+  "description": "Abaca SDK codecs",
   "keywords": [
     "abaca"
   ],
@@ -12,12 +12,19 @@
   "files": [
     "lib/"
   ],
-  "exports": "./lib/index.js",
+  "exports": {
+    "./node/json-seq": "./lib/node/json-seq.js"
+  },
   "scripts": {
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
     "prepare": "pnpm run build",
     "watch": "tsc -b -w src"
+  },
+  "dependencies": {
+    "abaca-runtime": "workspace:*",
+    "json-text-sequence": "^1.0.1",
+    "node-fetch": "^3.3.1"
   }
 }
