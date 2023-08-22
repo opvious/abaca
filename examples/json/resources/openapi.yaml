@@ -91,13 +91,3 @@ components:
       maxItems: 100
       items:
         $ref: "#/components/schemas/Pet"
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-        message:
-          type: string

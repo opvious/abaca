@@ -1,7 +1,7 @@
 # Multi content-type example
 
-This example shows how to implement an API which support JSON and CSV
-content-types (both in requests and responses) using Abaca.
+This example shows how to implement a type-safe API which supports multiple
+content-types per endpoint using Abaca (JSON and CSV here).
 
 + OpenAPI specification: [`resources/openapi.yaml`](resources/openapi.yaml)
 + Server implementation: [`src/server.ts`](src/server.ts)

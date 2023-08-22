@@ -271,10 +271,8 @@ function defaultHandlerContext(obj: any): unknown {
 }
 
 class Registry {
-  private readonly ajv = new Ajv({
-    coerceTypes: true, // Needed for parameters
-    formats: {binary: true},
-  });
+  private readonly parameters = new Ajv({coerceTypes: true});
+  private readonly bodies = new Ajv({formats: {binary: true}});
   constructor(private readonly telemetry: Telemetry) {}
 
   register(schema: any, env: OperationHookEnv): void {
@@ -296,7 +294,7 @@ class Registry {
 
   private registerParameter(oid: string, name: string, schema: any): void {
     // Nest within an object to enable coercion and better error reporting.
-    this.ajv.addSchema(
+    this.parameters.addSchema(
       {
         type: 'object',
         properties: {[name]: schema ?? {type: 'string'}},
@@ -312,7 +310,7 @@ class Registry {
     schema: any
   ): void {
     const key = schemaKey(oid, {kind: 'requestBody', contentType});
-    this.ajv.addSchema(schema, key);
+    this.bodies.addSchema(schema, key);
 
     // Add individual multipart properties to be able to validate them as they
     // are streamed in.
@@ -330,7 +328,7 @@ class Registry {
           contentType,
           name,
         });
-        this.ajv.addSchema(propSchema, propKey);
+        this.bodies.addSchema(propSchema, propKey);
       }
     }
   }
@@ -341,7 +339,7 @@ class Registry {
     code: ResponseCode,
     schema: any
   ): void {
-    this.ajv.addSchema(
+    this.bodies.addSchema(
       schema,
       schemaKey(oid, {kind: 'responseBody', code, contentType})
     );
@@ -352,7 +350,7 @@ class Registry {
     oid: string,
     def: OperationDefinition
   ): void {
-    const {ajv} = this;
+    const {parameters} = this;
     for (const [name, pdef] of Object.entries(def.parameters)) {
       let str: unknown;
       switch (pdef.location) {
@@ -375,7 +373,7 @@ class Registry {
         continue;
       }
       const key = schemaKey(oid, {kind: 'parameter', name});
-      const validate = ajv.getSchema(key);
+      const validate = parameters.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
       ifPresent(incompatibleValueError(validate, {value: obj}), (err) => {
@@ -387,7 +385,7 @@ class Registry {
 
   validateRequestBody(body: unknown, oid: string, contentType: string): void {
     const key = schemaKey(oid, {kind: 'requestBody', contentType});
-    const validate = this.ajv.getSchema(key);
+    const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     const value =
       Buffer.isBuffer(body) || body instanceof stream.Readable ? '' : body;
@@ -438,7 +436,7 @@ class Registry {
         name,
       });
       const val = kind === 'field' ? prop.field : '';
-      const validate = this.ajv.getSchema(key);
+      const validate = this.bodies.getSchema(key);
       try {
         if (validate) {
           ifPresent(incompatibleValueError(validate, {value: val}), (cause) => {
@@ -485,7 +483,7 @@ class Registry {
     code: ResponseCode
   ): void {
     const key = schemaKey(oid, {kind: 'responseBody', contentType, code});
-    const validate = this.ajv.getSchema(key);
+    const validate = this.bodies.getSchema(key);
     assert(validate, 'Missing response schema', key);
     const value =
       Buffer.isBuffer(data) || data instanceof stream.Readable ? '' : data;

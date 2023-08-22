@@ -36,6 +36,9 @@ test('client streaming', async () => {
   const res = await sdk.ingestMessages({
     body: messages(),
     headers: {'content-type': 'application/json-seq'},
+    options: {
+      highWaterMark: 12,
+    },
   });
   expect(res.code).toEqual(204);
 });
