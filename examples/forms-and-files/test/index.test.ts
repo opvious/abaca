@@ -55,9 +55,9 @@ test('upload multipart form', async () => {
 test('upload multipart form with unexpected fields', async () => {
   const res = await sdk.uploadForm({
     headers: {'content-type': 'multipart/form-data'},
+    // @ts-expect-error unexpected name field
     body: {
-      // @ts-expect-error unexpected name field
-      metadata: {nam: 'ann'},
+      metadata: {name: 'ann'},
       name: 'unexpected',
       logoImage: new Blob(['abcd']),
     },

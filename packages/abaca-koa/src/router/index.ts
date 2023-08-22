@@ -440,20 +440,20 @@ class Registry {
       const val = kind === 'field' ? prop.field : '';
       const validate = this.ajv.getSchema(key);
       try {
-        if (!validate) {
+        if (validate) {
+          ifPresent(incompatibleValueError(validate, {value: val}), (cause) => {
+            const err = requestErrors.invalidMultipartProperty(name, cause);
+            throw errors.invalidRequest(err);
+          });
+          ee.emit('property', prop);
+        } else {
           if (ee.listenerCount('additionalProperty')) {
             ee.emit('additionalProperty', prop);
           } else if (kind === 'stream') {
             // Consume the stream to allow decoding to proceed
             prop.stream.resume();
           }
-          return;
         }
-        ifPresent(incompatibleValueError(validate, {value: val}), (cause) => {
-          const err = requestErrors.invalidMultipartProperty(name, cause);
-          throw errors.invalidRequest(err);
-        });
-        ee.emit('property', prop);
       } catch (err) {
         onError(err);
       }

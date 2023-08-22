@@ -36,6 +36,7 @@ paths:
               type: object
               required:
                 - metadata
+              additionalProperties: false
               properties:
                 metadata:
                   $ref: '#/components/schemas/Metadata'

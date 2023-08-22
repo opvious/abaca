@@ -32,10 +32,7 @@ test('list no pets', async () => {
 });
 
 test('creates and fetches a pet', async () => {
-  const createRes = await sdk.createPet({
-    body: {name: ''},
-    // fo: 123,
-  });
+  const createRes = await sdk.createPet({body: {name: 'Fido'}});
 
   assert(createRes.code === 201);
   // Response data type is narrowed to a pet here

@@ -72,6 +72,7 @@ components:
       required:
         - id
         - name
+      additionalProperties: false
       properties:
         id:
           type: integer
@@ -81,6 +82,7 @@ components:
       type: object
       required:
         - name
+      additionalProperties: false
       properties:
         name:
           type: string
