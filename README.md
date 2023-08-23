@@ -8,9 +8,23 @@ An [OpenAPI][] SDK generator with very strong type guarantees and minimal
 boilerplate.
 
 + Exports dependency-free, single-file client SDKs with a tiny runtime footprint
-+ Supports forms and file uploads, arbitrary content-types, streaming, custom
++ Supports arbitrary content-types, form and file uploads, streaming, custom
   `fetch` implementations, and more - all without compromising on type safety
 + Provides [Koa][] integrations for server routing and proxying
+
+
+## Motivation
+
+At [Opvious][], we use OpenAPI to describe both our public and internal APIs.
+To provide a great experience for our users, we support a variety of
+content-types and granular response codes in our specifications. For example we
+provide [on-demand streaming](examples/on-demand-streaming) when solving
+optimization models, streaming results back to clients when possible.
+
+We tried various TypeScript SDK generator libraries (see the
+[alternatives](#alternatives) section below) but didn't find one which could
+express these capabilities without losing type-safety. Abaca is our attempt at
+building a library which provides strong type safety beyond JSON APIs.
 
 
 ## Preview
@@ -70,11 +84,13 @@ handles various use-cases:
 
 ## Alternatives
 
+Shortlist of related libraries that we used before Abaca:
+
 + https://github.com/ajaishankar/openapi-typescript-fetch
 + https://github.com/ferdikoomen/openapi-typescript-codegen
 + https://github.com/oazapfts/oazapfts
-+ https://github.com/openapitools/openapi-generator
-+ https://tools.openapis.org/categories/sdk.html (includes other languages)
+
+More tools are also listed here: https://tools.openapis.org/categories/sdk.html
 
 
 ## Developing
@@ -85,6 +101,6 @@ pnpm dlx husky install # Set up git hooks, only needed once
 ```
 
 
-[OpenAPI]: https://www.openapis.org/
-[Koa]: https://koajs.com/
-[string literals]: https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types
+[Koa]: https://koajs.com
+[OpenAPI]: https://www.openapis.org
+[Opvious]: https://www.opvious.io

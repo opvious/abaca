@@ -91,7 +91,7 @@ if (res.code === 200) { // 6
 `abaca` automatically type checks each request's body against its
 `'content-type'` header. In the common case where the header is omitted, the
 SDK's default is used (`application/json`, unless overridden). For example,
-using the [`uploadTable` operation](#), its body should by default contain a
+using the [`uploadTable` operation](#TODO), its body should by default contain a
 `Table`:
 
 ```typescript
@@ -130,7 +130,7 @@ await sdk.uploadTable({
 code and request's `'accept'` header. When the header is omitted, it uses the
 SDK's default (similar to request typing above, defaulting to
 `application/json;q=1, text/*;q=0.5`). For example, using the [`downloadTable`
-operation](#):
+operation](#TODO):
 
 ```typescript
 const res = await sdk.downloadTable({params: {id: 'my-id'}});
