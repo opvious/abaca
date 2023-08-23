@@ -26,6 +26,10 @@ We tried various TypeScript SDK generator libraries (see the
 express these capabilities without losing type-safety. Abaca is our attempt at
 building a library which provides strong type safety beyond JSON APIs.
 
+originally internal, useful for other APIs
+used in production internally.
+versioning, still 0.x. 1.x once feedback from the community
+
 
 ## Preview
 
