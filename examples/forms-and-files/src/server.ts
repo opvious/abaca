@@ -16,15 +16,15 @@ export async function createRouter(): Promise<Router> {
     handlers: {
       uploadData: async (ctx) => {
         // This operation accepts requests with an `application/octet-stream`
-        // body, available has a binary `stream.Readable`. In this example we
-        // simply compute its SHA, but you can use it as any standard readable
-        // stream (save to a file, decode, etc.).
+        // body, available as a binary `stream.Readable`. In this example we
+        // simply compute its SHA, but you can use it as any standard stream
+        // (save to a file, decode, etc.).
         const sha = await computeSha(ctx.request.body);
         // We now return the computed SHA to be sent back to the client.
         return {type: 'text/plain', data: sha};
       },
       uploadForm: async (ctx) => {
-        // This operations accepts requests for form bodies, either as
+        // This operations accepts requests with form bodies, either as
         // `application/x-www-form-urlencoded` or `multipart/form-data`. The
         // request's `type` field can be used to narrow the body's type
         // accordingly.
@@ -39,9 +39,8 @@ export async function createRouter(): Promise<Router> {
           }
           case 'multipart/form-data': {
             // Multipart forms may contain files and as such are best exposed
-            // via event-emitters which emit (typed!) events asynchronously.
-            // This allows efficient and safe processing of forms with large
-            // files.
+            // via emitters which emit (typed!) events asynchronously. This
+            // allows efficient and safe processing of forms with large files.
             ctx.request.body.on('property', async (prop) => {
               // The `property` event is emitted each time a property is
               // available. There are two types of properties:
