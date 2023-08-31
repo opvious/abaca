@@ -44,10 +44,10 @@ Take a look at the [repository](https://www.gihub.com/opvious/abaca)'s README
 for more information, examples, and extensions (e.g. Koa integrations).
 
 
-## Typings
+## Type safety
 
-`abaca` checks request types and narrows response types extensively. This
-section describes the major components and highlights common patterns.
+Abaca checks request types and narrows response types extensively. This section
+describes the major components and highlights common patterns.
 
 
 ### Overview
@@ -88,11 +88,11 @@ if (res.code === 200) { // 6
 
 ### Request body type inference
 
-`abaca` automatically type checks each request's body against its
-`'content-type'` header. In the common case where the header is omitted, the
-SDK's default is used (`application/json`, unless overridden). For example,
-using the [`uploadTable` operation](#TODO), its body should by default contain a
-`Table`:
+Abaca automatically type checks each request's body against its `'content-type'`
+header. In the common case where the header is omitted, the SDK's default is
+used (`application/json`, unless overridden). For example, using the
+`uploadTable` operation defined [here][tables], its body should by default
+contain a `Table`:
 
 ```typescript
 await sdk.uploadTable({
@@ -106,15 +106,14 @@ Switching to CSV will automatically change the body's expected type:
 
 ```typescript
 await sdk.uploadTable({
-  headers: {'content-type': 'text/csv'},
+  headers: {'content-type': 'text/csv'}, // Different content-type
   params: {id: 'my-id'},
   body: '...', // Expected type: `string`
 });
 ```
 
 Additionally the `'content-type'` header is statically checked to match one of
-the defined body types. It also can be auto-completed if your editor supports
-auto-completion.
+the defined body types. It also can be auto-completed in compatible editors:
 
 ```typescript
 await sdk.uploadTable({
@@ -126,11 +125,11 @@ await sdk.uploadTable({
 
 ### Response type inference
 
-`abaca` automatically narrows the types of responses according to the response's
+Abaca automatically narrows the types of responses according to the response's
 code and request's `'accept'` header. When the header is omitted, it uses the
 SDK's default (similar to request typing above, defaulting to
-`application/json;q=1, text/*;q=0.5`). For example, using the [`downloadTable`
-operation](#TODO):
+`application/json;q=1, text/*;q=0.5`). For example, using the `downloadTable`
+operation defined [here][tables]:
 
 ```typescript
 const res = await sdk.downloadTable({params: {id: 'my-id'}});
@@ -242,3 +241,4 @@ switch (res.code) {
 
 
 [OpenAPI]: https://www.openapis.org/
+[tables]: /examples/multi-content-types/resources/openapi.yaml
