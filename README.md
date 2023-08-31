@@ -38,7 +38,7 @@ unary JSON calls.
 ## Preview
 
 First, generate the SDK from an OpenAPI specification (URL or local path). For
-example from [Stripe's specification][]:
+example from [Stripe's specification](https://github.com/stripe/openapi):
 
 ```sh
 npx abaca generate \
@@ -93,18 +93,9 @@ handles various use-cases:
 + [`abaca-runtime`](/packages/abaca-runtime), shared utilities
 
 
-## Alternatives
-
-Shortlist of related libraries that we used before Abaca:
-
-+ https://github.com/ajaishankar/openapi-typescript-fetch
-+ https://github.com/ferdikoomen/openapi-typescript-codegen
-+ https://github.com/oazapfts/oazapfts
-
-More tools are also listed here: https://tools.openapis.org/categories/sdk.html
-
-
 ## Developing
+
+Abaca uses [pnpm](https://pnpm.io/):
 
 ```sh
 pnpm i
@@ -116,6 +107,17 @@ pnpm dlx husky install # Set up git hooks, only needed once
 
 Contributions are most welcome. If you have an idea that would make Abaca
 better, please create an issue or submit a pull request!
+
+
+## Alternatives
+
+Shortlist of related libraries that we used before Abaca:
+
++ https://github.com/ajaishankar/openapi-typescript-fetch
++ https://github.com/ferdikoomen/openapi-typescript-codegen
++ https://github.com/oazapfts/oazapfts
+
+More tools are also listed here: https://tools.openapis.org/categories/sdk.html
 
 
 [Koa]: https://koajs.com
