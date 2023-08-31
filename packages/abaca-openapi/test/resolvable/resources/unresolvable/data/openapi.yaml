@@ -1,0 +1,6 @@
+openapi: "3.0.0"
+paths: {}
+components:
+  schemas:
+    Neighbor:
+      $ref: foo:///unknown.yaml

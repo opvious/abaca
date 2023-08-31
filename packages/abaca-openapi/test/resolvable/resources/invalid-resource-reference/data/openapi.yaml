@@ -1,0 +1,7 @@
+$id: resource://root-package/root.yaml
+openapi: "3.0.0"
+paths: {}
+components:
+  schemas:
+    Neighbor:
+      $ref: resource:///neighbor.yaml

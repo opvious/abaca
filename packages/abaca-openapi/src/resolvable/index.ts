@@ -39,10 +39,8 @@ export async function resolvingReferences<V extends object>(
         mapValues(r, (fn) => ({resolve: fn}))
       ),
       resource: {
-        resolve: async (url) => {
-          if (!rootId) {
-            throw errors.orphanedResource(url);
-          }
+        resolve: async () => {
+          assert(rootId, 'Missing root ID');
           return resourceSymbol;
         },
       },
@@ -59,7 +57,9 @@ export async function resolvingReferences<V extends object>(
       if (target == null) {
         return ref;
       }
-      assert(base, 'Unexpected or missing base URI:', uri);
+      if (!base) {
+        throw errors.orphanedResource(uri);
+      }
 
       const n = seqno++;
       refUrls.set(n, new URL(target));
@@ -150,7 +150,7 @@ function parseResourceReferenceContents(
     expected.search = '';
     assert('' + declared === '' + expected, 'ID %s doesn\'t match', id);
   } catch (cause) {
-    throw errors.invalidResolvedResource(ru, cause);
+    throw errors.invalidResourceReference(ru, cause);
   }
   return doc;
 }

@@ -77,7 +77,7 @@ class Handler implements KoaHandlersFor<Operations> {
     return created ? 201 : 204; // Type-checked (see above).
   }
 
-  createTables(): Values['clearTables'] {
+  clearTables(): Values['clearTables'] {
     this.tables.clear();
     return 204;
   }

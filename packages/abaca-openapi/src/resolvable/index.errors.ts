@@ -3,7 +3,7 @@ import {errorFactories, errorMessage} from '@opvious/stl-errors';
 export const [errors, codes] = errorFactories({
   definitions: {
     orphanedResource: (ref: unknown) => ({
-      message: `File references resource ${ref} but does not have an ID`,
+      message: `A file references resource ${ref} but does not have an ID`,
       tags: {ref},
     }),
     unresolvable: (issues: ReadonlyArray<ResolutionIssue>) => ({
@@ -11,7 +11,7 @@ export const [errors, codes] = errorFactories({
         'Data could not be resolved: ' + issues.map(formatIssue).join(', '),
       tags: {issues},
     }),
-    invalidResolvedResource: (ru: URL, cause: unknown) => ({
+    invalidResourceReference: (ru: URL, cause: unknown) => ({
       message: `Reference ${ru} is invalid: ${errorMessage(cause)}`,
       cause,
       tags: {ref: '' + ru},
