@@ -7,9 +7,12 @@
 An [OpenAPI][] SDK generator with very strong type guarantees and minimal
 boilerplate.
 
-+ Exports dependency-free, single-file client SDKs with a tiny runtime footprint
-+ Supports arbitrary content-types, form and file uploads, streaming, custom
-  `fetch` implementations, and more - all without compromising on type safety
++ Exports __dependency-free, single-file client SDKs__ with a tiny runtime
+  footprint
++ Supports [arbitrary content-types](/examples/multi-content-types), [form and
+  file uploads](/examples/forms-and-files),
+  [streaming](/examples/on-demand-streaming), custom `fetch` implementations,
+  and more - __all without compromising type-safety__
 + Provides [Koa][] integrations for server routing and proxying
 
 
@@ -58,8 +61,8 @@ const sdk = createSdk({ // SDK-wide options (common headers, ...)
 
 You're now ready to make type-safe API calls. The compiler will ensure that each
 method's inputs (request body, parameters, ...) match their type in the
-specification. The response (data and code) is also extensively type-checked,
-including taking into account the request's `accept` header.
+specification. The response (data and code) is also extensively type-checked
+taking into account the request's `accept` header.
 
 ```typescript
 const res = await sdk.GetAccounts({params: {limit: 5}}); // Typed parameters

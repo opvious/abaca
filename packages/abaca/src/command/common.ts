@@ -13,8 +13,7 @@ import {
 } from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {
-  OpenapiDocuments,
-  OpenapiVersion,
+  OpenapiDocument,
   ReferenceResolvers,
   resolveOpenapiDocument,
 } from 'abaca-openapi';
@@ -29,9 +28,6 @@ import {AsyncOrSync} from 'ts-essentials';
 import {telemetry} from '../common.js';
 import {errors} from './index.errors.js';
 
-// Supported versions
-const versions = ['3.0', '3.1'] as const;
-
 export function parseDocumentUri(uri: string): URL {
   try {
     return new URL(uri);
@@ -40,13 +36,11 @@ export function parseDocumentUri(uri: string): URL {
   }
 }
 
-export type Document = OpenapiDocuments[(typeof versions)[number]];
-
 export async function resolveDocument(args: {
   readonly url: URL;
   readonly loaderRoot: PathLike;
   readonly skipSchemaValidation?: boolean;
-}): Promise<Document> {
+}): Promise<OpenapiDocument> {
   const loader = ResourceLoader.create({root: args.loaderRoot});
 
   let data: string;
@@ -59,7 +53,6 @@ export async function resolveDocument(args: {
   try {
     return await resolveOpenapiDocument(data, {
       loader,
-      versions,
       skipSchemaValidation: args.skipSchemaValidation,
       ignoreWebhooks: true,
       telemetry,
@@ -82,7 +75,7 @@ export async function resolveDocument(args: {
   }
 }
 
-export function summarizeDocument(doc: Document): {
+export function summarizeDocument(doc: OpenapiDocument): {
   readonly pathCount: number;
   readonly schemaCount: number;
 } {
@@ -94,7 +87,7 @@ export function summarizeDocument(doc: Document): {
 }
 
 export function extractServerAddresses(
-  doc: Document,
+  doc: OpenapiDocument,
   base: URL
 ): ReadonlyArray<string> {
   const ret: string[] = [];
@@ -120,10 +113,11 @@ export async function writeOutput(lp: LocalPath, str: string): Promise<void> {
   await writeFile(lp, str, 'utf8');
 }
 
-export function overridingVersion<V extends OpenapiVersion>(
-  doc: OpenapiDocuments[V],
+/** Returns a copy of the input document with the version overridden */
+export function overridingVersion(
+  doc: OpenapiDocument,
   version: string
-): OpenapiDocuments[V] {
+): OpenapiDocument {
   return {...doc, info: {...doc.info, version}};
 }
 

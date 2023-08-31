@@ -5,8 +5,9 @@ import {ArrayMultimap, firstElement} from '@opvious/stl-utils/collections';
 import {MarkPresent} from '@opvious/stl-utils/objects';
 import {
   allOperationMethods,
-  OpenapiDocument,
-  OpenapiOperation,
+  OpenapiDocuments,
+  OpenapiOperations,
+  OpenapiVersion,
 } from 'abaca-openapi';
 import ProxyServer from 'http-proxy';
 import Koa from 'koa';
@@ -22,8 +23,8 @@ const instruments = instrumentsFor({
   },
 });
 
-type ProxiedOperation<D extends OpenapiDocument> = MarkPresent<
-  OpenapiOperation<D>,
+type ProxiedOperation<V extends OpenapiVersion> = MarkPresent<
+  OpenapiOperations[V],
   'operationId'
 >;
 
@@ -33,11 +34,11 @@ type ProxiedOperation<D extends OpenapiDocument> = MarkPresent<
  * Instead it disables Koa response handling by setting `ctx.respond` to false.
  */
 export function createOperationsProxy<
-  D extends OpenapiDocument,
+  V extends OpenapiVersion,
   U extends Record<string, ProxyServer.ServerOptions>
 >(args: {
   /** OpenAPI document. */
-  readonly document: D;
+  readonly document: OpenapiDocuments[V];
 
   /** Upstream server options. */
   readonly upstreams: U;
@@ -47,7 +48,7 @@ export function createOperationsProxy<
    * Operations without an ID or with `trace` method are always skipped.
    */
   readonly dispatch: (
-    op: ProxiedOperation<D>,
+    op: ProxiedOperation<V>,
     path: string
   ) => (keyof U & string) | undefined;
 
@@ -63,7 +64,7 @@ export function createOperationsProxy<
    */
   readonly prepare?: (
     ctx: Koa.Context,
-    op: ProxiedOperation<D>
+    op: ProxiedOperation<V>
   ) => Promise<void>;
 
   /** Telemetry provider. */
@@ -83,7 +84,7 @@ export function createOperationsProxy<
   const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
   const [metrics] = tel.metrics(instruments);
 
-  const ops = new Map<string, ProxiedOperation<D>>();
+  const ops = new Map<string, ProxiedOperation<V>>();
   const middlewares = new Map<string, Koa.Middleware>();
   const middlewareFor = (key: string): Koa.Middleware => {
     let mw = middlewares.get(key);

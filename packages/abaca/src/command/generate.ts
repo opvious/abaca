@@ -2,7 +2,11 @@ import {assert} from '@opvious/stl-errors';
 import {localPath} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {commaSeparated, GlobMapper} from '@opvious/stl-utils/strings';
-import {extractOperationDefinitions} from 'abaca-openapi';
+import {
+  documentPathOperations,
+  extractPathOperationDefinitions,
+  OpenapiDocument,
+} from 'abaca-openapi';
 import {
   DEFAULT_ACCEPT,
   JSON_MIME_TYPE,
@@ -17,7 +21,6 @@ import YAML from 'yaml';
 import {packageInfo, resourceLoader} from '../common.js';
 import {
   contextualAction,
-  Document,
   extractServerAddresses,
   newCommand,
   overridingVersion,
@@ -44,14 +47,14 @@ export function generateCommand(): Command {
       '-i, --include <globs>',
       'filter which operations to include in the SDK. the filter is applied ' +
         'to the (potentially generated) operation ID and can include globs. ' +
-        'for example `account*=y` would only inlcude operations with ID ' +
+        'for example `account*=y` would only include operations with ID ' +
         'starting with `account`',
       'y'
     )
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option(
-      '-s, --include-schemas <globs>',
+      '-s, --include-schemas [globs]',
       'filter which component schemas to generate a type for. the filter is ' +
         'applied to each schema\'s name and can include globs',
       'n'
@@ -59,8 +62,8 @@ export function generateCommand(): Command {
     .option(
       '-t, --streaming-content-types <types>',
       'comma-separated list of content-types which contain streamed data. ' +
-        'request and responses with these types will be wrapped in async ' +
-        'iterables',
+        'request and responses with these types will be exposed via an ' +
+        '`AsyncIterable`',
       JSON_SEQ_MIME_TYPE
     )
     .option(
@@ -102,10 +105,6 @@ export function generateCommand(): Command {
       contextualAction(async function (uri, opts) {
         const {spinner} = this;
 
-        // TODO: Use these globs
-        const _includeOps = GlobMapper.predicating(opts.include);
-        const _includeSchemas = GlobMapper.predicating(opts.includeSchemas);
-
         spinner.start('Resolving document...');
         const url = parseDocumentUri(uri);
         const doc = await resolveDocument({
@@ -119,10 +118,12 @@ export function generateCommand(): Command {
         );
 
         spinner.start('Generating SDK...');
+        const operationGlob = GlobMapper.predicating(opts.include);
         const streamingTypes = commaSeparated(opts.streamingContentTypes);
-        const operations = extractOperationDefinitions({
+        const operations = extractPathOperationDefinitions({
           document: doc,
           generateIds: opts.generateIds,
+          idGlob: operationGlob,
         });
         const serverAddresses = extractServerAddresses(doc, url);
         const types = await generateTypes({
@@ -130,6 +131,10 @@ export function generateCommand(): Command {
           streamingTypes,
           operations,
           additionalProperties: !opts.strictAdditionalProperties,
+          operationGlob,
+          schemaGlob: GlobMapper.predicating(
+            ifPresent(opts.includeSchemas, (v) => (v === true ? 'y' : v))
+          ),
         });
         const eta = new Eta({
           autoEscape: false,
@@ -172,19 +177,21 @@ export function generateCommand(): Command {
 
 enum SchemaFormat {
   BINARY = 'binary',
-  NEVER = 'never',
 }
 
 async function generateTypes(args: {
-  readonly document: Document;
+  readonly document: OpenapiDocument;
   readonly streamingTypes: ReadonlyArray<string>;
   readonly operations: {readonly [id: string]: OperationDefinition};
   readonly additionalProperties: boolean;
+  readonly operationGlob: GlobMapper<boolean>;
+  readonly schemaGlob: GlobMapper<boolean>;
 }): Promise<{
   readonly source: string;
   readonly count: number;
 }> {
-  const {streamingTypes, additionalProperties} = args;
+  const {streamingTypes, additionalProperties, operationGlob, schemaGlob} =
+    args;
 
   // We clone the document to mutate it since `doc` contains immutable nodes.
   // Note also that `openapi-typescript` may mutate it (for example to filter
@@ -194,46 +201,42 @@ async function generateTypes(args: {
   // Add operation IDs in case any were generated and add fake properties to
   // request bodies to enable "oneof" behavior.
   for (const [id, def] of Object.entries(args.operations)) {
-    const item = cloned.paths[def.path][def.method];
-    if (item.operationId) {
+    const val = cloned.paths[def.path][def.method];
+    if (val.operationId) {
       assert(
-        item.operationId === id,
+        val.operationId === id,
         'Inconsistent operation ID: %s != %s',
         id,
-        item.operationId
+        val.operationId
       );
     } else {
-      item.operationId = id;
+      val.operationId = id;
     }
+  }
 
-    ifPresent(item.requestBody?.content, (content) => {
-      const values = Object.values<any>(content);
+  // Delete IDs of any operations which aren't included. This will prevent
+  // them from having a generated type.
+  for (const {value: val} of documentPathOperations(cloned)) {
+    const {operationId: id} = val;
+    if (id != null && !operationGlob.map(id)) {
+      delete (val as any).operationId;
+    }
+  }
 
-      // Figure out all possible field names for object schemas
-      const fields = new Set<string>();
-      for (const {schema} of values) {
-        if (schema.type !== 'object') {
-          continue;
-        }
-        for (const field of Object.keys(schema.properties)) {
-          fields.add(field);
+  // Delete non-schema components and schemas which aren't included. This is
+  // safe even if the original specification references them in operations since
+  // the document passed as input to this method has already been fully
+  // resolved.
+  for (const [key, comp] of Object.entries<any>(cloned.components ?? {})) {
+    if (key === 'schemas') {
+      for (const key of Object.keys(comp)) {
+        if (!schemaGlob.map(key)) {
+          delete comp[key];
         }
       }
-
-      // Pad all object schemas with fields that they don't have to be able to
-      // generate `never` types below.
-      for (const {schema} of values) {
-        if (schema.type !== 'object') {
-          continue;
-        }
-        for (const field of fields) {
-          schema.properties[field] ??= {
-            type: 'null',
-            format: SchemaFormat.NEVER,
-          };
-        }
-      }
-    });
+    } else {
+      delete cloned.components[key];
+    }
   }
 
   // postTransform can be called multiple times for a given path, we need to
@@ -249,8 +252,6 @@ async function generateTypes(args: {
       switch (schema.format) {
         case SchemaFormat.BINARY:
           return 'Blob';
-        case SchemaFormat.NEVER:
-          return 'never';
         default:
           return undefined;
       }

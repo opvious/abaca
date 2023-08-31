@@ -1,14 +1,16 @@
 # On-demand streaming example
 
-This example shows how to use and implement an endpoint which streams data via
-[JSON text sequences][json-seq] back to compatible clients and gracefully falls
+## Overview
+
+This example shows how to use and implement endpoints which stream data via
+[JSON text sequences][json-seq] back to compatible clients and gracefully fall
 back to JSON otherwise.
 
 ```typescript
 // Standard JSON API call. `application/json` responses are accepted by default,
 // so we can omit the header.
 const unary = await sdk.processMessages({
-  body: {messages},
+  body: messages,
 });
 switch (unary.code) {
   case 200:
@@ -23,7 +25,7 @@ switch (unary.code) {
 // `accept` header which is now updated to accept JSON sequences.
 const streaming = await sdk.processMessages({
   headers: {accept: 'application/json-seq'},
-  body: {messages},
+  body: messages,
 });
 switch (streaming.code) {
   case 200:
@@ -42,9 +44,12 @@ streaming using the same primitives.
 
 Note that all these capabilities are exposed via simple HTTP requests (no
 WebSockets required for instance) and without losing any of the type-safety
-provided by the OpenAPI specification. It is also possible to stream
+provided by the OpenAPI specification. Finally it is also possible to stream
 content-types other than JSON sequences by specifying them via Abaca CLI's
 `--streaming-content-types` option.
+
+
+## Contents
 
 + OpenAPI specification: [`resources/openapi.yaml`](resources/openapi.yaml)
 + Client implementation: [`src/client.ts`](src/client.ts)

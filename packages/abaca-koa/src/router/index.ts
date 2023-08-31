@@ -14,7 +14,7 @@ import {typedEmitter} from '@opvious/stl-utils/events';
 import {atMostOnce, ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {
-  extractOperationDefinitions,
+  extractPathOperationDefinitions,
   incompatibleValueError,
   OpenapiDocument,
   OperationHookEnv,
@@ -124,7 +124,7 @@ export function createOperationsRouter<
   encoders.addAll(args.encoders as any);
 
   const registry = new Registry(tel);
-  const defs = extractOperationDefinitions({
+  const defs = extractPathOperationDefinitions({
     document: typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
     onSchema: (schema, env) => void registry.register(schema, env),
     generateIds: true,
