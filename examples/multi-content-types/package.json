@@ -16,7 +16,7 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
-    "gen": "abaca g resources/openapi.yaml -s -o src/sdk.gen.ts",
+    "gen": "abaca g resources/openapi.yaml -s -o src/sdk.gen.ts --default-accept application/json",
     "prepare": "pnpm run gen && pnpm run build",
     "test": "vitest",
     "watch": "tsc -b -w src"
