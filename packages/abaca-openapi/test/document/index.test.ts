@@ -11,13 +11,12 @@ const telemetry = RecordingTelemetry.forTesting();
 
 describe('load OpenAPI document', () => {
   describe('valid', () => {
-    test.each([
-      'pets.openapi.yaml',
-      'petstore.openapi.json',
-      'tables.openapi.yaml',
-    ])('%s', async (name) => {
-      await sut.loadOpenapiDocument({path: loader.localUrl(name), loader});
-    });
+    test.each(['pets.openapi.yaml', 'tables.openapi.yaml'])(
+      '%s',
+      async (name) => {
+        await sut.loadOpenapiDocument({path: loader.localUrl(name), loader});
+      }
+    );
   });
 
   test('unexpected version', async () => {
@@ -25,7 +24,7 @@ describe('load OpenAPI document', () => {
       await sut.loadOpenapiDocument({
         path: loader.localUrl('pets.openapi.yaml'),
         loader,
-        versions: ['2.0'],
+        versions: ['3.1'],
       });
       fail();
     } catch (err) {

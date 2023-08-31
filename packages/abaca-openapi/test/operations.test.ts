@@ -5,11 +5,11 @@ import * as sut from '../src/operations.js';
 
 const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
 
-describe('extract operation definitions', () => {
+describe('extract path operation definitions', () => {
   test('null hook', async () => {
     const {contents} = await loader.load('pets.openapi.yaml');
     const doc = YAML.parse(contents);
-    const defs = sut.extractOperationDefinitions({document: doc});
+    const defs = sut.extractPathOperationDefinitions({document: doc});
     expect(defs).toEqual({
       listPets: {
         path: '/pets',
