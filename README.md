@@ -60,15 +60,15 @@ const sdk = createSdk({ // SDK-wide options (common headers, ...)
 ```
 
 You're now ready to make type-safe API calls. The compiler will ensure that each
-method's inputs (request body, parameters, ...) match their type in the
-specification. The response (data and code) is also extensively type-checked
-taking into account the request's `accept` header.
+method's inputs (request body, parameters, content type header...) match their
+type in the specification. The response (data and code) is also extensively
+type-checked taking into account the request's `accept` header.
 
 ```typescript
-const res = await sdk.GetAccounts({params: {limit: 5}}); // Typed parameters
+const res = await sdk.GetAccount();
 switch (res.code) { // Typed response code
   case 200:
-    console.log(`${res.data.length} accounts.`); // Narrowed response data type
+    console.log(res.data.capabilities); // Narrowed response data type
     break;
   // ...
 }
