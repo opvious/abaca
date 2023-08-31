@@ -33,7 +33,6 @@ export async function messagesRouter(): Promise<Router> {
           // to the client as it becomes available here.
           return {type: 'application/json-seq', data: processedMessages()};
         }
-
         // Otherwise the client only accepts unary responses. We wait for all
         // messages to be processed locally to be able to gather the entire
         // response and send it back.
