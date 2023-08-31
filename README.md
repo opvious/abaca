@@ -27,8 +27,7 @@ sending results back to clients as early as possible.
 We tried various TypeScript SDK generator libraries (see the
 [alternatives](#alternatives) section below) but didn't find one which could
 express these capabilities without compromising type-safety. Abaca is our
-attempt at building a library to address these use-cases and is currently used
-in production at Opvious.
+attempt at building a library to address these use-cases.
 
 While we originally built Abaca for internal use, we believe it would be useful
 to others and are happy to make it available to the open-source community. We
@@ -115,7 +114,8 @@ pnpm dlx husky install # Set up git hooks, only needed once
 
 ## Contributing
 
-Contributions are most welcome!
+Contributions are most welcome. If you have an idea that would make Abaca
+better, please create an issue or submit a pull request!
 
 
 [Koa]: https://koajs.com
