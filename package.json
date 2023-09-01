@@ -1,6 +1,6 @@
 {
   "name": "@opvious/abaca-packages",
-  "version": "0.8.3",
+  "version": "0.9.0",
   "private": true,
   "repository": "github:opvious/abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -10,7 +10,7 @@
     "clean": "pnpm -r -F !. run clean && rm -rf node_modules out",
     "fix": "prettier --write '{packages,examples}/*/{src,test}/**/*.{ts,tsx}' && pnpm run lint --fix",
     "lint": "eslint '{packages,examples}/*/{src,test}/**/*.{ts,tsx}'",
-    "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in {examples,packages}/*; do if [ -d \"$p/out/coverage\" ]; then cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; fi; done"
+    "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in examples/* packages/*; do if [ -d \"$p/out/coverage\" ]; then cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; fi; done"
   },
   "devDependencies": {
     "@opvious/eslint-plugin": "^0.1.26",

@@ -1,6 +1,6 @@
 import {errorFactories} from '@opvious/stl-errors';
 import {OpenAPISchemaValidatorResult} from 'openapi-schema-validator';
-import {OpenAPIV2, OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
+import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
 
 export const [errors, errorCodes] = errorFactories({
@@ -36,7 +36,7 @@ function formatValidationIssue(i: DocumentValidationIssue): string {
 }
 
 /** All supported OpenAPI versions */
-export const openapiVersions = ['2.0', '3.0', '3.1'] as const;
+export const openapiVersions = ['3.0', '3.1'] as const;
 
 /** Available OpenAPI version type */
 export type OpenapiVersion = keyof OpenapiDocuments;
@@ -55,7 +55,6 @@ export type TaggedDocument<D, S> = DeepReadonly<D> & {
 
 /** All supported OpenAPI document types, by version */
 export interface OpenapiDocuments<S = any> {
-  '2.0': TaggedDocument<OpenAPIV2.Document, S>;
   '3.0': TaggedDocument<OpenAPIV3.Document, S>;
   '3.1': TaggedDocument<OpenAPIV3_1.Document, S>;
 }

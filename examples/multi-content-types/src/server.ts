@@ -21,7 +21,9 @@ export async function createRouter(): Promise<Router> {
 }
 
 // Convenience alias for strongly-typed Koa context for each operation
-// (including request bodies, parameters, ...).
+// (including request bodies, parameters, ...). This is useful to implement
+// router handlers outside the `createOperationsRouter` argument, for example
+// from a separate class.
 type Contexts = KoaContextsFor<Operations>;
 
 // Similarly, convenience alias for acceptable return values for each operation
@@ -34,11 +36,15 @@ class Handler implements KoaHandlersFor<Operations> {
   getTable(ctx: Contexts['getTable']): Values['getTable'] {
     const table = this.tables.get(ctx.params.id);
     if (!table) {
-      return 404; // Type-checked (405 would fail for example).
+      // Returning a number sends back a response to the client of that status
+      // and without a body. Importantly, the returned number is type-checked
+      // (405 would fail for example!).
+      return 404;
     }
     if (ctx.accepts(['application/json', 'text/csv']) === 'application/json') {
-      // When the `type` field is omitted, the SDK's default is used
-      // (application/json here) and the `data` type-checked against it.
+      // When the `type` field is omitted from the return value, the SDK's
+      // default is used (application/json here) and the `data` type-checked
+      // against it.
       return {data: table};
     }
     // When a `type` field is set, the `data` field must match exacty that
@@ -61,14 +67,18 @@ class Handler implements KoaHandlersFor<Operations> {
       case 'text/csv':
         table = {rows: ctx.request.body.split('\n').map((r) => r.split(','))};
     }
+    // The compiler automatically checks for us that the switch statement above
+    // is exhautive (if it wasn't, it would throw an error saying `table` is
+    // used before being defined). This guarantees that we aren't forgetting any
+    // branches.
     const {id} = ctx.params;
     const created = !this.tables.has(id);
     this.tables.set(id, table);
-    return created ? 201 : 204; // Type-checked.
+    return created ? 201 : 204; // Type-checked (see above).
   }
 
-  createTables(): Values['clearTables'] {
+  clearTables(): Values['clearTables'] {
     this.tables.clear();
-    return 204; // Type-checked.
+    return 204;
   }
 }

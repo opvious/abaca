@@ -4,48 +4,77 @@
 
 # Abaca [![CI](https://github.com/opvious/abaca/actions/workflows/ci.yml/badge.svg)](https://github.com/opvious/abaca/actions/workflows/ci.yml) [![NPM version](https://img.shields.io/npm/v/abaca.svg)](https://www.npmjs.com/package/abaca) [![codecov](https://codecov.io/gh/opvious/abaca/branch/main/graph/badge.svg?token=XuV2bcZPjJ)](https://codecov.io/gh/opvious/abaca)
 
-An [OpenAPI][] SDK generator with (very) strong type guarantees and minimal
+An [OpenAPI][] SDK generator with very strong type guarantees and minimal
 boilerplate.
 
-+ Exports dependency-free, single-file client SDKs with a tiny runtime footprint
-+ Supports arbitrary content-types, streaming, custom `fetch` implementations,
-  and more
++ Exports __dependency-free, single-file client SDKs__ with a tiny runtime
+  footprint
++ Supports [arbitrary content-types](/examples/multi-content-types), [form and
+  file uploads](/examples/forms-and-files),
+  [streaming](/examples/on-demand-streaming), custom `fetch` implementations,
+  and more - __all without compromising type-safety__
 + Provides [Koa][] integrations for server routing and proxying
+
+
+## Motivation
+
+At [Opvious][], we use OpenAPI to describe both our public and internal APIs. To
+provide a great experience for our users, we support granular response codes and
+a variety of content-types. For example we provide [on-demand
+streaming](examples/on-demand-streaming) when solving optimization models,
+sending results back to clients as early as possible.
+
+We tried various TypeScript SDK generator libraries (see the
+[alternatives](#alternatives) section below) but didn't find one which could
+express these capabilities without compromising type-safety. Abaca is our
+attempt at building a library to address these use-cases.
+
+While we originally built Abaca for internal use, we believe it would be useful
+to others and are happy to make it available to the open-source community. We
+hope in particular to help those developing APIs which push the boundaries of
+unary JSON calls.
 
 
 ## Preview
 
-First, generate the SDK from an OpenAPI specification (URL or local path):
+First, generate the SDK from an OpenAPI specification (URL or local path). For
+example from [Stripe's specification](https://github.com/stripe/openapi):
 
 ```sh
-abaca generate \
+npx abaca generate \
   https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml \
   --output src/sdk.gen.ts
 ```
 
-Then simply import the generated file in your code to access strongly typed
-fetch methods for all operations defined in the specification:
+Then simply import the generated file in your code and instantiate the SDK. The
+returned instance contains a strongly typed method for each operation defined in
+the original OpenAPI specification.
 
 ```typescript
-import {createSdk} from './sdk.gen.js'; // Generated SDK
+import {createSdk} from './sdk.gen.js'; // File generated above
 
 const sdk = createSdk({ // SDK-wide options (common headers, ...)
   headers: {authorization: `Bearer sk_test_your_key`},
 });
+```
 
-const res = await sdk.GetAccounts({ // Typed request (body, parameters, ...)
-  params: {limit: 5},
-});
+You're now ready to make type-safe API calls. The compiler will ensure that each
+method's inputs (request body, parameters, content type header...) match their
+type in the specification. The response (data and code) is also extensively
+type-checked taking into account the request's `accept` header.
+
+```typescript
+const res = await sdk.GetAccount();
 switch (res.code) { // Typed response code
   case 200:
-    console.log(`Pet is named ${res.data.name}`); // Narrowed response data type
+    console.log(res.data.capabilities); // Narrowed response data type
     break;
   // ...
 }
 ```
 
-Take a look at the following examples to see how Abaca handles various
-use-cases:
+Take a look at the following examples to see how Abaca safely and concisely
+handles various use-cases:
 
 + [JSON API](/examples/json)
 + [Form and file uploads](/examples/forms-and-files)
@@ -64,16 +93,9 @@ use-cases:
 + [`abaca-runtime`](/packages/abaca-runtime), shared utilities
 
 
-## Alternatives
-
-+ https://github.com/ajaishankar/openapi-typescript-fetch
-+ https://github.com/ferdikoomen/openapi-typescript-codegen
-+ https://github.com/oazapfts/oazapfts
-+ https://github.com/openapitools/openapi-generator
-+ https://tools.openapis.org/categories/sdk.html (includes other languages)
-
-
 ## Developing
+
+Abaca uses [pnpm](https://pnpm.io/):
 
 ```sh
 pnpm i
@@ -81,6 +103,23 @@ pnpm dlx husky install # Set up git hooks, only needed once
 ```
 
 
-[OpenAPI]: https://www.openapis.org/
-[Koa]: https://koajs.com/
-[string literals]: https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types
+## Contributing
+
+Contributions are most welcome. If you have an idea that would make Abaca
+better, please create an issue or submit a pull request!
+
+
+## Alternatives
+
+Shortlist of related libraries that we used before Abaca:
+
++ https://github.com/ajaishankar/openapi-typescript-fetch
++ https://github.com/ferdikoomen/openapi-typescript-codegen
++ https://github.com/oazapfts/oazapfts
+
+More tools are also listed here: https://tools.openapis.org/categories/sdk.html
+
+
+[Koa]: https://koajs.com
+[OpenAPI]: https://www.openapis.org
+[Opvious]: https://www.opvious.io

@@ -3,62 +3,66 @@ info:
   version: 1.0.0
   title: Messages API
 paths:
+  /process:
+    post:
+      summary: >
+        Operation which processes the request's messages, streaming responses
+        on demand.
+      operationId: processMessages
+      requestBody:
+        description: A list of messages
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageArray"
+      responses:
+        '200':
+          description: >
+            A collection of messages, both unary and streaming content types
+            are supported.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageArray"
+            application/json-seq:
+              schema:
+                $ref: "#/components/schemas/Message"
   /ingest:
     post:
       summary: >
         Client-side streaming operation which accepts a stream of messages to
-        ingest and does not return any data to the client.
+        ingest and returns the total ingested content length.
       operationId: ingestMessages
       requestBody:
-        $ref: "#/components/requestBodies/Messages"
-      responses:
-        '204':
-          description: Messages successfully ingested
-  /repeat:
-    post:
-      summary: >
-        Server-side streaming operation which repeats the request's message
-        back to the client multiple times.
-      operationId: repeatMessage
-      parameters:
-        - name: count
-          in: query
-          description: How many items to repeat the message
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          text/plain:
-            schema:
-              type: string
+        $ref: "#/components/requestBodies/MessageStream"
       responses:
         '200':
-          $ref: "#/components/responses/Messages"
+          description: Messages successfully ingested
+          content:
+            application/json:
+              schema:
+                type: number
   /echo:
     post:
       summary: >
-        Bidirectional streaming operation which echos request messages back to
-        the client.
+        Bidirectional streaming operation which echoes messages back to the
+        client in real time.
       operationId: echoMessages
       requestBody:
-        $ref: "#/components/requestBodies/Messages"
+        $ref: "#/components/requestBodies/MessageStream"
       responses:
         '200':
-          $ref: "#/components/responses/Messages"
+          description: A stream of messages
+          content:
+            application/json-seq:
+              schema:
+                $ref: "#/components/schemas/Message"
 components:
   requestBodies:
-    Messages:
+    MessageStream:
       description: A stream of messages
       required: true
-      content:
-        application/json-seq:
-          schema:
-            $ref: "#/components/schemas/Message"
-  responses:
-    Messages:
-      description: A stream of messages
       content:
         application/json-seq:
           schema:
@@ -70,3 +74,7 @@ components:
       properties:
         contents:
           type: string
+    MessageArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/Message"

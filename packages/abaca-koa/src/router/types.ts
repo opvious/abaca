@@ -154,7 +154,7 @@ type DataForCode<C, D, X, M> = Values<{
   [K in keyof D]: {
     readonly data:
       | D[K]
-      | (D[K] extends string ? Buffer | stream.Readable : never);
+      | (D[K] extends Blob | string ? Buffer | stream.Readable : never);
   } & WithType<K, M> &
     WithStatus<StatusesMatching<C, X>>;
 }>;

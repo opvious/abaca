@@ -176,11 +176,6 @@ export interface ResolveOpenapiDocumentOptions<V> {
   readonly skipSchemaValidation?: boolean;
   /** Skip any defined webhook operations */
   readonly ignoreWebhooks?: boolean;
-  /**
-   * Default `additionalProperties` value added to all object schemas when not
-   * already present.
-   */
-  readonly additionalPropertiesDefault?: boolean; // TODO: Implement
   /** Telemetry instance */
   readonly telemetry?: Telemetry;
 }

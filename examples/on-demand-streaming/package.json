@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-on-demand-streaming",
   "private": true,
-  "version": "0.8.3",
+  "version": "0.9.0",
   "repository": "github:opvious/abaca",
   "description": "Streaming example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -16,7 +16,7 @@
     "build": "tsc -p src",
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
-    "gen": "abaca g resources/openapi.yaml -o src/sdk.gen.ts",
+    "gen": "abaca g resources/openapi.yaml -s -o src/sdk.gen.ts",
     "prepare": "pnpm run gen && pnpm run build",
     "test": "vitest",
     "watch": "tsc -b -w src"

@@ -16,13 +16,6 @@ export async function createRouter(): Promise<Router> {
   return createOperationsRouter<Operations>({
     document,
     handlers: {
-      clearPets: () => {
-        pets.clear();
-        // Returning a number from a handler produces a response with that
-        // number as status and no content. Importantly, the returned number is
-        // type-checked, so returning 200 would fail here for example!
-        return 204;
-      },
       createPet: (ctx) => {
         // Request bodies are automatically validated and typed. Handlers are
         // guaranteed to be called with input data that matches the
@@ -43,7 +36,14 @@ export async function createRouter(): Promise<Router> {
       },
       showPetById: (ctx) => {
         const pet = pets.get(ctx.params.petId);
+        // Returning just a number from a handler produces a response with that
+        // number as status and no content. Importantly, the returned number is
+        // type-checked, so returning 200 would fail here for example!
         return pet ? {data: pet} : 404;
+      },
+      clearPets: () => {
+        pets.clear();
+        return 204;
       },
     },
     // The `handleInvalidRequests` option transforms invalid input errors (for

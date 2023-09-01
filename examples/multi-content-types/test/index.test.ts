@@ -42,34 +42,38 @@ test('uploads table from CSV', async () => {
   });
 });
 
-test('fetches table as JSON', async () => {
+test('fetches missing table as JSON', async () => {
   const res = await sdk.getTable({
     params: {id: 'id3'},
     headers: {accept: 'application/json'},
   });
-  switch (res.code) {
-    case 200:
-      expect<Schema<'Table'>>(res.data).toEqual([]);
-      break;
-    case 404:
-      expect<undefined>(res.data).toBeUndefined();
-      break;
-  }
+  assert(res.code === 404);
+  expect(res.data).toBeUndefined();
 });
 
-test('fetches tables as CSV', async () => {
-  const res = await sdk.getTable({
-    params: {id: 'id4'},
-    headers: {accept: 'text/csv'},
+describe('fetches existing table', () => {
+  const table = {rows: [['r1', 'v1']]};
+
+  beforeEach(async () => {
+    await sdk.setTable({params: {id: 'id4'}, body: table});
   });
-  switch (res.code) {
-    case 200:
-      expect<string>(res.data).toEqual('');
-      break;
-    case 404:
-      expect<undefined>(res.data).toBeUndefined();
-      break;
-  }
+
+  test('as JSON', async () => {
+    const res = await sdk.getTable({params: {id: 'id4'}});
+    assert(res.code === 200);
+    assertType<Schema<'Table'>>(res.data);
+    expect(res.data).toEqual(table);
+  });
+
+  test('fetches tables as CSV', async () => {
+    const res = await sdk.getTable({
+      params: {id: 'id4'},
+      headers: {accept: 'text/csv'},
+    });
+    assert(res.code === 200);
+    assertType<string>(res.data);
+    expect(res.data).toEqual('r1,v1');
+  });
 });
 
 test('fetches table using glob', async () => {

@@ -9,9 +9,11 @@ export {
 export * from './document/index.js';
 export {
   allOperationMethods,
-  extractOperationDefinitions,
-  OpenapiOperation,
+  documentPathOperations,
+  extractPathOperationDefinitions,
+  OpenapiOperations,
   OperationHookEnv,
   OperationHookTarget,
+  OperationMethod,
 } from './operations.js';
 export * from './resolvable/index.js';

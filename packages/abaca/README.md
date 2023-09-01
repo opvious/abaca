@@ -1,18 +1,22 @@
-# Abaca
+# Abaca [![NPM version](https://img.shields.io/npm/v/abaca.svg)](https://www.npmjs.com/package/abaca) [![codecov](https://codecov.io/gh/opvious/abaca/branch/main/graph/badge.svg?token=XuV2bcZPjJ)](https://codecov.io/gh/opvious/abaca)
+
+An [OpenAPI][] SDK generator with very strong type guarantees and minimal
+boilerplate.
+
 
 ## Quickstart
 
-1. Install this package, typically as development dependency:
+1. Install this package as development dependency:
 
   ```sh
   npm i -D abaca
   ```
 
-2. Use its `generate` command to create a TypeScript SDK from an OpenAPI
-   definition file. This is typically done from a NPM script:
+2. Use its `generate` command (or `g` for short) to create a TypeScript SDK from
+   an OpenAPI specification file, typically from an `npm` script:
 
   ```sh
-  abaca generate resources/openapi.yaml -o src/sdk.gen.ts
+  abaca g resources/openapi.yaml -o src/sdk.gen.ts
   ```
 
 3. Import the generated SDK from your code and instantiate it:
@@ -20,7 +24,7 @@
   ```typescript
   import {createSdk} from './sdk.gen.js';
 
-  const sdk = createSdk({/* Optional configuration, see below */});
+  const sdk = createSdk(/* Optional configuration */);
   ```
 
 4. That's it! The instantiated SDK exposes a strongly typed method for each
@@ -36,25 +40,17 @@
   }
   ```
 
-
-## SDK creation options
-
-Each `createSdk` factory supports the following options:
-
-+ `headers`, headers sent with all requests
-+ `fetch`, custom fetch implementation
-+ `options`, options set on all requests (typed consistently with the `fetch`
-  option)
-+ `defaultContentType`, default content-type used as `'content-type'` and
-  `'accept'` headers when omitted
-+ `encoders`, request body encoders
-+ `decoders`, response decoders
-+ `coercer`, unexpected response content-type handler
+Take a look at the [repository](https://www.gihub.com/opvious/abaca)'s README
+for more information, examples, and extensions (e.g. Koa integrations).
 
 
-## Client typings overview
+## Type safety
 
-`abaca` checks request types and narrows response types extensively:
+Abaca checks request types and narrows response types extensively. This section
+describes the major components and highlights common patterns.
+
+
+### Overview
 
 ```typescript
 const res = await sdk.doSomething({
@@ -62,7 +58,7 @@ const res = await sdk.doSomething({
     'content-type': 'application/json', // 1
     accept: 'application/json', // 2
   },
-  parameters: {/* ... */}, // 3
+  params: {/* ... */}, // 3
   body: {/* ... */}, // 4
   options: {/* ... */}, // 5
 });
@@ -72,7 +68,7 @@ if (res.code === 200) { // 6
 ```
 
 1. The `content-type` header (or, if omitted, the SDK's default) must match one
-   of the operation's request body mime types. [The type of the request's body
+   of the operation's request body's mime types. [The type of the request's body
    automatically reflects this value.](#request-body-type-inference)
 2. The `accept` header (or, if omitted, the SDK's default) must match one of the
    operation's response mime types. [The type of the response automatically
@@ -90,93 +86,53 @@ if (res.code === 200) { // 6
    response code.
 
 
-## Examples
-
-Assume a simple API for uploading and downloading tabular data defined as
-follows:
-
-```yaml
-# ...
-  /tables/{id}:
-    get:
-      operationId: downloadTable
-      parameters:
-        - $ref: '#/components/parameters/TableId'
-      responses:
-        '200':
-          description: Table found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Table'
-            text/csv:
-              schema:
-                type: string
-        '404':
-          description: Table not found
-    put:
-      operationId: uploadTable
-      parameters:
-        - $ref: '#/components/parameters/TableId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Table'
-          text/csv:
-            schema:
-              type: string
-      responses:
-        '201':
-          description: Table created
-        '204':
-          description: Table updated
-```
-
 ### Request body type inference
 
-`abaca` automatically type checks each request's body against its
-`'content-type'` header. In the common case where the header is omitted, the
-SDK's default is used (`application/json`, unless overridden at creation time):
+Abaca automatically type checks each request's body against its `'content-type'`
+header. In the common case where the header is omitted, the SDK's default is
+used (`application/json`, unless overridden). For example, using the
+`uploadTable` operation defined [here][tables], its body should by default
+contain a `Table`:
 
 ```typescript
 await sdk.uploadTable({
-  parameters: {id: 'my-id'},
+  headers: {'content-type': 'application/json'}, // Can be omitted
+  params: {id: 'my-id'},
   body: {/* ... */}, // Expected type: `Table`
 });
 ```
 
-Specifying a `'content-type'` will automatically change the body's expected
-type:
+Switching to CSV will automatically change the body's expected type:
 
 ```typescript
 await sdk.uploadTable({
-  parameters: {id: 'my-id'},
-  headers: {'content-type': 'text/csv'},
+  headers: {'content-type': 'text/csv'}, // Different content-type
+  params: {id: 'my-id'},
   body: '...', // Expected type: `string`
 });
 ```
 
 Additionally the `'content-type'` header is statically checked to match one of
-the defined body types. It also can be auto-completed if your editor supports
-auto-completion.
+the defined body types. It also can be auto-completed in compatible editors:
 
 ```typescript
 await sdk.uploadTable({
-  parameters: {id: 'my-id'},
-  headers: {'content-type': 'application/xml'}, // Type error
+  headers: {'content-type': 'application/xml'}, // Compile time error
+  params: {id: 'my-id'},
 });
 ```
 
+
 ### Response type inference
 
-`abaca` automatically narrows the types of responses according to the request's
-`'accept'` header and response code. When the header is omitted, it uses the
-SDK's default (similar to request typing above):
+Abaca automatically narrows the types of responses according to the response's
+code and request's `'accept'` header. When the header is omitted, it uses the
+SDK's default (similar to request typing above, defaulting to
+`application/json;q=1, text/*;q=0.5`). For example, using the `downloadTable`
+operation defined [here][tables]:
 
 ```typescript
-const res = await sdk.downloadTable({parameters: {id: 'my-id'}});
+const res = await sdk.downloadTable({params: {id: 'my-id'}});
 switch (res.code) {
   case 200:
     res.data; // Narrowed type: `Table`
@@ -187,12 +143,12 @@ switch (res.code) {
 }
 ```
 
-Setting a specific content-type has the expected effect:
+Setting the accept header to CSV updates the response's type accordingly:
 
 ```typescript
 const res = await sdk.downloadTable({
-  parameters: {id: 'my-id'},
   headers: {accept: 'text/csv'},
+  params: {id: 'my-id'},
 });
 switch (res.code) {
   case 200:
@@ -204,11 +160,12 @@ switch (res.code) {
 }
 ```
 
-Wildcards are also supported:
+Wildcards are also supported. In this case the returned type will be the union
+of all possible response values:
 
 ```typescript
 const res = await sdk.downloadTable({
-  parameters: {id: 'my-id'},
+  params: {id: 'my-id'},
   headers: {accept: '*/*'},
 });
 if (res.code === 200) {
@@ -220,7 +177,7 @@ Finally, the `accept` header itself is type-checked (and auto-completable):
 
 ```typescript
 const res = await sdk.downloadTable({
-  parameters: {id: 'my-id'},
+  params: {id: 'my-id'},
   headers: {
     // Valid examples:
     accept: 'application/json',
@@ -235,6 +192,7 @@ const res = await sdk.downloadTable({
   },
 });
 ```
+
 
 ### Custom `fetch` implementation
 
@@ -266,7 +224,7 @@ await fetchSdk.uploadTable({
 const sdk = createSdk();
 
 const res = await sdk.runSomeOperation({
-  parameters: {/* ... */}, // Checked
+  params: {/* ... */}, // Checked
   body: {/* ... */}, // Checked
   headers: {
     accept: 'application/json', // Checked (and optional)
@@ -280,3 +238,7 @@ switch (res.code) {
   // ...
 }
 ```
+
+
+[OpenAPI]: https://www.openapis.org/
+[tables]: /examples/multi-content-types/resources/openapi.yaml

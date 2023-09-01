@@ -199,7 +199,11 @@ type MaybeParam<V> = keyof V extends never
   ? {readonly params?: V}
   : {readonly params: V};
 
-type Output<O, X, F> = O extends OperationType<infer R>
+type Output<
+  O extends OperationType,
+  F extends BaseFetch,
+  X
+> = O extends OperationType<infer R>
   ? CommonOutput<F> & DataOutput<GetHeader<X, 'accept', DA> & MimeType, R>
   : never;
 
@@ -243,17 +247,33 @@ type SdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch = typeof fetch
 > = {
-  readonly [K in keyof O]: SdkFunction<O[K], Input<O[K], F>, F>;
+  readonly [K in keyof O]: SdkFunction<O[K], F, Input<O[K], F>>;
 };
 
 // We use this convoluted approach instead of a union of overloaded function
 // interfaces (or types) to allow reference lookups to see-through this
 // definition and link directly to the underlying operation type.
-type SdkFunction<O, I, F> = {} extends I
+type SdkFunction<
+  O extends OperationType,
+  F extends BaseFetch,
+  I extends Input<OperationType, F>
+> = {} extends I
   ? <X extends I = I>(
-      args?: X
-    ) => Output<O, Exact<I, X> extends never ? X : {}, F>
-  : <X extends I>(args: X) => Output<O, X, F>;
+      args?: X & NeverAdditional<I, X>
+    ) => Output<O, F, Exact<I, X> extends never ? X : {}>
+  : <X extends I>(args: X & NeverAdditional<I, X>) => Output<O, F, X>;
+
+type NeverAdditional<I, X> = I extends boolean | number | string
+  ? I
+  : I extends ReadonlyArray<infer E>
+  ? X extends ReadonlyArray<infer F>
+    ? ReadonlyArray<NeverAdditional<E, F>>
+    : never
+  : {
+      readonly [K in keyof X]: K extends keyof I
+        ? NeverAdditional<I[K], NonNullable<X[K]>>
+        : never;
+    };
 
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
