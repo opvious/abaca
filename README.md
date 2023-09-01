@@ -113,9 +113,10 @@ better, please create an issue or submit a pull request!
 
 Shortlist of related libraries that we used before Abaca:
 
-+ https://github.com/ajaishankar/openapi-typescript-fetch
-+ https://github.com/ferdikoomen/openapi-typescript-codegen
-+ https://github.com/oazapfts/oazapfts
++ [`openapi-fetch`](https://github.com/drwpow/openapi-typescript)
++ [`openapi-typescript-fetch`](https://github.com/ajaishankar/openapi-typescript-fetch)
++ [`openapi-typescript-codegen`](https://github.com/ferdikoomen/openapi-typescript-codegen)
++ [`oazapfts`](https://github.com/oazapfts/oazapfts)
 
 More tools are also listed here: https://tools.openapis.org/categories/sdk.html
 
