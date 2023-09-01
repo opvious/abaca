@@ -4,15 +4,15 @@
 
 # Abaca [![CI](https://github.com/opvious/abaca/actions/workflows/ci.yml/badge.svg)](https://github.com/opvious/abaca/actions/workflows/ci.yml) [![NPM version](https://img.shields.io/npm/v/abaca.svg)](https://www.npmjs.com/package/abaca) [![codecov](https://codecov.io/gh/opvious/abaca/branch/main/graph/badge.svg?token=XuV2bcZPjJ)](https://codecov.io/gh/opvious/abaca)
 
-An [OpenAPI][] SDK generator with very strong type guarantees and minimal
-boilerplate.
+An [OpenAPI][] SDK generator with __very strong type guarantees__ and __minimal
+boilerplate__.
 
 + Exports __dependency-free, single-file client SDKs__ with a tiny runtime
   footprint
-+ Supports [arbitrary content-types](/examples/multi-content-types), [form and
-  file uploads](/examples/forms-and-files),
-  [streaming](/examples/on-demand-streaming), custom `fetch` implementations,
-  and more - __all without compromising type-safety__
++ Handles [form and file uploads](/examples/forms-and-files), [on-demand
+  streaming](/examples/on-demand-streaming), [content-type
+  switching](/examples/multi-content-types), and more
++ Supports custom `fetch` implementations
 + Provides [Koa][] integrations for server routing and proxying
 
 
