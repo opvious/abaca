@@ -1,4 +1,7 @@
+import {absurd} from '@opvious/stl-errors';
+import {fromAsyncIterable} from '@opvious/stl-utils/collections';
 import {OpenapiDocument} from 'abaca-openapi';
+import events from 'events';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
@@ -49,5 +52,70 @@ describe('snippets', async () => {
     });
     assert(res.code === 200);
     expect(await res.data.text()).toEqual('abc');
+  });
+
+  test('uploads URL encoded form', async () => {
+    const metadata = {name: 'bob'};
+
+    await resetHandlers({
+      '/upload-form#post': (ctx) => {
+        assert(ctx.request.type === 'application/x-www-form-urlencoded');
+        expect(ctx.request.body).toEqual(metadata);
+        return 204;
+      },
+    });
+
+    const res = await sdk['/upload-form#post']({
+      headers: {'content-type': 'application/x-www-form-urlencoded'},
+      body: metadata,
+    });
+    assert(res.code === 204);
+  });
+
+  test('uploads multipart form', async () => {
+    const metadata = {name: 'ann'};
+    const sig = Buffer.from([1, 2, 3]);
+
+    await resetHandlers({
+      '/upload-form#post': async (ctx) => {
+        assert(ctx.request.type === 'multipart/form-data');
+
+        const additional: string[] = [];
+        ctx.request.body
+          .on('property', async (prop) => {
+            switch (prop.name) {
+              case 'metadata':
+                expect(prop.field).toEqual(metadata);
+                break;
+              case 'signature': {
+                const buf = Buffer.concat(await fromAsyncIterable(prop.stream));
+                expect(buf).toEqual(sig);
+                break;
+              }
+              default:
+                throw absurd(prop);
+            }
+          })
+          .on('additionalProperty', (prop) => {
+            additional.push(prop.name);
+          });
+
+        await events.once(ctx.request.body, 'done');
+        expect(additional).toEqual(['other']);
+        return 204 as const;
+      },
+    });
+
+    const res = await sdk['/upload-form#post']({
+      headers: {'content-type': 'multipart/form-data'},
+      body: {
+        metadata,
+        signature: new Blob([sig]),
+        other: 1,
+      },
+    });
+    assert(res.code === 204);
+
+    expect.assertions(3);
   });
 });

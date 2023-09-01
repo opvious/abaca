@@ -20,3 +20,37 @@ paths:
               schema:
                 type: string
                 format: binary
+  /upload-form:
+    post:
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Metadata'
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - metadata
+              properties:
+                metadata:
+                  $ref: '#/components/schemas/Metadata'
+                signature:
+                  type: string
+                  format: binary
+      responses:
+        '204':
+          description: Successfully uploaded
+components:
+  schemas:
+    Metadata:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
