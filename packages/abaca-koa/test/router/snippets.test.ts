@@ -1,4 +1,4 @@
-import {absurd} from '@opvious/stl-errors';
+import {absurd, fail} from '@opvious/stl-errors';
 import {fromAsyncIterable} from '@opvious/stl-utils/collections';
 import {OpenapiDocument} from 'abaca-openapi';
 import events from 'events';
@@ -117,5 +117,22 @@ describe('snippets', async () => {
     assert(res.code === 204);
 
     expect.assertions(3);
+  });
+
+  test('handles invalid multipart form property', async () => {
+    await resetHandlers({
+      '/upload-form#post': async (ctx) => {
+        assert(ctx.request.type === 'multipart/form-data');
+        await events.once(ctx.request.body, 'done');
+        fail();
+      },
+    });
+
+    const res = await sdk['/upload-form#post']({
+      headers: {'content-type': 'multipart/form-data'},
+      // @ts-expect-error missing name
+      body: {metadata: {tag: 'bb'}},
+    });
+    assert(res.raw.status === 400);
   });
 });
