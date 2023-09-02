@@ -67,9 +67,9 @@ test('upload multipart form with incompatible field', async () => {
   // incompatible type, etc will all fail at compile time!
   const res = await sdk.uploadForm({
     headers: {'content-type': 'multipart/form-data'},
-    // @ts-expect-error incompatible metadata name type
+    // @ts-expect-error incompatible metadata type
     body: {
-      metadata: {name: 12}, // Should be string
+      metadata: {}, // Missing name
       logoImage: new Blob(['abcd']),
     },
   });
