@@ -49,7 +49,7 @@ than JSON sequences by specifying them via Abaca CLI's
 `--streaming-content-types` option.
 
 
-## Contents
+## Sources
 
 + OpenAPI specification: [`resources/openapi.yaml`](resources/openapi.yaml)
 + Client implementation: [`src/client.ts`](src/client.ts)

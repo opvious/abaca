@@ -123,7 +123,8 @@ describe('tables', async () => {
   test('set invalid', async () => {
     const res = await sdk.setTable({
       params: {id: 'unused'},
-      body: {rows: 123} as any,
+      // @ts-expect-error rows should be array
+      body: {rows: {}},
     });
     expect(res).toMatchObject({
       code: 'default',

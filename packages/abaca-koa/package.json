@@ -1,6 +1,6 @@
 {
   "name": "abaca-koa",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "repository": "github:opvious/abaca",
   "description": "Abaca Koa integrations",
   "keywords": [
@@ -27,7 +27,7 @@
     "fix": "prettier --write",
     "gen-test-pets": "abaca g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-snippets": "abaca g test/resources/snippets.openapi.yaml -o test/snippets-sdk.gen.ts --generate-ids",
-    "gen-test-tables": "abaca g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-test-tables": "abaca g test/resources/tables.openapi.yaml -s -o test/tables-sdk.gen.ts",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables",
     "prepare": "pnpm run build && inlinable e",
     "test": "pnpm run gen-test && vitest",
@@ -57,10 +57,12 @@
     "@types/koa": "^2.13.1",
     "@types/koa-compose": "^3.2.5",
     "@types/koa__router": "^8.0.11",
+    "@types/qs": "^6.9.8",
     "abaca": "workspace:*",
     "inlinable": "^0.2.6",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
-    "node-fetch": "^3.3.1"
+    "node-fetch": "^3.3.1",
+    "qs": "^6.11.2"
   }
 }

@@ -92,7 +92,7 @@ export type Encoder<B = any, F extends BaseFetch = typeof fetch> = (
   ctx: EncoderContext<F>
 ) => AsyncOrSync<BodyInitFor<F>>;
 
-export type BodyInitFor<F> = Lookup<RequestInitFor<F>, 'body'>;
+export type BodyInitFor<F> = Lookup<RequestInitFor<F>, 'body', unknown>;
 
 export interface EncoderContext<F> {
   readonly operationId: string;

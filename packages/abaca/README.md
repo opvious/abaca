@@ -241,4 +241,4 @@ switch (res.code) {
 
 
 [OpenAPI]: https://www.openapis.org/
-[tables]: /examples/multi-content-types/resources/openapi.yaml
+[tables]: /examples/content-types/resources/openapi.yaml

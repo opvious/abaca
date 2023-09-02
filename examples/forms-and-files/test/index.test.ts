@@ -44,8 +44,8 @@ test('upload urlencoded form', async () => {
 });
 
 test('upload multipart form', async () => {
-  // Multipart forms are also similar but also support binary properties
-  // natively (while JSON and URL-encoded forms do not).
+  // Multipart forms are also similar and support binary properties (while JSON
+  // and URL-encoded forms do not).
   const res = await sdk.uploadForm({
     headers: {'content-type': 'multipart/form-data'},
     // Binary properties are represented as built-in `Blob` instances, same as
@@ -67,9 +67,9 @@ test('upload multipart form with incompatible field', async () => {
   // incompatible type, etc will all fail at compile time!
   const res = await sdk.uploadForm({
     headers: {'content-type': 'multipart/form-data'},
+    // @ts-expect-error incompatible metadata type
     body: {
-      // @ts-expect-error incompatible metadata name type
-      metadata: {name: 12}, // Should be string
+      metadata: {}, // Missing name
       logoImage: new Blob(['abcd']),
     },
   });

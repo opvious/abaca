@@ -11,8 +11,8 @@ boilerplate__.
   footprint
 + Handles [form and file uploads](/examples/forms-and-files), [on-demand
   streaming](/examples/on-demand-streaming), [content-type
-  switching](/examples/multi-content-types), and more
-+ Supports custom `fetch` implementations
+  switching](/examples/content-types), and more
++ Supports both native and custom `fetch` implementations
 + Provides [Koa][] integrations for server routing and proxying
 
 
@@ -43,7 +43,8 @@ example from [Stripe's specification](https://github.com/stripe/openapi):
 ```sh
 npx abaca generate \
   https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml \
-  --output src/sdk.gen.ts
+  --output src/sdk.gen.ts \
+  --include *Account*=y # Optional operation filter
 ```
 
 Then simply import the generated file in your code and instantiate the SDK. The
@@ -79,7 +80,7 @@ handles various use-cases:
 + [JSON API](/examples/json)
 + [Form and file uploads](/examples/forms-and-files)
 + [On-demand streaming](/examples/on-demand-streaming)
-+ [Multi-content-type endpoints](/examples/multi-content-types)
++ [Content-type switching](/examples/content-types)
 
 
 ## Packages
