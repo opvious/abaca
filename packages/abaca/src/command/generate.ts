@@ -54,12 +54,6 @@ export function generateCommand(): Command {
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option(
-      '-s, --include-schemas [globs]',
-      'filter which component schemas to generate a type for. the filter is ' +
-        'applied to each schema\'s name and can include globs',
-      'n'
-    )
-    .option(
       '-t, --streaming-content-types <types>',
       'comma-separated list of content-types which contain streamed data. ' +
         'request and responses with these types will be exposed via an ' +
@@ -132,9 +126,6 @@ export function generateCommand(): Command {
           operations,
           additionalProperties: !opts.strictAdditionalProperties,
           operationGlob,
-          schemaGlob: GlobMapper.predicating(
-            ifPresent(opts.includeSchemas, (v) => (v === true ? 'y' : v))
-          ),
         });
         const eta = new Eta({
           autoEscape: false,
@@ -185,13 +176,11 @@ async function generateTypes(args: {
   readonly operations: {readonly [id: string]: OperationDefinition};
   readonly additionalProperties: boolean;
   readonly operationGlob: GlobMapper<boolean>;
-  readonly schemaGlob: GlobMapper<boolean>;
 }): Promise<{
   readonly source: string;
   readonly count: number;
 }> {
-  const {streamingTypes, additionalProperties, operationGlob, schemaGlob} =
-    args;
+  const {streamingTypes, additionalProperties, operationGlob} = args;
 
   // We clone the document to mutate it since `doc` contains immutable nodes.
   // Note also that `openapi-typescript` may mutate it (for example to filter
@@ -220,22 +209,6 @@ async function generateTypes(args: {
     const {operationId: id} = val;
     if (id != null && !operationGlob.map(id)) {
       delete (val as any).operationId;
-    }
-  }
-
-  // Delete non-schema components and schemas which aren't included. This is
-  // safe even if the original specification references them in operations since
-  // the document passed as input to this method has already been fully
-  // resolved.
-  for (const [key, comp] of Object.entries<any>(cloned.components ?? {})) {
-    if (key === 'schemas') {
-      for (const key of Object.keys(comp)) {
-        if (!schemaGlob.map(key)) {
-          delete comp[key];
-        }
-      }
-    } else {
-      delete cloned.components[key];
     }
   }
 

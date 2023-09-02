@@ -1,3 +1,4 @@
+import {assert} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {GlobMapper} from '@opvious/stl-utils/strings';
@@ -67,9 +68,7 @@ export function extractPathOperationDefinitions(args: {
     const params: Record<string, ParameterDefinition> = {};
     for (const paramOrRef of val.parameters ?? []) {
       const param =
-        '$ref' in paramOrRef
-          ? dereferencePointer(paramOrRef.$ref, doc)
-          : paramOrRef;
+        '$ref' in paramOrRef ? dereference(paramOrRef, doc) : paramOrRef;
       const required = !!param.required;
       const location: any = param.in;
       params[param.name] = {location, required};
@@ -83,9 +82,7 @@ export function extractPathOperationDefinitions(args: {
 
     const body = ifPresent(val.requestBody, (bodyOrRef) => {
       const body =
-        '$ref' in bodyOrRef
-          ? dereferencePointer(bodyOrRef.$ref, doc)
-          : bodyOrRef;
+        '$ref' in bodyOrRef ? dereference(bodyOrRef, doc) : bodyOrRef;
       return {
         required: !!body.required,
         types: contentTypes(body.content, id, {kind: 'requestBody'}),
@@ -94,8 +91,7 @@ export function extractPathOperationDefinitions(args: {
 
     const responses: Record<string, ReadonlyArray<MimeType>> = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
-      const res =
-        '$ref' in resOrRef ? dereferencePointer(resOrRef.$ref, doc) : resOrRef;
+      const res = '$ref' in resOrRef ? dereference(resOrRef, doc) : resOrRef;
       responses[code] = contentTypes(res.content ?? {}, id, {
         kind: 'response',
         code,
@@ -120,6 +116,13 @@ export function extractPathOperationDefinitions(args: {
     }
     return ret;
   }
+}
+
+/** Inline dereference */
+function dereference(obj: {readonly $ref: string}, doc: unknown): any {
+  const ref = obj.$ref;
+  assert(ref.startsWith('#'), 'Unsupported reference: %s', ref);
+  return dereferencePointer(ref.slice(1), doc);
 }
 
 export interface OperationHookEnv {
