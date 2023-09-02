@@ -1,0 +1,39 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: References service
+paths:
+  /tables/{id}:
+    get:
+      operationId: getTable
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A matching table was found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '404':
+          description: Table not found
+components:
+  schemas:
+    Table:
+      type: object
+      required: [rows]
+      properties:
+        header:
+          $ref: '#/components/schemas/Row'
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/Row'
+    Row:
+      type: array
+      items:
+        type: string

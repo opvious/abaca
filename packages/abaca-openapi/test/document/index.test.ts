@@ -1,6 +1,7 @@
 import {fail} from '@opvious/stl-errors';
 import {RecordingTelemetry} from '@opvious/stl-telemetry';
 import {ResourceLoader} from '@opvious/stl-utils/files';
+import util from 'util';
 
 import codes from '../../src/document/index.errors.js';
 import * as sut from '../../src/document/index.js';
@@ -51,5 +52,15 @@ describe('load OpenAPI document', () => {
       telemetry,
     });
     expect(Object.keys(doc.components!.schemas!)).toEqual(['Row']);
+  });
+
+  test('consolidates aliases', async () => {
+    const documentLoader = loader.scoped('document');
+    const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
+      path: documentLoader.localUrl('references.openapi.yaml'),
+      loader: documentLoader,
+      telemetry,
+    });
+    console.log(util.inspect(doc, {depth: Infinity}));
   });
 });
