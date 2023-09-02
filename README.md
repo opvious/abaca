@@ -44,7 +44,7 @@ example from [Stripe's specification](https://github.com/stripe/openapi):
 npx abaca generate \
   https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml \
   --output src/sdk.gen.ts \
-  --include *Account*=y # Optional operation filter
+  --include '*Account*=y' # Optional operation filter
 ```
 
 Then simply import the generated file in your code and instantiate the SDK. The
@@ -100,7 +100,8 @@ Abaca uses [pnpm](https://pnpm.io/):
 
 ```sh
 pnpm i
-pnpm dlx husky install # Set up git hooks, only needed once
+pnpm dlx husky install # Optional, to set up git hooks (only needed once)
+pnpm t
 ```
 
 

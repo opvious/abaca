@@ -47,7 +47,6 @@ test('creates and fetches a pet', async () => {
     case 200:
       assertType<Schema<'Pet'>>(showRes.data); // `data` is typed as `Pet` here
       expect(showRes.data.name).toEqual('Fido');
-      console.log('HI');
       break;
     case 404:
       // We did not declare a body in our specification for 404 responses so it
