@@ -4,8 +4,8 @@
 
 # Abaca [![CI](https://github.com/opvious/abaca/actions/workflows/ci.yml/badge.svg)](https://github.com/opvious/abaca/actions/workflows/ci.yml) [![NPM version](https://img.shields.io/npm/v/abaca.svg)](https://www.npmjs.com/package/abaca) [![codecov](https://codecov.io/gh/opvious/abaca/branch/main/graph/badge.svg?token=XuV2bcZPjJ)](https://codecov.io/gh/opvious/abaca)
 
-An [OpenAPI][] SDK generator with __very strong type guarantees__ and __minimal
-boilerplate__.
+An [OpenAPI][] SDK generator for TypeScript with __strong type guarantees__ and
+__minimal boilerplate__.
 
 + Exports __dependency-free, single-file client SDKs__ with a tiny runtime
   footprint
