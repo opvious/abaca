@@ -12,7 +12,7 @@ import YAML from 'yaml';
 
 import {createPointer, JsonPointer, packageInfo} from '../common.js';
 import {ReferenceResolvers, resolvingReferences} from '../resolvable/index.js';
-import { OpenapiDocuments, OpenapiVersion} from './common.js';
+import {OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
 
 const DOCUMENT_FILE = 'openapi.yaml';
@@ -241,6 +241,10 @@ class Consolidator {
           return undefined;
         }
         const component = components.get(anchor);
+        if (!component) {
+          // This anchor does not have a corresponding component
+          return undefined;
+        }
         assert(component, 'Missing aliased component for %s', anchor);
         if (componentPointer(ancestors) == null) {
           const ref = new YAML.YAMLMap();
@@ -292,19 +296,22 @@ function componentPointer(
   ancestors: ReadonlyArray<unknown>
 ): JsonPointer | undefined {
   if (ancestors.length !== 7 || pairKey(ancestors[2]) !== COMPONENTS_KEY) {
-    // Not top-level component.
     return undefined;
   }
   const subsection = pairKey(ancestors[4]);
-  assert(subsection != null, 'Missing subsection in %j', ancestors);
+  assert(subsection != null, 'Missing subsection in %j', ancestors[4]);
   const name = pairKey(ancestors[6]);
-  assert(name != null, 'Missing name in %j', ancestors);
+  assert(name != null, 'Missing name in %j', ancestors[6]);
   return createPointer([COMPONENTS_KEY, subsection, name]);
 }
 
 function pairKey(node: unknown): string | undefined {
-  return node instanceof YAML.Pair && node.key instanceof YAML.Scalar
-    ? node.key.value
+  return node instanceof YAML.Pair
+    ? node.key instanceof YAML.Scalar
+      ? node.key.value
+      : typeof node.key == 'string'
+      ? node.key
+      : undefined
     : undefined;
 }
 

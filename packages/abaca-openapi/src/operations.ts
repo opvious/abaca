@@ -1,4 +1,3 @@
-import {assert} from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {GlobMapper} from '@opvious/stl-utils/strings';
@@ -8,9 +7,10 @@ import {
   ParameterDefinition,
   ResponseCode,
 } from 'abaca-runtime';
-import { OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
+import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
 
+import {dereferencePointer} from './common.js';
 import {
   OpenapiDocument,
   OpenapiDocuments,
@@ -52,9 +52,9 @@ export function extractPathOperationDefinitions(args: {
   readonly idGlob?: GlobMapper<boolean>;
   readonly generateIds?: boolean;
 }): Record<string, OperationDefinition> {
-  const {generateIds, onSchema, idGlob} = args;
+  const {document: doc, generateIds, onSchema, idGlob} = args;
   const defs: Record<string, OperationDefinition> = {};
-  for (const op of documentPathOperations(args.document)) {
+  for (const op of documentPathOperations(doc)) {
     const {path, method, value: val} = op;
 
     const id =
@@ -65,8 +65,11 @@ export function extractPathOperationDefinitions(args: {
     }
 
     const params: Record<string, ParameterDefinition> = {};
-    for (const param of val.parameters ?? []) {
-      assert(!('$ref' in param), 'Unexpected reference', param);
+    for (const paramOrRef of val.parameters ?? []) {
+      const param =
+        '$ref' in paramOrRef
+          ? dereferencePointer(paramOrRef.$ref, doc)
+          : paramOrRef;
       const required = !!param.required;
       const location: any = param.in;
       params[param.name] = {location, required};
@@ -78,17 +81,21 @@ export function extractPathOperationDefinitions(args: {
       }
     }
 
-    const body = ifPresent(val.requestBody, (b) => {
-      assert(!('$ref' in b), 'Unexpected reference', b);
+    const body = ifPresent(val.requestBody, (bodyOrRef) => {
+      const body =
+        '$ref' in bodyOrRef
+          ? dereferencePointer(bodyOrRef.$ref, doc)
+          : bodyOrRef;
       return {
-        required: !!b.required,
-        types: contentTypes(b.content, id, {kind: 'requestBody'}),
+        required: !!body.required,
+        types: contentTypes(body.content, id, {kind: 'requestBody'}),
       };
     });
 
     const responses: Record<string, ReadonlyArray<MimeType>> = {};
-    for (const [code, res] of Object.entries<any>(val.responses ?? {})) {
-      assert(!('$ref' in res), 'Unexpected reference', res);
+    for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
+      const res =
+        '$ref' in resOrRef ? dereferencePointer(resOrRef.$ref, doc) : resOrRef;
       responses[code] = contentTypes(res.content ?? {}, id, {
         kind: 'response',
         code,

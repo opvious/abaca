@@ -1,7 +1,6 @@
 import {fail} from '@opvious/stl-errors';
 import {RecordingTelemetry} from '@opvious/stl-telemetry';
 import {ResourceLoader} from '@opvious/stl-utils/files';
-import util from 'util';
 
 import codes from '../../src/document/index.errors.js';
 import * as sut from '../../src/document/index.js';
@@ -51,7 +50,7 @@ describe('load OpenAPI document', () => {
       versions: ['3.0'],
       telemetry,
     });
-    expect(Object.keys(doc.components!.schemas!)).toEqual(['Row']);
+    expect(Object.keys(doc.components!.schemas!)).toEqual(['Table', 'Row']);
   });
 
   test('consolidates aliases', async () => {
@@ -61,6 +60,9 @@ describe('load OpenAPI document', () => {
       loader: documentLoader,
       telemetry,
     });
-    console.log(util.inspect(doc, {depth: Infinity}));
+    const res = (doc as any).paths['/tables/{id}'].get.responses['200'];
+    expect(res.content['application/json'].schema.$ref).toEqual(
+      '#/components/schemas/Table'
+    );
   });
 });

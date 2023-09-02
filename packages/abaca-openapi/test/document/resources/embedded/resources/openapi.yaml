@@ -19,9 +19,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: resource://embedded/schemas/table.yaml?embed=*
+                $ref: '#/components/schemas/Table'
             text/csv:
               schema:
                 type: string
         '404':
           description: Table not found
+components:
+  schemas:
+    Table:
+      $ref: resource://embedded/schemas/table.yaml?embed=*

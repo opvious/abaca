@@ -15,7 +15,7 @@ export function createPointer(parts: ReadonlyArray<string>): JsonPointer {
   return '/' + escaped.join('/');
 }
 
-export function dereferencePointer<V = unknown>(
+export function dereferencePointer<V = any>(
   ptr: JsonPointer,
   root: unknown
 ): V {
