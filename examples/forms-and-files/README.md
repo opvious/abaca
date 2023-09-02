@@ -64,7 +64,7 @@ const router = createOperationsRouter<Operations>({
 [_source_](src/server.ts)
 
 
-## Contents
+## Sources
 
 + OpenAPI specification: [`resources/openapi.yaml`](resources/openapi.yaml)
 + Server implementation: [`src/server.ts`](src/server.ts)

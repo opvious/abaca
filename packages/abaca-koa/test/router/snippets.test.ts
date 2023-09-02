@@ -1,10 +1,12 @@
 import {absurd, fail} from '@opvious/stl-errors';
 import {fromAsyncIterable} from '@opvious/stl-utils/collections';
 import {OpenapiDocument} from 'abaca-openapi';
+import {FORM_MIME_TYPE} from 'abaca-runtime';
 import events from 'events';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
+import qs from 'qs';
 
 import * as sut from '../../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
@@ -25,7 +27,11 @@ describe('snippets', async () => {
     });
     const app = new Koa().use(router.routes());
     server = await startApp(app);
-    sdk = createSdk({address: serverAddress(server), fetch});
+    sdk = createSdk({
+      address: serverAddress(server),
+      fetch,
+      encoders: {[FORM_MIME_TYPE]: (data) => qs.stringify(data)},
+    });
   }
 
   beforeAll(async () => {
@@ -55,7 +61,7 @@ describe('snippets', async () => {
   });
 
   test('uploads URL encoded form', async () => {
-    const metadata = {name: 'bob'};
+    const metadata = {name: 'bob', tags: [{key: 'a'}]};
 
     await resetHandlers({
       '/upload-form#post': (ctx) => {
