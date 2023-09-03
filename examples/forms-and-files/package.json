@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-forms-and-files",
   "private": true,
-  "version": "0.9.2",
+  "version": "0.10.0",
   "repository": "github:opvious/abaca",
   "description": "Form submission example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
