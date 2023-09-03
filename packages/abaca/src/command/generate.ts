@@ -1,7 +1,7 @@
 import {assert} from '@opvious/stl-errors';
 import {localPath} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {commaSeparated, GlobMapper} from '@opvious/stl-utils/strings';
+import {GlobMapper} from '@opvious/stl-utils/strings';
 import {
   documentPathOperations,
   extractPathOperationDefinitions,
@@ -10,7 +10,6 @@ import {
 import {
   DEFAULT_ACCEPT,
   JSON_MIME_TYPE,
-  JSON_SEQ_MIME_TYPE,
   OperationDefinition,
 } from 'abaca-runtime';
 import {Command} from 'commander';
@@ -210,18 +209,16 @@ async function generateTypes(args: {
   const streamed = new Map<string, string>();
   const unstreamed = await generate({
     transform(schema, opts) {
-      count++;
-      if ('type' in schema && schema.type === 'object') {
-        schema.additionalProperties ??= additionalProperties;
-      }
-      if (schema.format == null) {
+      if (!('type' in schema)) {
         return undefined;
       }
-      assert(
-        'type' in schema && schema.type == 'string',
-        'Format on non-string type %j',
-        schema
-      );
+      count++;
+      if (schema.type === 'object') {
+        schema.additionalProperties ??= additionalProperties;
+        return undefined;
+      } else if (schema.type !== 'string' || schema.format == null) {
+        return undefined;
+      }
       switch (schema.format) {
         case SchemaFormat.BINARY:
           return 'Blob';

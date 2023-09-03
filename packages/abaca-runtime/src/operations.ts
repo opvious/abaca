@@ -71,4 +71,6 @@ export interface BodyDefinition {
   readonly types: ReadonlyArray<MimeType>;
 }
 
-export type Streamed<V> = V extends ReadonlyArray<infer I> ? AsyncIterable<I> : never;
+export type Streamed<V> = V extends ReadonlyArray<infer I>
+  ? AsyncIterable<I>
+  : never;

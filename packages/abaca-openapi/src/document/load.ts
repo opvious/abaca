@@ -251,9 +251,8 @@ class Consolidator {
           ref.set('$ref', component.reference);
           return ref;
         }
-          component.value.anchor = undefined;
-          return component.value;
-
+        component.value.anchor = undefined;
+        return component.value;
       },
     });
   }
