@@ -133,10 +133,10 @@ type BodyInput<B, F extends BaseFetch> =
 
 type DefaultBodyInput<B, F extends BaseFetch> = DM extends keyof B
   ? {
-    readonly headers?: {'content-type'?: DM};
-    readonly body: B[DM];
-    readonly encoder?: Encoder<B[DM], F>;
-  }
+      readonly headers?: {'content-type'?: DM};
+      readonly body: B[DM];
+      readonly encoder?: Encoder<B[DM], F>;
+    }
   : never;
 
 type CustomBodyInput<B, F extends BaseFetch> = Values<{
@@ -144,13 +144,13 @@ type CustomBodyInput<B, F extends BaseFetch> = Values<{
     readonly headers: {'content-type': K};
     readonly body: B[K];
     readonly encoder?: Encoder<B[K], F>;
-  }
+  };
 }>;
 
 type MaybeAcceptInput<
   R extends ResponsesType,
   F extends BaseFetch
-> = Values<R> extends never
+> = ResponseMimeTypes<R> extends never
   ? {}
   :
       | DefaultAcceptInput<R, F>
@@ -265,6 +265,8 @@ type SdkFunction<
 
 type NeverAdditional<I, X> = I extends boolean | number | string
   ? I
+  : unknown extends I
+  ? unknown
   : I extends ReadonlyArray<infer E>
   ? X extends ReadonlyArray<infer F>
     ? ReadonlyArray<NeverAdditional<E, F>>

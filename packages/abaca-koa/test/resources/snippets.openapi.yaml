@@ -20,6 +20,20 @@ paths:
               schema:
                 type: string
                 format: binary
+  /object-echo:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json-seq:
+            schema:
+              type: string
+              format: stream
+              items:
+                $ref: '#/components/schemas/Message'
+      responses:
+        200:
+          $ref: '#/components/responses/MessageStream'
   /upload-form:
     post:
       requestBody:
@@ -42,7 +56,22 @@ paths:
         '204':
           description: Successfully uploaded
 components:
+  responses:
+    MessageStream:
+      description: A stream of messages
+      content:
+        application/json-seq:
+          schema:
+            type: string
+            format: stream
+            items:
+              $ref: '#/components/schemas/Message'
   schemas:
+    Message:
+      type: object
+      properties:
+        contents:
+          type: string
     Metadata:
       type: object
       required:

@@ -44,9 +44,7 @@ client-side and bi-directional streaming using the same primitives.
 
 Note that these capabilities are exposed via simple HTTP requests (no WebSockets
 required for instance) and without losing any of the type-safety provided by the
-OpenAPI specification. Finally it is also possible to stream content-types other
-than JSON sequences by specifying them via Abaca CLI's
-`--streaming-content-types` option.
+OpenAPI specification.
 
 
 ## Sources

@@ -24,8 +24,8 @@ describe('snippets', () => {
   });
 
   test('undeclared content-type', async () => {
-    // @ts-expect-error content-type
     const res = await sdk['/optional-body#post']({
+      // @ts-expect-error content-type
       headers: {'content-type': 'application/json'},
       body: {name: 'ann'},
     });

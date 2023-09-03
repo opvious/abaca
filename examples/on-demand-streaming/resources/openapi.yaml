@@ -80,6 +80,9 @@ components:
         $ref: "#/components/schemas/Message"
     MessageStream:
       type: string
+      # The `stream` format is used to represent streams of objects (i.e.
+      # non-binary stream). The type of the stream's elements is specified via
+      # the `items` property.
       format: stream
       items:
         $ref: "#/components/schemas/Message"

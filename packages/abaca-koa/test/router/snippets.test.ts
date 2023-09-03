@@ -1,5 +1,8 @@
 import {absurd, fail} from '@opvious/stl-errors';
-import {fromAsyncIterable} from '@opvious/stl-utils/collections';
+import {
+  fromAsyncIterable,
+  toAsyncIterable,
+} from '@opvious/stl-utils/collections';
 import {OpenapiDocument} from 'abaca-openapi';
 import {FORM_MIME_TYPE} from 'abaca-runtime';
 import events from 'events';
@@ -58,6 +61,25 @@ describe('snippets', async () => {
     });
     assert(res.code === 200);
     expect(await res.data.text()).toEqual('abc');
+  });
+
+  test('echos object data', async () => {
+    await resetHandlers({
+      '/object-echo#post': (ctx) => {
+        return {type: 'application/json-seq', data: ctx.request.body};
+      },
+    });
+
+    const messages = [{contents: 'hi'}, {contents: ''}];
+    const res = await sdk['/object-echo#post']({
+      headers: {
+        accept: 'application/json-seq',
+        'content-type': 'application/json-seq',
+      },
+      body: toAsyncIterable(messages),
+    });
+    assert(res.code === 200);
+    expect(await fromAsyncIterable(res.data)).toEqual(messages);
   });
 
   test('uploads URL encoded form', async () => {

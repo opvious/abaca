@@ -235,7 +235,6 @@ async function generateTypes(args: {
       }
     },
     postTransform(gen, opts) {
-      count++;
       const {path} = opts;
       if (streamed.has(path)) {
         streamed.set(path, gen);
@@ -248,9 +247,21 @@ async function generateTypes(args: {
     return {source: unstreamed, count};
   }
   const source = await generate({
-    transform(_schema, opts) {
+    transform(schema, opts) {
       const gen = streamed.get(opts.path);
-      return gen == null ? undefined : `Streamed<${gen}>`;
+      if (gen) {
+        return `Streamed<${gen}>`;
+      }
+      if (!('type' in schema)) {
+        return undefined;
+      }
+      if (schema.type === 'object') {
+        schema.additionalProperties ??= additionalProperties;
+        return undefined;
+      }
+      return schema.type === 'string' && schema.format === SchemaFormat.BINARY
+        ? 'Blob'
+        : undefined;
     },
   });
   return {source, count};

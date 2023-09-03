@@ -13,13 +13,13 @@
   ],
   "exports": "./lib/index.js",
   "scripts": {
-    "build": "tsc -p src",
+    "build": "tsc -b src test",
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
     "gen": "abaca g resources/openapi.yaml -o src/sdk.gen.ts --default-accept application/json",
     "prepare": "pnpm run gen && pnpm run build",
     "test": "vitest",
-    "watch": "tsc -b -w src"
+    "watch": "tsc -b -w src test"
   },
   "dependencies": {
     "abaca-koa": "workspace:*",
