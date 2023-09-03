@@ -60,6 +60,18 @@ export function extractPathOperationDefinitions(args: {
 }): Record<string, OperationDefinition> {
   const {document: doc, generateIds, producer, idGlob} = args;
 
+  const deref = <V extends object>(
+    obj: V | HasRef,
+    fb: ReadonlyArray<string>
+  ): [Exclude<V, HasRef>, ReadonlyArray<string>] => {
+    if ('$ref' in obj) {
+      const ptr = refPointer(obj);
+      return [dereferencePointer(ptr, doc), splitPointer(ptr)];
+    }
+      return [obj as any, fb];
+
+  };
+
   const schemaPointer = (parts: ReadonlyArray<string>): JsonPointer => {
     const ptr = createPointer([...parts, 'schema']);
     const obj = dereferencePointer(ptr, doc);
@@ -81,15 +93,11 @@ export function extractPathOperationDefinitions(args: {
 
     const params: Record<string, ParameterDefinition> = {};
     for (const [ix, paramOrRef] of (val.parameters ?? []).entries()) {
-      let param, parts;
-      if ('$ref' in paramOrRef) {
-        const ptr = refPointer(paramOrRef);
-        param = dereferencePointer(ptr, doc);
-        parts = splitPointer(ptr);
-      } else {
-        param = paramOrRef;
-        parts = [...prefix, 'parameters', '' + ix];
-      }
+      const [param, parts] = deref(paramOrRef, [
+        ...prefix,
+        'parameters',
+        '' + ix,
+      ]);
       const required = !!param.required;
       const location: any = param.in;
       params[param.name] = {location, required};
@@ -99,15 +107,7 @@ export function extractPathOperationDefinitions(args: {
     }
 
     const body = ifPresent(val.requestBody, (bodyOrRef) => {
-      let body, parts;
-      if ('$ref' in bodyOrRef) {
-        const ptr = refPointer(bodyOrRef);
-        body = dereferencePointer(ptr, doc);
-        parts = splitPointer(ptr);
-      } else {
-        body = bodyOrRef;
-        parts = [...prefix, 'requestBody'];
-      }
+      const [body, parts] = deref(bodyOrRef, [...prefix, 'requestBody']);
       const types = Object.keys(body.content ?? {});
       if (producer) {
         for (const key of types) {
@@ -120,15 +120,7 @@ export function extractPathOperationDefinitions(args: {
 
     const responses: Record<string, ReadonlyArray<MimeType>> = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
-      let res, parts;
-      if ('$ref' in resOrRef) {
-        const ptr = refPointer(resOrRef);
-        res = dereferencePointer(ptr, doc);
-        parts = splitPointer(ptr);
-      } else {
-        res = resOrRef;
-        parts = [...prefix, 'responses', code];
-      }
+      const [res, parts] = deref(resOrRef, [...prefix, 'responses', code]);
       const types = Object.keys(res.content ?? {});
       if (producer) {
         for (const key of types) {
@@ -144,7 +136,11 @@ export function extractPathOperationDefinitions(args: {
   return defs;
 }
 
-function refPointer(obj: {readonly $ref: string}): JsonPointer {
+interface HasRef {
+  readonly $ref: string;
+}
+
+function refPointer(obj: HasRef): JsonPointer {
   const ref = obj.$ref;
   assert(ref.startsWith('#'), 'Unsupported reference: %s', ref);
   return ref.slice(1);
