@@ -133,18 +133,18 @@ type BodyInput<B, F extends BaseFetch> =
 
 type DefaultBodyInput<B, F extends BaseFetch> = DM extends keyof B
   ? {
-      readonly headers?: {'content-type'?: DM};
-      readonly body: B[DM];
-      readonly encoder?: Encoder<B[DM], F>;
-    }
+    readonly headers?: {'content-type'?: DM};
+    readonly body: B[DM];
+    readonly encoder?: Encoder<B[DM], F>;
+  }
   : never;
 
 type CustomBodyInput<B, F extends BaseFetch> = Values<{
-  [K in keyof B]: {
+  [K in keyof B & MimeType]: {
     readonly headers: {'content-type': K};
     readonly body: B[K];
     readonly encoder?: Encoder<B[K], F>;
-  };
+  }
 }>;
 
 type MaybeAcceptInput<
@@ -420,8 +420,6 @@ export type RequestParametersFor<O extends OperationType> = Lookup<
   Lookup<O['parameters'], 'query', {}> &
   Lookup<O['parameters'], 'headers', {}>;
 
-type Iterated<V> = V extends AsyncIterable<infer I> ? I : V;
-
 export type ResponseDataFor<
   O extends OperationType,
   C extends keyof O['responses'],
@@ -429,4 +427,4 @@ export type ResponseDataFor<
     O['responses'],
     C
   >
-> = Iterated<Get<Lookup<O['responses'][C], 'content'>, M>>;
+> = Get<Lookup<O['responses'][C], 'content'>, M>;

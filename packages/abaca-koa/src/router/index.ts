@@ -14,10 +14,13 @@ import {typedEmitter} from '@opvious/stl-utils/events';
 import {atMostOnce, ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {
+  dereferencePointer,
   extractPathOperationDefinitions,
   incompatibleValueError,
+  JsonPointer,
   OpenapiDocument,
-  OperationHookEnv,
+  OperationListeners,
+  OperationSchema,
   parseOpenapiDocument,
 } from 'abaca-openapi';
 import {
@@ -110,12 +113,14 @@ export function createOperationsRouter<
    */
   readonly handleInvalidRequests?: boolean;
 }): Router<S> {
-  const {document: doc, fallback} = args;
+  const {fallback} = args;
   const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
   const handlers: any = args.handlers;
   const handlerContext = args.handlerContext ?? defaultHandlerContext(handlers);
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const rethrow = !args.handleInvalidRequests;
+
+  const doc = typeof args.document == 'string' ? parseOpenapiDocument(args.document) : args.document;
 
   const decoders = defaultDecoders();
   decoders.addAll(args.decoders as any);
@@ -124,9 +129,18 @@ export function createOperationsRouter<
   encoders.addAll(args.encoders as any);
 
   const registry = new Registry(tel);
-  const defs = extractPathOperationDefinitions({
-    document: typeof doc == 'string' ? parseOpenapiDocument(doc) : doc,
-    onSchema: (schema, env) => void registry.register(schema, env),
+  const defs = await extractPathOperationDefinitions({
+    document: doc,
+    producer: typedEmitter<OperationListeners>()
+      .on('parameter', (oid, ptr, name) => {
+        registry.registerParameter(oid, ptr, name);
+      })
+      .on('requestBody', (oid, ptr, mime) => {
+        registry.registerRequestBody(oid, ptr, mime);
+      })
+      .on('response', (oid, ptr, mime, code) => {
+        registry.registerResponseBody(oid, ptr, mime, code);
+      }),
     generateIds: true,
   });
 
@@ -270,50 +284,36 @@ function defaultHandlerContext(obj: any): unknown {
   return name == null || name === 'Object' ? undefined : obj;
 }
 
+// ID used for the OpenAPI specification
+const DOCUMENT_ID = 'file:///openapi.yaml';
+
+function documentReference(ptr: JsonPointer): {readonly $ref: string} {
+  return {$ref: `${DOCUMENT_ID}#${ptr}`};
+}
+
 class Registry {
   // Coercion is useful for encodings which do not retain enough information,
   // for example URL encoding (mostly in parameters but also in request bodies).
   private readonly cache = new Ajv({
     coerceTypes: 'array',
-    formats: {binary: true},
+    formats: {binary: true, stream: true},
   });
   constructor(private readonly telemetry: Telemetry) {}
 
-  register(schema: any, env: OperationHookEnv): void {
-    const {operationId: oid, target} = env;
-    switch (target.kind) {
-      case 'parameter':
-        this.registerParameter(oid, target.name, schema);
-        break;
-      case 'requestBody':
-        this.registerRequestBody(oid, target.type, schema);
-        break;
-      case 'response':
-        this.registerResponseBody(oid, target.type, target.code, schema);
-        break;
-      default:
-        throw absurd(target);
-    }
-  }
-
-  private registerParameter(oid: string, name: string, schema: any): void {
+  registerParameter(schema: OperationSchema, oid: string, name: string): void {
     // Nest within an object to enable coercion and better error reporting.
     this.cache.addSchema(
-      {
-        type: 'object',
-        properties: {[name]: schema ?? {type: 'string'}},
-        required: [name],
-      },
-      schemaKey(oid, {kind: 'parameter', name})
+      {type: 'object', properties: {[name]: schema}, required: [name]},
+      schemaId(oid, {kind: 'parameter', name})
     );
   }
 
-  private registerRequestBody(
+  registerRequestBody(
+    schema: OperationSchema,
     oid: string,
-    contentType: string,
-    schema: any
+    contentType: string
   ): void {
-    const key = schemaKey(oid, {kind: 'requestBody', contentType});
+    const key = schemaId(oid, {kind: 'requestBody', contentType});
     this.cache.addSchema(schema, key);
 
     // Add individual multipart properties to be able to validate them as they
@@ -327,7 +327,7 @@ class Registry {
       for (const [name, propSchema] of Object.entries<any>(
         schema.properties ?? {}
       )) {
-        const propKey = schemaKey(oid, {
+        const propKey = schemaId(oid, {
           kind: 'requestBodyProperty',
           contentType,
           name,
@@ -337,15 +337,15 @@ class Registry {
     }
   }
 
-  private registerResponseBody(
+  registerResponseBody(
+    schema: OperationSchema,
     oid: string,
     contentType: string,
-    code: ResponseCode,
-    schema: any
+    code: ResponseCode
   ): void {
     this.cache.addSchema(
       schema,
-      schemaKey(oid, {kind: 'responseBody', code, contentType})
+      schemaId(oid, {kind: 'responseBody', code, contentType})
     );
   }
 
@@ -376,7 +376,7 @@ class Registry {
         }
         continue;
       }
-      const key = schemaKey(oid, {kind: 'parameter', name});
+      const key = schemaId(oid, {kind: 'parameter', name});
       const validate = cache.getSchema(key);
       assert(validate, 'Missing parameter schema', key);
       const obj = {[name]: str};
@@ -388,7 +388,7 @@ class Registry {
   }
 
   validateRequestBody(body: unknown, oid: string, contentType: string): void {
-    const key = schemaKey(oid, {kind: 'requestBody', contentType});
+    const key = schemaId(oid, {kind: 'requestBody', contentType});
     const validate = this.cache.getSchema(key);
     assert(validate, 'Missing request body schema', key);
     const value =
@@ -434,7 +434,7 @@ class Registry {
 
     const emitProperty = (prop: AdditionalMultipartProperty): void => {
       const {kind, name} = prop;
-      const key = schemaKey(oid, {
+      const key = schemaId(oid, {
         kind: 'requestBodyProperty',
         contentType,
         name,
@@ -486,7 +486,7 @@ class Registry {
     contentType: string,
     code: ResponseCode
   ): void {
-    const key = schemaKey(oid, {kind: 'responseBody', contentType, code});
+    const key = schemaId(oid, {kind: 'responseBody', contentType, code});
     const validate = this.cache.getSchema(key);
     assert(validate, 'Missing response schema', key);
     const value =
@@ -497,7 +497,7 @@ class Registry {
   }
 }
 
-function schemaKey(oid: string, qual: SchemaQualifier): string {
+function schemaId(oid: string, qual: SchemaQualifier): string {
   let suffix: string;
   switch (qual.kind) {
     case 'parameter':

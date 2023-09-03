@@ -1,8 +1,10 @@
 import {assert} from '@opvious/stl-errors';
+import {EventProducer} from '@opvious/stl-utils/events';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {GlobMapper} from '@opvious/stl-utils/strings';
 import {
+  BodyDefinition,
   MimeType,
   OperationDefinition,
   ParameterDefinition,
@@ -11,12 +13,13 @@ import {
 import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
 
-import {dereferencePointer} from './common.js';
+import {createPointer, dereferencePointer, JsonPointer} from './common.js';
 import {
   OpenapiDocument,
   OpenapiDocuments,
   OpenapiVersion,
 } from './document/index.js';
+import {resolvingReferences} from './resolvable/index.js';
 
 export interface OpenapiOperations {
   '3.0': DeepReadonly<OpenAPIV3.OperationObject>;
@@ -45,77 +48,92 @@ export interface DocumentOperation<V extends OpenapiVersion = OpenapiVersion> {
 
 /**
  * Extracts all operations under the document's paths. The input document must
- * be fully resolved.
+ * only contain inline references.
  */
-export function extractPathOperationDefinitions(args: {
+export async function extractPathOperationDefinitions(args: {
   readonly document: OpenapiDocument;
-  readonly onSchema?: (schema: any, env: OperationHookEnv) => void;
+  readonly producer?: EventProducer<OperationListeners>;
   readonly idGlob?: GlobMapper<boolean>;
   readonly generateIds?: boolean;
-}): Record<string, OperationDefinition> {
-  const {document: doc, generateIds, onSchema, idGlob} = args;
+}): Promise<Record<string, OperationDefinition>> {
+  const {document: doc, generateIds, producer, idGlob} = args;
   const defs: Record<string, OperationDefinition> = {};
   for (const op of documentPathOperations(doc)) {
     const {path, method, value: val} = op;
 
-    const id =
+    const oid =
       val?.operationId ??
       (val && generateIds ? `${path}#${method}` : undefined);
-    if (!id || (idGlob && !idGlob.map(id))) {
+    if (!oid || (idGlob && !idGlob.map(oid))) {
       continue;
     }
+    const prefix = ['paths', path, method];
 
-    const params: Record<string, ParameterDefinition> = {};
-    for (const paramOrRef of val.parameters ?? []) {
+    const paramDefs: Record<string, ParameterDefinition> = {};
+    for (const [ix, paramOrRef] of (val.parameters ?? []).entries()) {
       const param =
         '$ref' in paramOrRef ? dereference(paramOrRef, doc) : paramOrRef;
       const required = !!param.required;
       const location: any = param.in;
-      params[param.name] = {location, required};
-      if (onSchema) {
-        onSchema(param.schema, {
-          operationId: id,
-          target: {kind: 'parameter', name: param.name},
+      paramDefs[param.name] = {location, required};
+      if (producer) {
+        const schema = await resolvingReferences(doc, {
+          pointer: createPointer([...prefix, 'parameters', '' + ix]),
         });
+        producer.emit('parameter', schema, oid, param.name);
       }
     }
 
-    const body = ifPresent(val.requestBody, (bodyOrRef) => {
+    let bodyDef: BodyDefinition | undefined;
+    if (val.requestBody) {
       const body =
-        '$ref' in bodyOrRef ? dereference(bodyOrRef, doc) : bodyOrRef;
-      return {
+        '$ref' in val.requestBody
+          ? dereference(val.requestBody, doc)
+          : val.requestBody;
+      if (producer) {
+        for (const [mime, val] of Object.entries<any>(body.content)) {
+          const schema = await resolvingReferences(doc, {
+            pointer: createPointer([...prefix, 'requestBody', 'content', mime]),
+          });
+          producer.emit('requestBody', schema, oid, mime);
+        }
+      }
+      bodyDef = {
         required: !!body.required,
-        types: contentTypes(body.content, id, {kind: 'requestBody'}),
+        types: Object.keys(body.content),
       };
-    });
+    }
 
-    const responses: Record<string, ReadonlyArray<MimeType>> = {};
+    const resDefs: Record<string, ReadonlyArray<MimeType>> = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
       const res = '$ref' in resOrRef ? dereference(resOrRef, doc) : resOrRef;
-      responses[code] = contentTypes(res.content ?? {}, id, {
-        kind: 'response',
-        code,
-      });
+      const content = res.content ?? {};
+      if (producer) {
+        for (const [mime, val] of Object.entries<any>(content)) {
+          const schema = await resolvingReferences(doc, {
+            pointer: createPointer([
+              ...prefix,
+              'responses',
+              code,
+              'content',
+              mime,
+            ]),
+          });
+          producer.emit('response', schema, oid, mime, code);
+        }
+      }
+      resDefs[code] = Object.keys(content);
     }
 
-    defs[id] = {path, method, parameters: params, body, responses};
+    defs[oid] = {
+      path,
+      method,
+      parameters: paramDefs,
+      body: bodyDef,
+      responses: resDefs,
+    };
   }
   return defs;
-
-  function contentTypes(
-    obj: any,
-    operationId: string,
-    target: any
-  ): ReadonlyArray<MimeType> {
-    const ret: MimeType[] = [];
-    for (const [key, val] of Object.entries<any>(obj)) {
-      ret.push(key);
-      if (onSchema) {
-        onSchema(val.schema, {operationId, target: {...target, type: key}});
-      }
-    }
-    return ret;
-  }
 }
 
 /** Inline dereference */
@@ -125,16 +143,18 @@ function dereference(obj: {readonly $ref: string}, doc: unknown): any {
   return dereferencePointer(ref.slice(1), doc);
 }
 
-export interface OperationHookEnv {
-  readonly operationId: string;
-  readonly target: OperationHookTarget;
-}
+export type OperationSchema = any;
 
-export type OperationHookTarget = KindAmong<{
-  requestBody: {readonly type: MimeType};
-  response: {readonly type: MimeType; readonly code: ResponseCode};
-  parameter: {readonly name: string};
-}>;
+export interface OperationListeners {
+  parameter(schema: OperationSchema, oid: string, name: string): void;
+  requestBody(schema: OperationSchema, oid: string, mime: MimeType): void;
+  response(
+    schema: OperationSchema,
+    oid: string,
+    mime: MimeType,
+    code: ResponseCode
+  ): void;
+}
 
 export const allOperationMethods = [
   'get',

@@ -7,12 +7,16 @@ import {AsyncOrSync} from 'ts-essentials';
 import URI from 'urijs'; // Needed because of the resolver library.
 import YAML from 'yaml';
 
+import {JsonPointer} from '../common.js';
 import {errors} from './index.errors.js';
 
 /** Loads and fully resolves a schema */
-export async function resolvingReferences<V extends object>(
+export async function resolvingReferences<V extends object, W = V>(
   parsed: V,
   opts?: {
+    /** Optional pointer to part of the schema */
+    readonly pointer?: JsonPointer;
+
     /** Custom resource loader. */
     readonly loader?: ResourceLoader;
 
@@ -25,7 +29,7 @@ export async function resolvingReferences<V extends object>(
     /** Optional function called each time a referenced resource is resolved. */
     readonly onResolvedReference?: (r: ResolvedResource) => void;
   }
-): Promise<V> {
+): Promise<W> {
   const loader = opts?.loader ?? ResourceLoader.create();
   const rootId = resourceUrl((parsed as any).$id);
 
@@ -107,7 +111,10 @@ export async function resolvingReferences<V extends object>(
     },
   });
 
-  const resolved = await resolver.resolve(parsed, {baseUri: '' + rootId});
+  const resolved = await resolver.resolve(parsed, {
+    baseUri: rootId?.toString(),
+    jsonPointer: opts?.pointer,
+  });
   if (resolved.errors.length) {
     throw errors.unresolvable(resolved.errors);
   }

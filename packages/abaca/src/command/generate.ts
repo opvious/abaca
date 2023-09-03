@@ -54,13 +54,6 @@ export function generateCommand(): Command {
     .option('-o, --output <path>', 'output file path (default: stdin)')
     .option('-r, --loader-root <path>', 'loader root path (default: CWD)')
     .option(
-      '-t, --streaming-content-types <types>',
-      'comma-separated list of content-types which contain streamed data. ' +
-        'request and responses with these types will be exposed via an ' +
-        '`AsyncIterable`',
-      JSON_SEQ_MIME_TYPE
-    )
-    .option(
       '-v, --document-version <version>',
       'version override used in the consolidated document. only applicable ' +
         'if the `--document-output` option is used'
@@ -113,7 +106,6 @@ export function generateCommand(): Command {
 
         spinner.start('Generating SDK...');
         const operationGlob = GlobMapper.predicating(opts.include);
-        const streamingTypes = commaSeparated(opts.streamingContentTypes);
         const operations = extractPathOperationDefinitions({
           document: doc,
           generateIds: opts.generateIds,
@@ -122,7 +114,6 @@ export function generateCommand(): Command {
         const serverAddresses = extractServerAddresses(doc, url);
         const types = await generateTypes({
           document: doc,
-          streamingTypes,
           operations,
           additionalProperties: !opts.strictAdditionalProperties,
           operationGlob,
@@ -168,11 +159,11 @@ export function generateCommand(): Command {
 
 enum SchemaFormat {
   BINARY = 'binary',
+  STREAM = 'stream',
 }
 
 async function generateTypes(args: {
   readonly document: OpenapiDocument;
-  readonly streamingTypes: ReadonlyArray<string>;
   readonly operations: {readonly [id: string]: OperationDefinition};
   readonly additionalProperties: boolean;
   readonly operationGlob: GlobMapper<boolean>;
@@ -180,7 +171,7 @@ async function generateTypes(args: {
   readonly source: string;
   readonly count: number;
 }> {
-  const {streamingTypes, additionalProperties, operationGlob} = args;
+  const {additionalProperties, operationGlob} = args;
 
   // We clone the document to mutate it since `doc` contains immutable nodes.
   // Note also that `openapi-typescript` may mutate it (for example to filter
@@ -212,19 +203,36 @@ async function generateTypes(args: {
     }
   }
 
-  // postTransform can be called multiple times for a given path, we need to
-  // keep track of the last time it runs to correctly wrap it later on. This
-  // will require two passes.
+  // transform can be called multiple times for a given path, we need to keep
+  // track of the last time it runs to correctly wrap it later on. This will
+  // require two passes.
   let count = 0;
-  const lastGenerated = new Map<string, string>();
-  const nonStreaming = await generate({
-    transform(schema) {
+  const streamed = new Map<string, string>();
+  const unstreamed = await generate({
+    transform(schema, opts) {
+      count++;
       if ('type' in schema && schema.type === 'object') {
         schema.additionalProperties ??= additionalProperties;
       }
+      if (schema.format == null) {
+        return undefined;
+      }
+      assert(
+        'type' in schema && schema.type == 'string',
+        'Format on non-string type %j',
+        schema
+      );
       switch (schema.format) {
         case SchemaFormat.BINARY:
           return 'Blob';
+        case SchemaFormat.STREAM: {
+          const {items} = schema as any;
+          assert(items, 'Missing stream items');
+          delete schema.format;
+          Object.assign(schema, {type: 'array'});
+          streamed.set(opts.path, ''); // Placeholder
+          return undefined;
+        }
         default:
           return undefined;
       }
@@ -232,20 +240,20 @@ async function generateTypes(args: {
     postTransform(gen, opts) {
       count++;
       const {path} = opts;
-      if (isStreamingPath(path, streamingTypes)) {
-        lastGenerated.set(path, gen);
+      if (streamed.has(path)) {
+        streamed.set(path, gen);
       }
       return gen;
     },
   });
-  if (!lastGenerated.size) {
-    // No streaming content types, we can return directly.
-    return {source: nonStreaming, count};
+  if (!streamed.size) {
+    // No streamed types, we can return directly.
+    return {source: unstreamed, count};
   }
   const source = await generate({
     transform(_schema, opts) {
-      const gen = lastGenerated.get(opts.path);
-      return gen == null ? undefined : `AsyncIterable<${gen}>`;
+      const gen = streamed.get(opts.path);
+      return gen == null ? undefined : `Streamed<${gen}>`;
     },
   });
   return {source, count};
@@ -257,31 +265,4 @@ async function generateTypes(args: {
       ...opts,
     });
   }
-}
-
-function isStreamingPath(p: string, stypes: ReadonlyArray<string>): boolean {
-  // TODO: Reduce chance of false positives.
-  const [anchor, p1, p2] = p.split('/');
-  assert(anchor === '#', 'Unexpected path', p);
-  switch (p1) {
-    case 'paths':
-      break;
-    case 'components':
-      switch (p2) {
-        case 'requestBodies':
-        case 'responses':
-          break;
-        default:
-          return false;
-      }
-      break;
-    default:
-      return false;
-  }
-  for (const stype of stypes) {
-    if (p.endsWith(stype)) {
-      return true;
-    }
-  }
-  return false;
 }
