@@ -1,10 +1,8 @@
 import {assert} from '@opvious/stl-errors';
 import {EventProducer} from '@opvious/stl-utils/events';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {KindAmong} from '@opvious/stl-utils/objects';
 import {GlobMapper} from '@opvious/stl-utils/strings';
 import {
-  BodyDefinition,
   MimeType,
   OperationDefinition,
   ParameterDefinition,
@@ -13,13 +11,17 @@ import {
 import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
 
-import {createPointer, dereferencePointer, JsonPointer} from './common.js';
+import {
+  createPointer,
+  dereferencePointer,
+  JsonPointer,
+  splitPointer,
+} from './common.js';
 import {
   OpenapiDocument,
   OpenapiDocuments,
   OpenapiVersion,
 } from './document/index.js';
-import {resolvingReferences} from './resolvable/index.js';
 
 export interface OpenapiOperations {
   '3.0': DeepReadonly<OpenAPIV3.OperationObject>;
@@ -50,12 +52,12 @@ export interface DocumentOperation<V extends OpenapiVersion = OpenapiVersion> {
  * Extracts all operations under the document's paths. The input document must
  * only contain inline references.
  */
-export async function extractPathOperationDefinitions(args: {
+export function extractPathOperationDefinitions(args: {
   readonly document: OpenapiDocument;
   readonly producer?: EventProducer<OperationListeners>;
   readonly idGlob?: GlobMapper<boolean>;
   readonly generateIds?: boolean;
-}): Promise<Record<string, OperationDefinition>> {
+}): Record<string, OperationDefinition> {
   const {document: doc, generateIds, producer, idGlob} = args;
   const defs: Record<string, OperationDefinition> = {};
   for (const op of documentPathOperations(doc)) {
@@ -67,90 +69,87 @@ export async function extractPathOperationDefinitions(args: {
     if (!oid || (idGlob && !idGlob.map(oid))) {
       continue;
     }
+
     const prefix = ['paths', path, method];
 
-    const paramDefs: Record<string, ParameterDefinition> = {};
+    const params: Record<string, ParameterDefinition> = {};
     for (const [ix, paramOrRef] of (val.parameters ?? []).entries()) {
-      const param =
-        '$ref' in paramOrRef ? dereference(paramOrRef, doc) : paramOrRef;
+      let param, parts;
+      if ('$ref' in paramOrRef) {
+        const ptr = refPointer(paramOrRef);
+        param = dereferencePointer(ptr, doc);
+        parts = splitPointer(ptr);
+      } else {
+        param = paramOrRef;
+        parts = [...prefix, 'parameters', '' + ix];
+      }
       const required = !!param.required;
       const location: any = param.in;
-      paramDefs[param.name] = {location, required};
+      params[param.name] = {location, required};
       if (producer) {
-        const schema = await resolvingReferences(doc, {
-          pointer: createPointer([...prefix, 'parameters', '' + ix]),
-        });
-        producer.emit('parameter', schema, oid, param.name);
+        const ptr = createPointer([...parts, 'schema']);
+        producer.emit('parameter', oid, ptr, param.name);
       }
     }
 
-    let bodyDef: BodyDefinition | undefined;
-    if (val.requestBody) {
-      const body =
-        '$ref' in val.requestBody
-          ? dereference(val.requestBody, doc)
-          : val.requestBody;
+    const body = ifPresent(val.requestBody, (bodyOrRef) => {
+      let body, parts;
+      if ('$ref' in bodyOrRef) {
+        const ptr = refPointer(bodyOrRef);
+        body = dereferencePointer(ptr, doc);
+        parts = splitPointer(ptr);
+      } else {
+        body = bodyOrRef;
+        parts = [...prefix, 'requestBody', 'content'];
+      }
+      const types = Object.keys(body.content ?? {});
       if (producer) {
-        for (const [mime, val] of Object.entries<any>(body.content)) {
-          const schema = await resolvingReferences(doc, {
-            pointer: createPointer([...prefix, 'requestBody', 'content', mime]),
-          });
-          producer.emit('requestBody', schema, oid, mime);
+        for (const key of types) {
+          const ptr = createPointer([...parts, key, 'schema']);
+          producer.emit('requestBody', oid, ptr, key);
         }
       }
-      bodyDef = {
-        required: !!body.required,
-        types: Object.keys(body.content),
-      };
-    }
+      return {required: !!body.required, types};
+    });
 
-    const resDefs: Record<string, ReadonlyArray<MimeType>> = {};
+    const responses: Record<string, ReadonlyArray<MimeType>> = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
-      const res = '$ref' in resOrRef ? dereference(resOrRef, doc) : resOrRef;
-      const content = res.content ?? {};
+      let res, parts;
+      if ('$ref' in resOrRef) {
+        const ptr = refPointer(resOrRef);
+        res = dereferencePointer(ptr, doc);
+        parts = splitPointer(ptr);
+      } else {
+        res = resOrRef;
+        parts = [...prefix, 'responses', code, 'content'];
+      }
+      const types = Object.keys(res.content ?? {});
       if (producer) {
-        for (const [mime, val] of Object.entries<any>(content)) {
-          const schema = await resolvingReferences(doc, {
-            pointer: createPointer([
-              ...prefix,
-              'responses',
-              code,
-              'content',
-              mime,
-            ]),
-          });
-          producer.emit('response', schema, oid, mime, code);
+        for (const key of types) {
+          const ptr = createPointer([...parts, key, 'schema']);
+          producer.emit('response', oid, ptr, key, code);
         }
       }
-      resDefs[code] = Object.keys(content);
+      responses[code] = types;
     }
 
-    defs[oid] = {
-      path,
-      method,
-      parameters: paramDefs,
-      body: bodyDef,
-      responses: resDefs,
-    };
+    defs[oid] = {path, method, parameters: params, body, responses};
   }
   return defs;
 }
 
-/** Inline dereference */
-function dereference(obj: {readonly $ref: string}, doc: unknown): any {
+function refPointer(obj: {readonly $ref: string}): JsonPointer {
   const ref = obj.$ref;
   assert(ref.startsWith('#'), 'Unsupported reference: %s', ref);
-  return dereferencePointer(ref.slice(1), doc);
+  return ref.slice(1);
 }
 
-export type OperationSchema = any;
-
 export interface OperationListeners {
-  parameter(schema: OperationSchema, oid: string, name: string): void;
-  requestBody(schema: OperationSchema, oid: string, mime: MimeType): void;
+  parameter(oid: string, ptr: JsonPointer, name: string): void;
+  requestBody(oid: string, ptr: JsonPointer, mime: MimeType): void;
   response(
-    schema: OperationSchema,
     oid: string,
+    ptr: JsonPointer,
     mime: MimeType,
     code: ResponseCode
   ): void;

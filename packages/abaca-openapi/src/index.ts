@@ -15,6 +15,5 @@ export {
   OpenapiOperations,
   OperationListeners,
   OperationMethod,
-  OperationSchema,
 } from './operations.js';
 export * from './resolvable/index.js';

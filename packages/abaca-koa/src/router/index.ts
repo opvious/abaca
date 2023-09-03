@@ -20,7 +20,6 @@ import {
   JsonPointer,
   OpenapiDocument,
   OperationListeners,
-  OperationSchema,
   parseOpenapiDocument,
 } from 'abaca-openapi';
 import {
@@ -120,7 +119,10 @@ export function createOperationsRouter<
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const rethrow = !args.handleInvalidRequests;
 
-  const doc = typeof args.document == 'string' ? parseOpenapiDocument(args.document) : args.document;
+  const doc =
+    typeof args.document == 'string'
+      ? parseOpenapiDocument(args.document)
+      : args.document;
 
   const decoders = defaultDecoders();
   decoders.addAll(args.decoders as any);
@@ -128,8 +130,8 @@ export function createOperationsRouter<
   const encoders = defaultEncoders();
   encoders.addAll(args.encoders as any);
 
-  const registry = new Registry(tel);
-  const defs = await extractPathOperationDefinitions({
+  const registry = Registry.create(doc, tel);
+  const defs = extractPathOperationDefinitions({
     document: doc,
     producer: typedEmitter<OperationListeners>()
       .on('parameter', (oid, ptr, name) => {
@@ -297,54 +299,71 @@ class Registry {
   private readonly cache = new Ajv({
     coerceTypes: 'array',
     formats: {binary: true, stream: true},
+    strict: false,
+    validateSchema: false,
   });
-  constructor(private readonly telemetry: Telemetry) {}
+  private constructor(
+    private readonly document: OpenapiDocument,
+    private readonly telemetry: Telemetry
+  ) {}
 
-  registerParameter(schema: OperationSchema, oid: string, name: string): void {
+  static create(doc: OpenapiDocument, tel: Telemetry): Registry {
+    const ret = new Registry(doc, tel);
+    ret.cache.addSchema(doc, DOCUMENT_ID);
+    return ret;
+  }
+
+  registerParameter(oid: string, ptr: JsonPointer, name: string): void {
     // Nest within an object to enable coercion and better error reporting.
     this.cache.addSchema(
-      {type: 'object', properties: {[name]: schema}, required: [name]},
+      {
+        type: 'object',
+        properties: {[name]: documentReference(ptr)},
+        required: [name],
+      },
       schemaId(oid, {kind: 'parameter', name})
     );
   }
 
   registerRequestBody(
-    schema: OperationSchema,
     oid: string,
+    ptr: JsonPointer,
     contentType: string
   ): void {
     const key = schemaId(oid, {kind: 'requestBody', contentType});
-    this.cache.addSchema(schema, key);
+    this.cache.addSchema(documentReference(ptr), key);
 
     // Add individual multipart properties to be able to validate them as they
     // are streamed in.
     if (contentTypeMatches(contentType, [MULTIPART_MIME_TYPE])) {
+      const schema = dereferencePointer(ptr, this.document);
       assert(
         schema.type === 'object',
         'Non-object multipart request body: %j',
         schema
       );
-      for (const [name, propSchema] of Object.entries<any>(
-        schema.properties ?? {}
-      )) {
+      for (const name of Object.keys(schema.properties ?? {})) {
         const propKey = schemaId(oid, {
           kind: 'requestBodyProperty',
           contentType,
           name,
         });
-        this.cache.addSchema(propSchema, propKey);
+        this.cache.addSchema(
+          documentReference(`${ptr}/properties/${name}`),
+          propKey
+        );
       }
     }
   }
 
   registerResponseBody(
-    schema: OperationSchema,
     oid: string,
+    ptr: JsonPointer,
     contentType: string,
     code: ResponseCode
   ): void {
     this.cache.addSchema(
-      schema,
+      documentReference(ptr),
       schemaId(oid, {kind: 'responseBody', code, contentType})
     );
   }

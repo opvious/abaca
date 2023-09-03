@@ -15,18 +15,25 @@ export function createPointer(parts: ReadonlyArray<string>): JsonPointer {
   return '/' + escaped.join('/');
 }
 
+export function splitPointer(ptr: JsonPointer): ReadonlyArray<string> {
+  assert(ptr.startsWith('/'), 'Invalid pointer: %s', ptr);
+  if (ptr === '/') {
+    return [];
+  }
+  const parts: string[] = [];
+  for (const part of ptr.slice(1).split('/')) {
+    parts.push(part.replaceAll('~1', '/').replaceAll('~0', '~'));
+  }
+  return parts;
+}
+
 export function dereferencePointer<V = any>(
   ptr: JsonPointer,
   root: unknown
 ): V {
-  assert(ptr.startsWith('/'), 'Invalid pointer: %s', ptr);
   let val: any = root;
-  if (ptr === '/') {
-    return val;
-  }
-  for (const part of ptr.slice(1).split('/')) {
-    const unescaped = part.replaceAll('~1', '/').replaceAll('~0', '~');
-    val = val[unescaped];
+  for (const part of splitPointer(ptr)) {
+    val = val[part];
     assert(val !== undefined, 'Undefined pointer value for %s', ptr);
   }
   return val;
