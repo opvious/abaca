@@ -220,8 +220,6 @@ enum QueryKey {
   REFNO = '_',
 }
 
-// const componentSubsectionPattern = /
-
 /**
  * Transforms aliases into references when possible. This is useful to reduce
  * generated file sizes (types and also when specifications are combined via a
