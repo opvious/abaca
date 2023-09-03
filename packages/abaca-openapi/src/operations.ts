@@ -68,8 +68,7 @@ export function extractPathOperationDefinitions(args: {
       const ptr = refPointer(obj);
       return [dereferencePointer(ptr, doc), splitPointer(ptr)];
     }
-      return [obj as any, fb];
-
+    return [obj as any, fb];
   };
 
   const schemaPointer = (parts: ReadonlyArray<string>): JsonPointer => {
