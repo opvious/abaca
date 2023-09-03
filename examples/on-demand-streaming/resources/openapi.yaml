@@ -27,7 +27,7 @@ paths:
                 $ref: "#/components/schemas/MessageArray"
             application/json-seq:
               schema:
-                $ref: "#/components/schemas/Message"
+                $ref: "#/components/schemas/MessageStream"
   /ingest:
     post:
       summary: >
@@ -57,7 +57,7 @@ paths:
           content:
             application/json-seq:
               schema:
-                $ref: "#/components/schemas/Message"
+                $ref: "#/components/schemas/MessageStream"
 components:
   requestBodies:
     MessageStream:
@@ -66,7 +66,7 @@ components:
       content:
         application/json-seq:
           schema:
-            $ref: "#/components/schemas/Message"
+            $ref: "#/components/schemas/MessageStream"
   schemas:
     Message:
       type: object
@@ -76,5 +76,13 @@ components:
           type: string
     MessageArray:
       type: array
+      items:
+        $ref: "#/components/schemas/Message"
+    MessageStream:
+      type: string
+      # The `stream` format is used to represent streams of objects (i.e.
+      # non-binary stream). The type of the stream's elements is specified via
+      # the `items` property.
+      format: stream
       items:
         $ref: "#/components/schemas/Message"

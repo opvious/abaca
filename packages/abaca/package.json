@@ -1,6 +1,6 @@
 {
   "name": "abaca",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "repository": "github:opvious/abaca",
   "description": "OpenAPI SDK generator with strong type guarantees and minimal boilerplate",
   "keywords": [
@@ -25,14 +25,14 @@
   "bin": "bin/abaca.js",
   "exports": {},
   "scripts": {
-    "build": "tsc -p src",
+    "build": "tsc -b src",
     "clean": "rm -rf lib node_modules out $(find . -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
     "gen-preamble": "./scripts/generate-preamble-template",
     "gen-test-pets": "./bin/abaca.js g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-snippets": "./bin/abaca.js g test/resources/snippets.openapi.yaml -o test/snippets-sdk.gen.ts --generate-ids",
     "gen-test-tables": "./bin/abaca.js g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts --strict-additional-properties",
-    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables && tsc -b test",
     "prepare": "pnpm run gen-preamble && pnpm run build && inlinable e",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
@@ -46,7 +46,7 @@
     "commander": "^10.0.0",
     "eta": "^3.1.0",
     "node-fetch": "^3.3.1",
-    "openapi-typescript": "^6.2.0",
+    "openapi-typescript": "^6.5.4",
     "ora": "^7.0.1",
     "yaml": "^2.3.1"
   },

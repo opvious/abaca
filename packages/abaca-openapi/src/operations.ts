@@ -1,6 +1,6 @@
 import {assert} from '@opvious/stl-errors';
+import {EventProducer} from '@opvious/stl-utils/events';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {KindAmong} from '@opvious/stl-utils/objects';
 import {GlobMapper} from '@opvious/stl-utils/strings';
 import {
   MimeType,
@@ -8,9 +8,15 @@ import {
   ParameterDefinition,
   ResponseCode,
 } from 'abaca-runtime';
-import { OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
+import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
 
+import {
+  createPointer,
+  dereferencePointer,
+  JsonPointer,
+  splitPointer,
+} from './common.js';
 import {
   OpenapiDocument,
   OpenapiDocuments,
@@ -44,87 +50,111 @@ export interface DocumentOperation<V extends OpenapiVersion = OpenapiVersion> {
 
 /**
  * Extracts all operations under the document's paths. The input document must
- * be fully resolved.
+ * only contain inline references.
  */
 export function extractPathOperationDefinitions(args: {
   readonly document: OpenapiDocument;
-  readonly onSchema?: (schema: any, env: OperationHookEnv) => void;
+  readonly producer?: EventProducer<OperationListeners>;
   readonly idGlob?: GlobMapper<boolean>;
   readonly generateIds?: boolean;
 }): Record<string, OperationDefinition> {
-  const {generateIds, onSchema, idGlob} = args;
+  const {document: doc, generateIds, producer, idGlob} = args;
+
+  const deref = <V extends object>(
+    obj: V | HasRef,
+    fb: ReadonlyArray<string>
+  ): [Exclude<V, HasRef>, ReadonlyArray<string>] => {
+    if ('$ref' in obj) {
+      const ptr = refPointer(obj);
+      return [dereferencePointer(ptr, doc), splitPointer(ptr)];
+    }
+    return [obj as any, fb];
+  };
+
+  const schemaPointer = (parts: ReadonlyArray<string>): JsonPointer => {
+    const ptr = createPointer([...parts, 'schema']);
+    const obj = dereferencePointer(ptr, doc);
+    return '$ref' in obj ? refPointer(obj) : ptr;
+  };
+
   const defs: Record<string, OperationDefinition> = {};
-  for (const op of documentPathOperations(args.document)) {
+  for (const op of documentPathOperations(doc)) {
     const {path, method, value: val} = op;
 
-    const id =
+    const oid =
       val?.operationId ??
       (val && generateIds ? `${path}#${method}` : undefined);
-    if (!id || (idGlob && !idGlob.map(id))) {
+    if (!oid || (idGlob && !idGlob.map(oid))) {
       continue;
     }
 
+    const prefix = ['paths', path, method];
+
     const params: Record<string, ParameterDefinition> = {};
-    for (const param of val.parameters ?? []) {
-      assert(!('$ref' in param), 'Unexpected reference', param);
+    for (const [ix, paramOrRef] of (val.parameters ?? []).entries()) {
+      const [param, parts] = deref(paramOrRef, [
+        ...prefix,
+        'parameters',
+        '' + ix,
+      ]);
       const required = !!param.required;
       const location: any = param.in;
       params[param.name] = {location, required};
-      if (onSchema) {
-        onSchema(param.schema, {
-          operationId: id,
-          target: {kind: 'parameter', name: param.name},
-        });
+      if (producer) {
+        producer.emit('parameter', oid, schemaPointer(parts), param.name);
       }
     }
 
-    const body = ifPresent(val.requestBody, (b) => {
-      assert(!('$ref' in b), 'Unexpected reference', b);
-      return {
-        required: !!b.required,
-        types: contentTypes(b.content, id, {kind: 'requestBody'}),
-      };
+    const body = ifPresent(val.requestBody, (bodyOrRef) => {
+      const [body, parts] = deref(bodyOrRef, [...prefix, 'requestBody']);
+      const types = Object.keys(body.content ?? {});
+      if (producer) {
+        for (const key of types) {
+          const ptr = schemaPointer([...parts, 'content', key]);
+          producer.emit('requestBody', oid, ptr, key);
+        }
+      }
+      return {required: !!body.required, types};
     });
 
     const responses: Record<string, ReadonlyArray<MimeType>> = {};
-    for (const [code, res] of Object.entries<any>(val.responses ?? {})) {
-      assert(!('$ref' in res), 'Unexpected reference', res);
-      responses[code] = contentTypes(res.content ?? {}, id, {
-        kind: 'response',
-        code,
-      });
+    for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
+      const [res, parts] = deref(resOrRef, [...prefix, 'responses', code]);
+      const types = Object.keys(res.content ?? {});
+      if (producer) {
+        for (const key of types) {
+          const ptr = schemaPointer([...parts, 'content', key]);
+          producer.emit('response', oid, ptr, key, code);
+        }
+      }
+      responses[code] = types;
     }
 
-    defs[id] = {path, method, parameters: params, body, responses};
+    defs[oid] = {path, method, parameters: params, body, responses};
   }
   return defs;
-
-  function contentTypes(
-    obj: any,
-    operationId: string,
-    target: any
-  ): ReadonlyArray<MimeType> {
-    const ret: MimeType[] = [];
-    for (const [key, val] of Object.entries<any>(obj)) {
-      ret.push(key);
-      if (onSchema) {
-        onSchema(val.schema, {operationId, target: {...target, type: key}});
-      }
-    }
-    return ret;
-  }
 }
 
-export interface OperationHookEnv {
-  readonly operationId: string;
-  readonly target: OperationHookTarget;
+interface HasRef {
+  readonly $ref: string;
 }
 
-export type OperationHookTarget = KindAmong<{
-  requestBody: {readonly type: MimeType};
-  response: {readonly type: MimeType; readonly code: ResponseCode};
-  parameter: {readonly name: string};
-}>;
+function refPointer(obj: HasRef): JsonPointer {
+  const ref = obj.$ref;
+  assert(ref.startsWith('#'), 'Unsupported reference: %s', ref);
+  return ref.slice(1);
+}
+
+export interface OperationListeners {
+  parameter(oid: string, ptr: JsonPointer, name: string): void;
+  requestBody(oid: string, ptr: JsonPointer, mime: MimeType): void;
+  response(
+    oid: string,
+    ptr: JsonPointer,
+    mime: MimeType,
+    code: ResponseCode
+  ): void;
+}
 
 export const allOperationMethods = [
   'get',

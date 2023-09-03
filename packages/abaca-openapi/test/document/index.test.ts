@@ -50,6 +50,19 @@ describe('load OpenAPI document', () => {
       versions: ['3.0'],
       telemetry,
     });
-    expect(Object.keys(doc.components!.schemas!)).toEqual(['Row']);
+    expect(Object.keys(doc.components!.schemas!)).toEqual(['Table', 'Row']);
+  });
+
+  test('consolidates aliases', async () => {
+    const documentLoader = loader.scoped('document');
+    const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
+      path: documentLoader.localUrl('references.openapi.yaml'),
+      loader: documentLoader,
+      telemetry,
+    });
+    const res = (doc as any).paths['/tables/{id}'].get.responses['200'];
+    expect(res.content['application/json'].schema.$ref).toEqual(
+      '#/components/schemas/Table'
+    );
   });
 });

@@ -107,7 +107,9 @@ export async function resolvingReferences<V extends object>(
     },
   });
 
-  const resolved = await resolver.resolve(parsed, {baseUri: '' + rootId});
+  const resolved = await resolver.resolve(parsed, {
+    baseUri: rootId?.toString(),
+  });
   if (resolved.errors.length) {
     throw errors.unresolvable(resolved.errors);
   }

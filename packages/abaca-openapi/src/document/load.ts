@@ -10,9 +10,9 @@ import {ifPresent} from '@opvious/stl-utils/functions';
 import {readFile} from 'fs/promises';
 import YAML from 'yaml';
 
-import {packageInfo} from '../common.js';
+import {createPointer, JsonPointer, packageInfo} from '../common.js';
 import {ReferenceResolvers, resolvingReferences} from '../resolvable/index.js';
-import {OpenapiDocument, OpenapiDocuments, OpenapiVersion} from './common.js';
+import {OpenapiDocuments, OpenapiVersion} from './common.js';
 import {assertIsOpenapiDocument} from './parse.js';
 
 const DOCUMENT_FILE = 'openapi.yaml';
@@ -106,53 +106,53 @@ export async function resolveOpenapiDocument<
   );
   tel.logger.debug('Resolved all references. [resources=%s]', resourceRefCount);
 
-  let stripped: OpenapiDocument;
-  if (resourceRefCount > 0) {
-    // We need to strip metadata added for resource reference handling and
-    // potentially handle embeddings. We use a YAML document to mutate the tree
-    // since shared nodes are otherwise frozen. The parser is smart enough to
-    // respect identical nodes.
-    const doc = new YAML.Document(resolved);
+  // We need to strip metadata added for resource reference handling and
+  // potentially handle embeddings. We use a YAML document to mutate the tree
+  // since shared nodes are otherwise frozen. The parser is smart enough to
+  // respect identical nodes.
+  const doc = new YAML.Document(resolved);
 
-    // We now add embedded nodes if any.
-    if (embeddings.size) {
-      const embedder = new Embedder(doc);
-      YAML.visit(doc.contents, {
-        Pair: (_, pair, path) => {
-          if ((pair.key as any)?.value !== '$id') {
-            return;
-          }
-          const id = (pair.value as any)?.value;
-          assert(typeof id == 'string', 'Invalid ID: %s', id);
-          const embedding = embeddings.get(id);
-          if (embedding) {
-            const node = path[path.length - 1];
-            assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
-            embedder.embedSchemas(node, embedding);
-          }
-        },
-      });
-      tel.logger.debug('Processed %s embedding(s).', embeddings.size);
-    }
-
-    // Strip special keys (in particular IDs added during resolution)
+  // We now add embedded nodes if any.
+  if (embeddings.size) {
+    const embedder = new Embedder(doc);
     YAML.visit(doc.contents, {
-      Pair: (_, pair) => {
-        const key = (pair.key as any)?.value;
-        return typeof key == 'string' && key.startsWith('$')
-          ? YAML.visit.REMOVE
-          : undefined;
+      Pair: (_key, pair, path) => {
+        if ((pair.key as any)?.value !== '$id') {
+          return;
+        }
+        const id = (pair.value as any)?.value;
+        assert(typeof id == 'string', 'Invalid ID: %s', id);
+        const embedding = embeddings.get(id);
+        if (embedding) {
+          const node = path[path.length - 1];
+          assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
+          embedder.embedSchemas(node, embedding);
+        }
       },
     });
-    tel.logger.debug('Stripped special keys.');
-
-    // Note: this step is slow. Currently suspecting it is due to the aliases
-    // which traverse the tree each time to `resolve` themselves.
-    stripped = doc.toJS({maxAliasCount: -1});
-  } else {
-    const {$id: _$id, ...rest} = resolved as any;
-    stripped = rest;
+    tel.logger.debug('Processed %s embedding(s).', embeddings.size);
   }
+
+  // Strip special keys (in particular IDs added during resolution)
+  YAML.visit(doc.contents, {
+    Pair: (_key, pair) => {
+      const key = (pair.key as any)?.value;
+      return typeof key == 'string' && key.startsWith('$')
+        ? YAML.visit.REMOVE
+        : undefined;
+    },
+  });
+  tel.logger.debug('Stripped special keys.');
+
+  // Transform aliases into component references where possible. This leads to
+  // more robust deduplication and speeds up the following step.
+  const consolidator = new Consolidator(doc);
+  consolidator.consolidate();
+  tel.logger.debug('Consolidated aliases.');
+
+  // Note: this step is slow. Currently suspecting it is due to the aliases
+  // which traverse the tree each time to `resolve` themselves.
+  const stripped = doc.toJS({maxAliasCount: -1});
   tel.logger.debug('Generated stripped document.');
 
   // Check the schema again now that all references have been resolved
@@ -180,6 +180,7 @@ export interface ResolveOpenapiDocumentOptions<V> {
   readonly telemetry?: Telemetry;
 }
 
+/** Injects imported definitions into the target */
 class Embedder {
   constructor(private readonly document: YAML.Document) {}
 
@@ -217,4 +218,101 @@ enum QueryKey {
 
   /** Special internal value used make references unique. */
   REFNO = '_',
+}
+
+/**
+ * Transforms aliases into references when possible. This is useful to reduce
+ * generated file sizes (types and also when specifications are combined via a
+ * tool which doesn't handle aliases well). Note that references can be present
+ * in the resolved input too, for example due to circular definitions.
+ */
+class Consolidator {
+  constructor(private readonly document: YAML.Document) {}
+
+  /** Mutates the consolidator's document, transforming aliases */
+  consolidate(): void {
+    const components = this.aliasedComponents();
+    YAML.visit(this.document, {
+      Node: (_key, node, ancestors) => {
+        const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
+        if (anchor == null) {
+          return undefined;
+        }
+        const component = components.get(anchor);
+        if (!component) {
+          // This anchor does not have a corresponding component
+          return undefined;
+        }
+        assert(component, 'Missing aliased component for %s', anchor);
+        if (componentPointer(ancestors) == null) {
+          const ref = new YAML.YAMLMap();
+          ref.set('$ref', component.reference);
+          return ref;
+        }
+        component.value.anchor = undefined;
+        return component.value;
+      },
+    });
+  }
+
+  /** Returns aliases which are created or referenced from a component */
+  private aliasedComponents(): ReadonlyMap<string, AliasedComponent> {
+    const aliased = new Map<string, YAML.Node>();
+    const ret = new Map<string, AliasedComponent>();
+    YAML.visit(this.document, {
+      Node: (_key, node, ancestors) => {
+        const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
+        if (anchor == null) {
+          // Not an alias or aliased node
+          return undefined;
+        }
+        if (node.anchor != null) {
+          // Aliased node
+          assert(!(node instanceof YAML.Alias), 'Aliased alias %j', node);
+          assert(!aliased.has(node.anchor), 'Duplicate alias %s', node.anchor);
+          aliased.set(node.anchor, node);
+        }
+        const pointer = componentPointer(ancestors);
+        if (pointer == null) {
+          // Not a top-level component
+          return undefined;
+        }
+        const value = aliased.get(anchor);
+        assert(value != null, 'Missing value for alias %s', node.anchor);
+        ret.set(anchor, {reference: '#' + pointer, value});
+        return undefined;
+      },
+    });
+    return ret;
+  }
+}
+
+const COMPONENTS_KEY = 'components';
+
+function componentPointer(
+  ancestors: ReadonlyArray<unknown>
+): JsonPointer | undefined {
+  if (ancestors.length !== 7 || pairKey(ancestors[2]) !== COMPONENTS_KEY) {
+    return undefined;
+  }
+  const subsection = pairKey(ancestors[4]);
+  assert(subsection != null, 'Missing subsection in %j', ancestors[4]);
+  const name = pairKey(ancestors[6]);
+  assert(name != null, 'Missing name in %j', ancestors[6]);
+  return createPointer([COMPONENTS_KEY, subsection, name]);
+}
+
+function pairKey(node: unknown): string | undefined {
+  return node instanceof YAML.Pair
+    ? node.key instanceof YAML.Scalar
+      ? node.key.value
+      : typeof node.key == 'string'
+      ? node.key
+      : undefined
+    : undefined;
+}
+
+interface AliasedComponent {
+  readonly reference: string;
+  readonly value: YAML.Node;
 }

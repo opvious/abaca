@@ -1,8 +1,7 @@
-$id: resource://embedded/openapi.yaml
 openapi: "3.0.0"
 info:
   version: 0.1.0
-  title: Data tables service
+  title: References service
 paths:
   /tables/{id}:
     get:
@@ -20,12 +19,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Table'
-            text/csv:
-              schema:
-                type: string
         '404':
           description: Table not found
 components:
   schemas:
     Table:
-      $ref: resource://embedded/schemas/table.yaml?embed=*
+      type: object
+      required: [rows]
+      properties:
+        header:
+          $ref: '#/components/schemas/Row'
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/Row'
+    Row:
+      type: array
+      items:
+        type: string

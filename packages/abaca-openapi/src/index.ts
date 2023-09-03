@@ -1,3 +1,4 @@
+export {createPointer, dereferencePointer, JsonPointer} from './common.js';
 export {
   assertCompatible,
   CompatibilityPredicate,
@@ -12,8 +13,7 @@ export {
   documentPathOperations,
   extractPathOperationDefinitions,
   OpenapiOperations,
-  OperationHookEnv,
-  OperationHookTarget,
+  OperationListeners,
   OperationMethod,
 } from './operations.js';
 export * from './resolvable/index.js';

@@ -1,5 +1,4 @@
 import Router from '@koa/router';
-import {assert} from '@opvious/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import koaBody_ from 'koa-body';
@@ -11,7 +10,7 @@ import {createSdk, Schema, Sdk} from './tables-sdk.gen.js';
 const koaBody = koaBody_.default ?? koaBody_;
 
 describe('tables', () => {
-  let sdk: Sdk<typeof fetch, 'application/json', 'application/json'>;
+  let sdk: Sdk<typeof fetch>;
   let app: Koa<any, any>;
   let server: http.Server;
 
@@ -19,13 +18,7 @@ describe('tables', () => {
     const router = newRouter();
     app = new Koa().use(router.allowedMethods()).use(router.routes());
     server = await startApp(app);
-    const addr = server.address();
-    assert(addr, 'Missing server address');
-    sdk = createSdk({
-      address: addr,
-      defaultAccept: 'application/json',
-      fetch,
-    });
+    sdk = createSdk({address: server.address()!, fetch});
   });
 
   afterAll(() => {
@@ -54,7 +47,10 @@ describe('tables', () => {
   });
 
   test('fetch JSON', async () => {
-    const res = await sdk.getTable({params: {id: 'id3'}});
+    const res = await sdk.getTable({
+      headers: {accept: 'application/json'},
+      params: {id: 'id3'},
+    });
     switch (res.code) {
       case 200:
         expect<Schema<'Table'>>(res.data).toEqual([]);

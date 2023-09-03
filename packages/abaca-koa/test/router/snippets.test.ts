@@ -1,7 +1,11 @@
 import {absurd, fail} from '@opvious/stl-errors';
-import {fromAsyncIterable} from '@opvious/stl-utils/collections';
+import {
+  fromAsyncIterable,
+  toAsyncIterable,
+} from '@opvious/stl-utils/collections';
+import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca-codecs/node/json-seq';
 import {OpenapiDocument} from 'abaca-openapi';
-import {FORM_MIME_TYPE} from 'abaca-runtime';
+import {FORM_MIME_TYPE, JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
 import events from 'events';
 import http from 'http';
 import Koa from 'koa';
@@ -30,7 +34,13 @@ describe('snippets', async () => {
     sdk = createSdk({
       address: serverAddress(server),
       fetch,
-      encoders: {[FORM_MIME_TYPE]: (data) => qs.stringify(data)},
+      decoders: {
+        [JSON_SEQ_MIME_TYPE]: jsonSeqDecoder(),
+      },
+      encoders: {
+        [FORM_MIME_TYPE]: (data) => qs.stringify(data),
+        [JSON_SEQ_MIME_TYPE]: jsonSeqEncoder(),
+      },
     });
   }
 
@@ -58,6 +68,25 @@ describe('snippets', async () => {
     });
     assert(res.code === 200);
     expect(await res.data.text()).toEqual('abc');
+  });
+
+  test('echos object data', async () => {
+    await resetHandlers({
+      '/object-echo#post': (ctx) => {
+        return {type: 'application/json-seq', data: ctx.request.body};
+      },
+    });
+
+    const messages = [{contents: 'hi'}, {contents: ''}];
+    const res = await sdk['/object-echo#post']({
+      headers: {
+        accept: 'application/json-seq',
+        'content-type': 'application/json-seq',
+      },
+      body: toAsyncIterable(messages),
+    });
+    assert(res.code === 200);
+    expect(await fromAsyncIterable(res.data)).toEqual(messages);
   });
 
   test('uploads URL encoded form', async () => {

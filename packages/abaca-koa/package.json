@@ -1,6 +1,6 @@
 {
   "name": "abaca-koa",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "repository": "github:opvious/abaca",
   "description": "Abaca Koa integrations",
   "keywords": [
@@ -22,16 +22,16 @@
     "./errors": "./lib/index.errors.js"
   },
   "scripts": {
-    "build": "tsc -p src",
+    "build": "tsc -b src",
     "clean": "rm -rf lib node_modules out $(find test -name '*.gen' -o -name '*.gen.*')",
     "fix": "prettier --write",
     "gen-test-pets": "abaca g test/resources/pets.openapi.yaml -o test/pets-sdk.gen.ts",
     "gen-test-snippets": "abaca g test/resources/snippets.openapi.yaml -o test/snippets-sdk.gen.ts --generate-ids",
-    "gen-test-tables": "abaca g test/resources/tables.openapi.yaml -s -o test/tables-sdk.gen.ts",
-    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables",
+    "gen-test-tables": "abaca g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
+    "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables && tsc -b test",
     "prepare": "pnpm run build && inlinable e",
     "test": "pnpm run gen-test && vitest",
-    "watch": "tsc -b -w src"
+    "watch": "tsc -b -w src test"
   },
   "dependencies": {
     "@koa/router": "^10.1.1",
@@ -59,6 +59,7 @@
     "@types/koa__router": "^8.0.11",
     "@types/qs": "^6.9.8",
     "abaca": "workspace:*",
+    "abaca-codecs": "workspace:*",
     "inlinable": "^0.2.6",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
