@@ -3,8 +3,9 @@ import {
   fromAsyncIterable,
   toAsyncIterable,
 } from '@opvious/stl-utils/collections';
+import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca-codecs/node/json-seq';
 import {OpenapiDocument} from 'abaca-openapi';
-import {FORM_MIME_TYPE} from 'abaca-runtime';
+import {FORM_MIME_TYPE, JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
 import events from 'events';
 import http from 'http';
 import Koa from 'koa';
@@ -33,7 +34,13 @@ describe('snippets', async () => {
     sdk = createSdk({
       address: serverAddress(server),
       fetch,
-      encoders: {[FORM_MIME_TYPE]: (data) => qs.stringify(data)},
+      decoders: {
+        [JSON_SEQ_MIME_TYPE]: jsonSeqDecoder(),
+      },
+      encoders: {
+        [FORM_MIME_TYPE]: (data) => qs.stringify(data),
+        [JSON_SEQ_MIME_TYPE]: jsonSeqEncoder(),
+      },
     });
   }
 

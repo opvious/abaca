@@ -59,6 +59,7 @@
     "@types/koa__router": "^8.0.11",
     "@types/qs": "^6.9.8",
     "abaca": "workspace:*",
+    "abaca-codecs": "workspace:*",
     "inlinable": "^0.2.6",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",

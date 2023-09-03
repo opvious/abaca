@@ -10,11 +10,10 @@ import {
   mapAsyncIterable,
   toAsyncIterable,
 } from '@opvious/stl-utils/collections';
+import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca-codecs/node/json-seq';
 import http from 'http';
-import jsonSeq from 'json-text-sequence';
 import Koa from 'koa';
 import fetch from 'node-fetch';
-import stream from 'stream';
 
 import * as sut from '../../src/router/index.js';
 import {loadResourceDocument, serverAddress, startApp} from '../helpers.js';
@@ -30,20 +29,6 @@ describe('tables', async () => {
     const router = sut.createOperationsRouter<Operations>({
       document: doc,
       handlers: handler,
-      decoders: {
-        'application/json-seq': (ctx) => {
-          const decoder = new jsonSeq.Parser();
-          ctx.req.pipe(decoder);
-          return decoder;
-        },
-      },
-      encoders: {
-        'application/json-seq': (iter, ctx) => {
-          const encoder = new jsonSeq.Generator();
-          stream.Readable.from(iter).pipe(encoder);
-          ctx.body = encoder;
-        },
-      },
     });
 
     const app = new Koa<any, any>()
@@ -62,19 +47,8 @@ describe('tables', async () => {
     sdk = createSdk<typeof fetch>({
       address: serverAddress(server),
       fetch,
-      encoders: {
-        'application/json-seq': (iter) => {
-          const encoder = new jsonSeq.Generator();
-          return stream.Readable.from(iter).pipe(encoder);
-        },
-      },
-      decoders: {
-        'application/json-seq': (res) => {
-          const decoder = new jsonSeq.Parser();
-          res.body!.pipe(decoder);
-          return decoder;
-        },
-      },
+      encoders: {'application/json-seq': jsonSeqEncoder()},
+      decoders: {'application/json-seq': jsonSeqDecoder()},
     });
   });
 
