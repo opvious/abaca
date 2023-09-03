@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     name: Test and maybe create tag
-    timeout-minutes: 2
+    timeout-minutes: 3
     runs-on: ubuntu-latest
     outputs:
       tagged: ${{ format(steps.check-version.outputs.exists == 'false') }}

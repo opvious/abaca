@@ -44,7 +44,8 @@ client-side and bi-directional streaming using the same primitives.
 
 Note that these capabilities are exposed via simple HTTP requests (no WebSockets
 required for instance) and without losing any of the type-safety provided by the
-OpenAPI specification.
+OpenAPI specification. It's also possible to stream with other content-types
+simply by providing a compatible decoder and encoder.
 
 
 ## Sources
