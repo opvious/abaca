@@ -212,7 +212,7 @@ export function createOperationsRouter<
             // Binary mode stream
             registry.validateRequestBody(body, oid, qtype);
           } else if (isAsyncIterable(body)) {
-            // Object-mode stream or native iterable
+            // Object-mode stream or native async iterable
             body = mapAsyncIterable(body, (b) => {
               registry.validateRequestBody(b, oid, qtype);
               return b;
@@ -331,12 +331,20 @@ class Registry {
     contentType: string
   ): void {
     const key = schemaId(oid, {kind: 'requestBody', contentType});
-    this.cache.addSchema(documentReference(ptr), key);
+
+    const schema = dereferencePointer(ptr, this.document);
+    this.cache.addSchema(
+      documentReference(
+        schema.type === 'string' && schema.format === 'stream'
+          ? ptr + '/items'
+          : ptr
+      ),
+      key
+    );
 
     // Add individual multipart properties to be able to validate them as they
     // are streamed in.
     if (contentTypeMatches(contentType, [MULTIPART_MIME_TYPE])) {
-      const schema = dereferencePointer(ptr, this.document);
       assert(
         schema.type === 'object',
         'Non-object multipart request body: %j',
@@ -362,8 +370,13 @@ class Registry {
     contentType: string,
     code: ResponseCode
   ): void {
+    const schema = dereferencePointer(ptr, this.document);
     this.cache.addSchema(
-      documentReference(ptr),
+      documentReference(
+        schema.type === 'string' && schema.format === 'stream'
+          ? ptr + '/items'
+          : ptr
+      ),
       schemaId(oid, {kind: 'responseBody', code, contentType})
     );
   }

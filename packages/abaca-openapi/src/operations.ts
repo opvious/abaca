@@ -59,6 +59,13 @@ export function extractPathOperationDefinitions(args: {
   readonly generateIds?: boolean;
 }): Record<string, OperationDefinition> {
   const {document: doc, generateIds, producer, idGlob} = args;
+
+  const schemaPointer = (parts: ReadonlyArray<string>): JsonPointer => {
+    const ptr = createPointer([...parts, 'schema']);
+    const obj = dereferencePointer(ptr, doc);
+    return '$ref' in obj ? refPointer(obj) : ptr;
+  };
+
   const defs: Record<string, OperationDefinition> = {};
   for (const op of documentPathOperations(doc)) {
     const {path, method, value: val} = op;
@@ -87,8 +94,7 @@ export function extractPathOperationDefinitions(args: {
       const location: any = param.in;
       params[param.name] = {location, required};
       if (producer) {
-        const ptr = createPointer([...parts, 'schema']);
-        producer.emit('parameter', oid, ptr, param.name);
+        producer.emit('parameter', oid, schemaPointer(parts), param.name);
       }
     }
 
@@ -100,12 +106,12 @@ export function extractPathOperationDefinitions(args: {
         parts = splitPointer(ptr);
       } else {
         body = bodyOrRef;
-        parts = [...prefix, 'requestBody', 'content'];
+        parts = [...prefix, 'requestBody'];
       }
       const types = Object.keys(body.content ?? {});
       if (producer) {
         for (const key of types) {
-          const ptr = createPointer([...parts, key, 'schema']);
+          const ptr = schemaPointer([...parts, 'content', key]);
           producer.emit('requestBody', oid, ptr, key);
         }
       }
@@ -121,12 +127,12 @@ export function extractPathOperationDefinitions(args: {
         parts = splitPointer(ptr);
       } else {
         res = resOrRef;
-        parts = [...prefix, 'responses', code, 'content'];
+        parts = [...prefix, 'responses', code];
       }
       const types = Object.keys(res.content ?? {});
       if (producer) {
         for (const key of types) {
-          const ptr = createPointer([...parts, key, 'schema']);
+          const ptr = schemaPointer([...parts, 'content', key]);
           producer.emit('response', oid, ptr, key, code);
         }
       }
