@@ -1,5 +1,6 @@
 import {assert, unexpected} from '@opvious/stl-errors';
 import {noopTelemetry, Telemetry} from '@opvious/stl-telemetry';
+import {SetMultimap} from '@opvious/stl-utils/collections';
 import {
   localPath,
   localUrl,
@@ -7,6 +8,7 @@ import {
   ResourceLoader,
 } from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
+import {commaSeparated} from '@opvious/stl-utils/strings';
 import {readFile} from 'fs/promises';
 import YAML from 'yaml';
 
@@ -69,32 +71,20 @@ export async function resolveOpenapiDocument<
     delete (parsed as any).webhooks;
   }
 
-  let resourceRefCount = 0;
-  const embeddings = new Map<string, string>();
+  const embedder = new Embedder();
   const resolved = await resolvingReferences(
     {$id, ...parsed},
     {
       loader: opts?.loader,
-      onResolvedReference: (r) => {
-        if (r.url.protocol !== 'resource:') {
-          return;
-        }
-
-        // Generate a unique ID for this reference so we can locate it later.
-        const url = new URL(r.url);
-        url.search = '';
-        url.searchParams.set(QueryKey.REFNO, '' + ++resourceRefCount);
-        const id = '' + url;
-        const doc = r.document;
-        doc.set('$id', id);
-
-        // Apply any parameters.
+      onResolvedResource: (r) => {
+        const id = r.result.$id;
+        assert(typeof id == 'string', 'Unexpected ID in %s: %s', r.url, id);
         for (const [key, val] of r.url.searchParams) {
           switch (key) {
             case QueryKey.EMBED: {
               assert(!r.parents.length, 'Nested embedding: %s', r.url);
-              assert(doc.get('$defs'), 'No definitions to embed in %s', r.url);
-              embeddings.set(id, val);
+              assert(r.result.$defs, 'No definitions to embed in %s', r.url);
+              embedder.register(id, val);
               break;
             }
             default:
@@ -104,7 +94,7 @@ export async function resolveOpenapiDocument<
       },
     }
   );
-  tel.logger.debug('Resolved all references. [resources=%s]', resourceRefCount);
+  tel.logger.debug('Resolved all references.');
 
   // We need to strip metadata added for resource reference handling and
   // potentially handle embeddings. We use a YAML document to mutate the tree
@@ -113,27 +103,16 @@ export async function resolveOpenapiDocument<
   const doc = new YAML.Document(resolved);
 
   // We now add embedded nodes if any.
-  if (embeddings.size) {
-    const embedder = new Embedder(doc);
-    YAML.visit(doc.contents, {
-      Pair: (_key, pair, path) => {
-        if ((pair.key as any)?.value !== '$id') {
-          return;
-        }
-        const id = (pair.value as any)?.value;
-        assert(typeof id == 'string', 'Invalid ID: %s', id);
-        const embedding = embeddings.get(id);
-        if (embedding) {
-          const node = path[path.length - 1];
-          assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
-          embedder.embedSchemas(node, embedding);
-        }
-      },
-    });
-    tel.logger.debug('Processed %s embedding(s).', embeddings.size);
-  }
+  embedder.embedSchemas(doc);
+  tel.logger.debug('Processed embeddings.');
 
-  // Strip special keys (in particular IDs added during resolution)
+  // Transform aliases into component references where possible. This leads to
+  // more robust deduplication and speeds up the following step.
+  const consolidator = new Consolidator(doc);
+  consolidator.consolidate();
+  tel.logger.debug('Consolidated aliases.');
+
+  // Strip special keys (in particular `$defs` and `$id`).
   YAML.visit(doc.contents, {
     Pair: (_key, pair) => {
       const key = (pair.key as any)?.value;
@@ -143,12 +122,6 @@ export async function resolveOpenapiDocument<
     },
   });
   tel.logger.debug('Stripped special keys.');
-
-  // Transform aliases into component references where possible. This leads to
-  // more robust deduplication and speeds up the following step.
-  const consolidator = new Consolidator(doc);
-  consolidator.consolidate();
-  tel.logger.debug('Consolidated aliases.');
 
   // Note: this step is slow. Currently suspecting it is due to the aliases
   // which traverse the tree each time to `resolve` themselves.
@@ -182,42 +155,60 @@ export interface ResolveOpenapiDocumentOptions<V> {
 
 /** Injects imported definitions into the target */
 class Embedder {
-  constructor(private readonly document: YAML.Document) {}
+  private readonly embeddings = new SetMultimap<string, string>();
 
-  embedSchemas(src: YAML.YAMLMap, filter: string): void {
-    const doc = this.document;
+  register(id: string, value: string): void {
+    this.embeddings.addAll(id, commaSeparated(value));
+  }
+
+  embedSchemas(doc: YAML.Document): void {
+    if (!this.embeddings.size) {
+      return;
+    }
+    YAML.visit(doc.contents, {
+      Pair: (_key, pair, ancestors) => {
+        if ((pair.key as any)?.value !== '$id') {
+          return;
+        }
+        const id = (pair.value as any)?.value;
+        assert(typeof id == 'string', 'Invalid ID: %s', id);
+        const values = this.embeddings.get(id);
+        if (values.size) {
+          const node = ancestors[ancestors.length - 1];
+          assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
+          this.embed(doc, node, values);
+        }
+      },
+    });
+  }
+
+  private embed(
+    doc: YAML.Document,
+    src: YAML.YAMLMap,
+    values: ReadonlySet<string>
+  ): void {
     const defs = src.get('$defs');
     assert(YAML.isMap(defs), 'Unexpected definitions: %j', defs);
 
-    const pred = embeddingPredicate(filter);
     for (const pair of defs.items) {
       const name = (pair.key as any)?.value;
-      assert(typeof name, 'Unexpected embedded definition name in %j', pair);
-      if (!pred(name)) {
-        continue;
+      assert(
+        typeof name == 'string',
+        'Unexpected embedded definition name in %j',
+        pair
+      );
+      if (values.has(name) || (values.has('*') && !name.startsWith('_'))) {
+        const dst = ['components', 'schemas', name];
+        assert(!doc.hasIn(dst), 'Embedding name collision: %j', pair);
+        doc.setIn(dst, pair.value);
       }
-
-      const dst = ['components', 'schemas', name];
-      assert(!doc.hasIn(dst), 'Embedding name collision: %j', pair);
-      doc.setIn(dst, pair.value);
     }
   }
-}
-
-function embeddingPredicate(filter: string): (name: string) => boolean {
-  if (filter === '*') {
-    return (n) => !n.startsWith('_');
-  }
-  const names = new Set(filter.split(','));
-  return (n) => names.has(n);
 }
 
 enum QueryKey {
   /** Flag a reference for embedding. */
   EMBED = 'embed',
-
-  /** Special internal value used make references unique. */
-  REFNO = '_',
 }
 
 /**
@@ -232,6 +223,7 @@ class Consolidator {
   /** Mutates the consolidator's document, transforming aliases */
   consolidate(): void {
     const components = this.aliasedComponents();
+    const consolidated = new Set<string>();
     YAML.visit(this.document, {
       Node: (_key, node, ancestors) => {
         const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
@@ -243,14 +235,20 @@ class Consolidator {
           // This anchor does not have a corresponding component
           return undefined;
         }
-        assert(component, 'Missing aliased component for %s', anchor);
-        if (componentPointer(ancestors) == null) {
-          const ref = new YAML.YAMLMap();
-          ref.set('$ref', component.reference);
-          return ref;
+        if (componentPointer(ancestors) != null) {
+          // This is the component's definition
+          if (consolidated.has(anchor)) {
+            // We already replaced the definition. This is used to avoid
+            // infinite recursion when visiting the node which was just used as
+            // replacement.
+            return undefined;
+          }
+          consolidated.add(anchor);
+          return component.value;
         }
-        component.value.anchor = undefined;
-        return component.value;
+        const ref = new YAML.YAMLMap();
+        ref.set('$ref', component.reference);
+        return ref;
       },
     });
   }

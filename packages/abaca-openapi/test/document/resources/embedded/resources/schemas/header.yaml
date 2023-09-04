@@ -1,0 +1,4 @@
+$id: resource://embedded/schemas/header.yaml
+type: array
+items:
+  type: string
