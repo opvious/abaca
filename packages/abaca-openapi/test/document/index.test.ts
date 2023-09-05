@@ -50,7 +50,20 @@ describe('load OpenAPI document', () => {
       versions: ['3.0'],
       telemetry,
     });
-    expect(Object.keys(doc.components!.schemas!)).toEqual(['Table', 'Row']);
+    expect(doc).toMatchObject({
+      components: {
+        schemas: {
+          Header: {type: 'array'},
+          Table: {
+            properties: {
+              header: {$ref: '#/components/schemas/Header'},
+              rows: {type: 'array', items: {$ref: '#/components/schemas/Row'}},
+            },
+          },
+          Row: {type: 'array'},
+        },
+      },
+    });
   });
 
   test('consolidates aliases', async () => {

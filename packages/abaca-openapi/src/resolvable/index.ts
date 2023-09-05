@@ -23,7 +23,7 @@ export async function resolvingReferences<V extends object>(
     readonly resolvers?: ReferenceResolvers;
 
     /** Optional function called each time a referenced resource is resolved. */
-    readonly onResolvedReference?: (r: ResolvedResource) => void;
+    readonly onResolvedResource?: (r: ResolvedResource) => void;
   }
 ): Promise<V> {
   const loader = opts?.loader ?? ResourceLoader.create();
@@ -31,6 +31,7 @@ export async function resolvingReferences<V extends object>(
 
   let seqno = 1;
   const refUrls = new Map<number, ResourceUrl>();
+  const parser = new Parser();
 
   const resolver = new Resolver({
     dereferenceInline: true,
@@ -83,7 +84,7 @@ export async function resolvingReferences<V extends object>(
           'Unexpected resolver result: %j',
           p.result
         );
-        return {result: YAML.parse(p.result)};
+        return {result: parser.parse(p.result)};
       }
 
       const target = resourceUrl(p.targetAuthority);
@@ -95,15 +96,15 @@ export async function resolvingReferences<V extends object>(
         scoped = scoped.scopedToDependency(p);
       }
       const {contents} = await scoped.load(target.pathname.slice(1));
-      const doc = parseResourceReferenceContents(target, contents);
+      const result = parser.parseResource(contents, target);
 
       const n = +check.isNumeric(target.searchParams.get(QueryKey.SEQNO));
       const ru = refUrls.get(n);
       assert(ru, 'Missing resource URL');
-      opts?.onResolvedReference?.({url: ru, document: doc, parents});
+      opts?.onResolvedResource?.({url: ru, result, parents});
       refUrls.delete(n);
 
-      return {result: doc.toJS()};
+      return {result};
     },
   });
 
@@ -124,7 +125,7 @@ export interface ReferenceResolvers {
 export interface ResolvedResource {
   readonly url: ResourceUrl;
   readonly parents: ReadonlyArray<string>;
-  readonly document: YAML.Document;
+  readonly result: any;
 }
 
 /** Protocol used for resolvable references. */
@@ -139,22 +140,35 @@ enum QueryKey {
   PARENT = 'p',
 }
 
-function parseResourceReferenceContents(
-  ru: ResourceUrl,
-  contents: string
-): YAML.Document {
-  const doc = YAML.parseDocument(contents);
-  const id = doc.get('$id');
-  try {
-    const declared = resourceUrl(id);
-    assert(declared != null, 'ID %s is not a valid resource URL', id);
-    const expected = new URL(ru);
-    expected.search = '';
-    assert('' + declared === '' + expected, 'ID %s doesn\'t match', id);
-  } catch (cause) {
-    throw errors.invalidResourceReference(ru, cause);
+/** Reference parser */
+class Parser {
+  cache = new Map<string, any>();
+
+  parse(contents: string): any {
+    const cached = this.cache.get(contents);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const parsed = YAML.parse(contents);
+    this.cache.set(contents, parsed);
+    return parsed;
   }
-  return doc;
+
+  parseResource(contents: string, ru: ResourceUrl): any {
+    const parsed = this.parse(contents);
+    const id = parsed.$id;
+    assert(typeof id == 'string', 'Unexpected ID at %s: %s', ru, id);
+    try {
+      const declared = resourceUrl(id);
+      assert(declared != null, 'ID %s is not a valid resource URL', id);
+      const expected = new URL(ru);
+      expected.search = '';
+      assert('' + declared === '' + expected, 'ID %s doesn\'t match', id);
+    } catch (cause) {
+      throw errors.invalidResourceReference(ru, cause);
+    }
+    return parsed;
+  }
 }
 
 // Sentinel used to detect resource references

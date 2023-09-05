@@ -33,7 +33,7 @@ import {
   ResponseClauseMatcher,
   ResponseCode,
 } from 'abaca-runtime';
-import ajv_ from 'ajv';
+import Ajv_ from 'ajv';
 import events from 'events';
 import stream from 'stream';
 
@@ -61,7 +61,7 @@ export {
   KoaValuesFor,
 } from './types.js';
 
-const Ajv = ajv_.default ?? ajv_;
+const Ajv = Ajv_.default ?? Ajv_;
 
 /** Creates a type-safe router for operations defined in the document */
 export function createOperationsRouter<

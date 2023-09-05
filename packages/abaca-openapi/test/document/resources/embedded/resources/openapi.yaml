@@ -27,5 +27,7 @@ paths:
           description: Table not found
 components:
   schemas:
+    Header:
+      $ref: resource://embedded/schemas/header.yaml
     Table:
       $ref: resource://embedded/schemas/table.yaml?embed=*

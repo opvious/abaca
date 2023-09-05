@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-json",
   "private": true,
-  "version": "0.10.1",
+  "version": "0.10.2",
   "repository": "github:opvious/abaca",
   "description": "JSON API example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
