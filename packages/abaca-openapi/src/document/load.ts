@@ -240,8 +240,11 @@ class Consolidator {
     const components = this.aliasedComponents();
     const consolidated = new Set<string>();
     YAML.visit(this.document.contents, {
-      Alias: (_key, node, ancestors) => {
-        const anchor = node.source;
+      Node: (_key, node, ancestors) => {
+        const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
+        if (anchor == null) {
+          return undefined;
+        }
         const component = components.get(anchor);
         if (!component) {
           // This anchor does not have a corresponding component
@@ -256,7 +259,6 @@ class Consolidator {
             return undefined;
           }
           consolidated.add(anchor);
-          assert(!YAML.isAlias(component.value), 'Alias component');
           return component.value;
         }
         const ref = new YAML.YAMLMap();
