@@ -113,12 +113,11 @@ better, please create an issue or submit a pull request!
 
 ## Alternatives
 
-See below for a short list of related libraries that we tried. Abaca is inspired
-by our favorite parts from each of them.
+See below for a short list of related libraries. Abaca is inspired by our
+favorite parts from each of them.
 
 + [`openapi-fetch`](https://github.com/drwpow/openapi-typescript), lightweight
-  with excellent schema types via `openapi-typescript` (also used by Abaca under
-  the hood)
+  with excellent schema types via `openapi-typescript`
 + [`oazapfts`](https://github.com/oazapfts/oazapfts), granular response codes in
   explicit mode
 + [`openapi-typescript-codegen`](https://github.com/ferdikoomen/openapi-typescript-codegen),

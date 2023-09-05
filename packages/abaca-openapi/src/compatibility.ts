@@ -108,7 +108,6 @@ class RealSchemaCompatibilityChecker<S>
   private validator(name: string): ValidateFunction {
     let fn = this.ajv.getSchema(name);
     if (!fn) {
-      const schema = documentSchemas(this.document)[name];
       const ref = `${DOCUMENT_ID}#/components/schemas/${name}`;
       this.ajv.addSchema({$ref: ref}, name);
       fn = this.ajv.getSchema(name);
