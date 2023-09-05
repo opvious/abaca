@@ -70,8 +70,8 @@ importers:
   examples/forms-and-files:
     dependencies:
       '@opvious/stl-errors':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
@@ -145,14 +145,14 @@ importers:
   packages/abaca:
     dependencies:
       '@opvious/stl-bootstrap':
-        specifier: ^0.21.40
-        version: 0.21.40(@opentelemetry/api@1.4.1)
+        specifier: ^0.21.41
+        version: 0.21.41(@opentelemetry/api@1.4.1)
       '@opvious/stl-errors':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       '@opvious/stl-utils':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       abaca-openapi:
         specifier: workspace:*
         version: link:../abaca-openapi
@@ -203,8 +203,8 @@ importers:
   packages/abaca-codecs:
     dependencies:
       '@opvious/stl-errors':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       abaca-runtime:
         specifier: workspace:*
         version: link:../abaca-runtime
@@ -224,14 +224,14 @@ importers:
         specifier: ~1.4.1
         version: 1.4.1
       '@opvious/stl-errors':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       '@opvious/stl-telemetry':
-        specifier: ^0.21.40
-        version: 0.21.40(@opentelemetry/api@1.4.1)
+        specifier: ^0.21.41
+        version: 0.21.41(@opentelemetry/api@1.4.1)
       '@opvious/stl-utils':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       abaca-openapi:
         specifier: workspace:*
         version: link:../abaca-openapi
@@ -309,14 +309,14 @@ importers:
   packages/abaca-openapi:
     dependencies:
       '@opvious/stl-errors':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       '@opvious/stl-telemetry':
-        specifier: ^0.21.40
-        version: 0.21.40(@opentelemetry/api@1.4.1)
+        specifier: ^0.21.41
+        version: 0.21.41(@opentelemetry/api@1.4.1)
       '@opvious/stl-utils':
-        specifier: ^0.21.40
-        version: 0.21.40
+        specifier: ^0.21.41
+        version: 0.21.41
       '@stoplight/json-ref-resolver':
         specifier: ^3.1.5
         version: 3.1.5
@@ -590,6 +590,11 @@ packages:
 
   /@eslint-community/regexpp@4.6.2:
     resolution: {integrity: sha512-pPTNuaAG3QMH+buKyBIGJs3g/S5y0caxw0ygM3YyE6yJFySwiGGSzA+mM3KJ8QQvzeLh3blwgSonkFjgQdxzMw==}
+    engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
+    dev: true
+
+  /@eslint-community/regexpp@4.8.0:
+    resolution: {integrity: sha512-JylOEEzDiOryeUnFbQz+oViCXS0KsvR1mvHkoMiu5+UiBvy+RYX7tzlIIIEstF/gVa2tj9AQXk3dgnxv6KxhFg==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
     dev: true
 
@@ -908,11 +913,11 @@ packages:
     peerDependencies:
       eslint: ^8.10.0
     dependencies:
-      '@typescript-eslint/eslint-plugin': 6.4.0(@typescript-eslint/parser@6.4.0)(eslint@8.47.0)(typescript@5.2.2)
-      '@typescript-eslint/parser': 6.4.0(eslint@8.47.0)(typescript@5.2.2)
+      '@typescript-eslint/eslint-plugin': 6.6.0(@typescript-eslint/parser@6.6.0)(eslint@8.47.0)(typescript@5.2.2)
+      '@typescript-eslint/parser': 6.6.0(eslint@8.47.0)(typescript@5.2.2)
       eslint: 8.47.0
       eslint-plugin-simple-import-sort: 10.0.0(eslint@8.47.0)
-      eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.4.0)(eslint@8.47.0)
+      eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.6.0)(eslint@8.47.0)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -922,8 +927,8 @@ packages:
     resolution: {integrity: sha512-iKEBPui5CvU3aIRtlyEgHvBGH7fNjtzB3KlxqMFHtTWpBY5q134Y6nYydZBcNcFMGRTXbMgKBrQgC6TqwuLJGg==, tarball: https://npm.pkg.github.com/download/@opvious/prettier-typescript/0.1.26/b39067d9dc25de3d3d84fd543e0367f315211277}
     dev: true
 
-  /@opvious/stl-bootstrap@0.21.40(@opentelemetry/api@1.4.1):
-    resolution: {integrity: sha512-Vn4P+xENHaTcSJQLydjomRAY0dTNNsw5pV+pdWiSg67UUGXZ79aqMHqvLG8RqFcLCyzwKUkAKNxRpWNdGC9ZGw==, tarball: https://npm.pkg.github.com/download/@opvious/stl-bootstrap/0.21.40/5d4deba35cdbc59f60373aaccb39323cd261f62e}
+  /@opvious/stl-bootstrap@0.21.41(@opentelemetry/api@1.4.1):
+    resolution: {integrity: sha512-J08BV8z4snw4GSJgf51YNIJ+2p3YsiW35lHZhi4R9HabpdNeDd+ahIXYuNnVR2xRm1QQ6FXXAvJf8MAz6tn5Zw==, tarball: https://npm.pkg.github.com/download/@opvious/stl-bootstrap/0.21.41/e6fa5e0422916be1fa14656da0f46f0ed1db8c68}
     peerDependencies:
       '@opentelemetry/api': ~1.4.1
     dependencies:
@@ -937,35 +942,35 @@ packages:
       '@opentelemetry/sdk-metrics': 1.15.2(@opentelemetry/api@1.4.1)
       '@opentelemetry/sdk-trace-base': 1.15.2(@opentelemetry/api@1.4.1)
       '@opentelemetry/sdk-trace-node': 1.15.2(@opentelemetry/api@1.4.1)
-      '@opvious/stl-errors': 0.21.40
-      '@opvious/stl-telemetry': 0.21.40(@opentelemetry/api@1.4.1)
-      '@opvious/stl-utils': 0.21.40
+      '@opvious/stl-errors': 0.21.41
+      '@opvious/stl-telemetry': 0.21.41(@opentelemetry/api@1.4.1)
+      '@opvious/stl-utils': 0.21.41
     dev: false
 
-  /@opvious/stl-errors@0.21.40:
-    resolution: {integrity: sha512-fOxEk3BTCpffUbjXyfJfgOHoWbtuqLB3JHBRfZBlaIEcxVNYUh65g6tNq9G2IygKwNJ/9KWWzUZiZs5jTaLyHA==, tarball: https://npm.pkg.github.com/download/@opvious/stl-errors/0.21.40/43ce6367b1873a0e3badb1636b6fe2eddbf97461}
+  /@opvious/stl-errors@0.21.41:
+    resolution: {integrity: sha512-DpcilEQYyyh0MFP33BE9iH0FMvra5/2PNGroqGp0V9ALMQdyErZ9C7YMvsH+QgTzU2NQBNR2bWybVviTX8SepQ==, tarball: https://npm.pkg.github.com/download/@opvious/stl-errors/0.21.41/e481fce18817e2d6cc5a158c497d89ef0bf5e306}
     dependencies:
       change-case: 4.1.2
       upper-case-first: 2.0.2
 
-  /@opvious/stl-telemetry@0.21.40(@opentelemetry/api@1.4.1):
-    resolution: {integrity: sha512-+BeM067ZXvRMbYaIH66do5u9aMZvRqWAVfips23xs3vUltbcrHXHrBuDCuM6cauCNLtGNwufgR1Q2s6EMGgZHg==, tarball: https://npm.pkg.github.com/download/@opvious/stl-telemetry/0.21.40/316937444af23d651163c62ebdb5a48564295f46}
+  /@opvious/stl-telemetry@0.21.41(@opentelemetry/api@1.4.1):
+    resolution: {integrity: sha512-EpGd7AUMpGPU+514zt9JsytKvKVEp/eyDqQzpAJE4thhpHgr/I/Bq75k9UxMsVcmGdPeIsRqB4B0KMSDnXHS+Q==, tarball: https://npm.pkg.github.com/download/@opvious/stl-telemetry/0.21.41/7210eba86f85c335570f6c5f6dce6cc9c7c641c2}
     peerDependencies:
       '@opentelemetry/api': ~1.4.1
     dependencies:
       '@opentelemetry/api': 1.4.1
-      '@opvious/stl-errors': 0.21.40
-      '@opvious/stl-utils': 0.21.40
+      '@opvious/stl-errors': 0.21.41
+      '@opvious/stl-utils': 0.21.41
       inlinable-runtime: 0.2.6
       pino: 8.15.0
       pino-std-serializers: 6.2.2
     dev: false
 
-  /@opvious/stl-utils@0.21.40:
-    resolution: {integrity: sha512-lxGgCaS7hu8jsU59b5eI9l5aPUcZoyIeIkxTTY/Amc2inIBXniqbSrkZaHic3eAz8wQA6UXzfVoVLaXeJ5kCWg==, tarball: https://npm.pkg.github.com/download/@opvious/stl-utils/0.21.40/ad78c8349b9631368f458ea3609eb2b8fa8c7cd0}
+  /@opvious/stl-utils@0.21.41:
+    resolution: {integrity: sha512-hpBA+pUy/341R+jKnqJwj6yZ6uKGb2fN8wuJNKMKrLK+FWGb27msJ8ZdxHq5sWsWZ//jCDsDHbNp406LxvlDFg==, tarball: https://npm.pkg.github.com/download/@opvious/stl-utils/0.21.41/42d55677d60bfd6ea2394e6a4485179b45333389}
     dependencies:
       '@avro/types': 1.0.25
-      '@opvious/stl-errors': 0.21.40
+      '@opvious/stl-errors': 0.21.41
       change-case: 4.1.2
       fast-deep-equal: 3.1.3
       inlinable-runtime: 0.2.6
@@ -1190,8 +1195,8 @@ packages:
     resolution: {integrity: sha512-EEhsLsD6UsDM1yFhAvy0Cjr6VwmpMWqFBCb9w07wVugF7w9nfajxLuVmngTIpgS6svCnm6Vaw+MZhoDCKnOfsw==}
     dev: true
 
-  /@types/semver@7.5.0:
-    resolution: {integrity: sha512-G8hZ6XJiHnuhQKR7ZmysCeJWE08o8T0AXtk5darsCaTVsYZhhgUrq53jizaR2FvsoeCwJhlmwTjkXBY5Pn/ZHw==}
+  /@types/semver@7.5.1:
+    resolution: {integrity: sha512-cJRQXpObxfNKkFAZbJl2yjWtJCqELQIdShsogr1d2MilP8dKD9TE/nEKHkJgUNHdGKCQaf9HbIynuV2csLGVLg==}
     dev: true
 
   /@types/serve-static@1.15.0:
@@ -1218,8 +1223,8 @@ packages:
       '@types/webidl-conversions': 7.0.0
     dev: true
 
-  /@typescript-eslint/eslint-plugin@6.4.0(@typescript-eslint/parser@6.4.0)(eslint@8.47.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-62o2Hmc7Gs3p8SLfbXcipjWAa6qk2wZGChXG2JbBtYpwSRmti/9KHLqfbLs9uDigOexG+3PaQ9G2g3201FWLKg==}
+  /@typescript-eslint/eslint-plugin@6.6.0(@typescript-eslint/parser@6.6.0)(eslint@8.47.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-CW9YDGTQnNYMIo5lMeuiIG08p4E0cXrXTbcZ2saT/ETE7dWUrNxlijsQeU04qAAKkILiLzdQz+cGFxCJjaZUmA==}
     engines: {node: ^16.0.0 || >=18.0.0}
     peerDependencies:
       '@typescript-eslint/parser': ^6.0.0 || ^6.0.0-alpha
@@ -1229,12 +1234,12 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.6.2
-      '@typescript-eslint/parser': 6.4.0(eslint@8.47.0)(typescript@5.2.2)
-      '@typescript-eslint/scope-manager': 6.4.0
-      '@typescript-eslint/type-utils': 6.4.0(eslint@8.47.0)(typescript@5.2.2)
-      '@typescript-eslint/utils': 6.4.0(eslint@8.47.0)(typescript@5.2.2)
-      '@typescript-eslint/visitor-keys': 6.4.0
+      '@eslint-community/regexpp': 4.8.0
+      '@typescript-eslint/parser': 6.6.0(eslint@8.47.0)(typescript@5.2.2)
+      '@typescript-eslint/scope-manager': 6.6.0
+      '@typescript-eslint/type-utils': 6.6.0(eslint@8.47.0)(typescript@5.2.2)
+      '@typescript-eslint/utils': 6.6.0(eslint@8.47.0)(typescript@5.2.2)
+      '@typescript-eslint/visitor-keys': 6.6.0
       debug: 4.3.4(supports-color@9.3.1)
       eslint: 8.47.0
       graphemer: 1.4.0
@@ -1247,8 +1252,8 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/parser@6.4.0(eslint@8.47.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-I1Ah1irl033uxjxO9Xql7+biL3YD7w9IU8zF+xlzD/YxY6a4b7DYA08PXUUCbm2sEljwJF6ERFy2kTGAGcNilg==}
+  /@typescript-eslint/parser@6.6.0(eslint@8.47.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-setq5aJgUwtzGrhW177/i+DMLqBaJbdwGj2CPIVFFLE0NCliy5ujIdLHd2D1ysmlmsjdL2GWW+hR85neEfc12w==}
     engines: {node: ^16.0.0 || >=18.0.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0
@@ -1257,10 +1262,10 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/scope-manager': 6.4.0
-      '@typescript-eslint/types': 6.4.0
-      '@typescript-eslint/typescript-estree': 6.4.0(typescript@5.2.2)
-      '@typescript-eslint/visitor-keys': 6.4.0
+      '@typescript-eslint/scope-manager': 6.6.0
+      '@typescript-eslint/types': 6.6.0
+      '@typescript-eslint/typescript-estree': 6.6.0(typescript@5.2.2)
+      '@typescript-eslint/visitor-keys': 6.6.0
       debug: 4.3.4(supports-color@9.3.1)
       eslint: 8.47.0
       typescript: 5.2.2
@@ -1268,16 +1273,16 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/scope-manager@6.4.0:
-    resolution: {integrity: sha512-TUS7vaKkPWDVvl7GDNHFQMsMruD+zhkd3SdVW0d7b+7Zo+bd/hXJQ8nsiUZMi1jloWo6c9qt3B7Sqo+flC1nig==}
+  /@typescript-eslint/scope-manager@6.6.0:
+    resolution: {integrity: sha512-pT08u5W/GT4KjPUmEtc2kSYvrH8x89cVzkA0Sy2aaOUIw6YxOIjA8ilwLr/1fLjOedX1QAuBpG9XggWqIIfERw==}
     engines: {node: ^16.0.0 || >=18.0.0}
     dependencies:
-      '@typescript-eslint/types': 6.4.0
-      '@typescript-eslint/visitor-keys': 6.4.0
+      '@typescript-eslint/types': 6.6.0
+      '@typescript-eslint/visitor-keys': 6.6.0
     dev: true
 
-  /@typescript-eslint/type-utils@6.4.0(eslint@8.47.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-TvqrUFFyGY0cX3WgDHcdl2/mMCWCDv/0thTtx/ODMY1QhEiyFtv/OlLaNIiYLwRpAxAtOLOY9SUf1H3Q3dlwAg==}
+  /@typescript-eslint/type-utils@6.6.0(eslint@8.47.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-8m16fwAcEnQc69IpeDyokNO+D5spo0w1jepWWY2Q6y5ZKNuj5EhVQXjtVAeDDqvW6Yg7dhclbsz6rTtOvcwpHg==}
     engines: {node: ^16.0.0 || >=18.0.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0
@@ -1286,8 +1291,8 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/typescript-estree': 6.4.0(typescript@5.2.2)
-      '@typescript-eslint/utils': 6.4.0(eslint@8.47.0)(typescript@5.2.2)
+      '@typescript-eslint/typescript-estree': 6.6.0(typescript@5.2.2)
+      '@typescript-eslint/utils': 6.6.0(eslint@8.47.0)(typescript@5.2.2)
       debug: 4.3.4(supports-color@9.3.1)
       eslint: 8.47.0
       ts-api-utils: 1.0.2(typescript@5.2.2)
@@ -1296,13 +1301,13 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/types@6.4.0:
-    resolution: {integrity: sha512-+FV9kVFrS7w78YtzkIsNSoYsnOtrYVnKWSTVXoL1761CsCRv5wpDOINgsXpxD67YCLZtVQekDDyaxfjVWUJmmg==}
+  /@typescript-eslint/types@6.6.0:
+    resolution: {integrity: sha512-CB6QpJQ6BAHlJXdwUmiaXDBmTqIE2bzGTDLADgvqtHWuhfNP3rAOK7kAgRMAET5rDRr9Utt+qAzRBdu3AhR3sg==}
     engines: {node: ^16.0.0 || >=18.0.0}
     dev: true
 
-  /@typescript-eslint/typescript-estree@6.4.0(typescript@5.2.2):
-    resolution: {integrity: sha512-iDPJArf/K2sxvjOR6skeUCNgHR/tCQXBsa+ee1/clRKr3olZjZ/dSkXPZjG6YkPtnW6p5D1egeEPMCW6Gn4yLA==}
+  /@typescript-eslint/typescript-estree@6.6.0(typescript@5.2.2):
+    resolution: {integrity: sha512-hMcTQ6Al8MP2E6JKBAaSxSVw5bDhdmbCEhGW/V8QXkb9oNsFkA4SBuOMYVPxD3jbtQ4R/vSODBsr76R6fP3tbA==}
     engines: {node: ^16.0.0 || >=18.0.0}
     peerDependencies:
       typescript: '*'
@@ -1310,8 +1315,8 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/types': 6.4.0
-      '@typescript-eslint/visitor-keys': 6.4.0
+      '@typescript-eslint/types': 6.6.0
+      '@typescript-eslint/visitor-keys': 6.6.0
       debug: 4.3.4(supports-color@9.3.1)
       globby: 11.1.0
       is-glob: 4.0.3
@@ -1322,18 +1327,18 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/utils@6.4.0(eslint@8.47.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-BvvwryBQpECPGo8PwF/y/q+yacg8Hn/2XS+DqL/oRsOPK+RPt29h5Ui5dqOKHDlbXrAeHUTnyG3wZA0KTDxRZw==}
+  /@typescript-eslint/utils@6.6.0(eslint@8.47.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-mPHFoNa2bPIWWglWYdR0QfY9GN0CfvvXX1Sv6DlSTive3jlMTUy+an67//Gysc+0Me9pjitrq0LJp0nGtLgftw==}
     engines: {node: ^16.0.0 || >=18.0.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.47.0)
       '@types/json-schema': 7.0.12
-      '@types/semver': 7.5.0
-      '@typescript-eslint/scope-manager': 6.4.0
-      '@typescript-eslint/types': 6.4.0
-      '@typescript-eslint/typescript-estree': 6.4.0(typescript@5.2.2)
+      '@types/semver': 7.5.1
+      '@typescript-eslint/scope-manager': 6.6.0
+      '@typescript-eslint/types': 6.6.0
+      '@typescript-eslint/typescript-estree': 6.6.0(typescript@5.2.2)
       eslint: 8.47.0
       semver: 7.5.4
     transitivePeerDependencies:
@@ -1341,11 +1346,11 @@ packages:
       - typescript
     dev: true
 
-  /@typescript-eslint/visitor-keys@6.4.0:
-    resolution: {integrity: sha512-yJSfyT+uJm+JRDWYRYdCm2i+pmvXJSMtPR9Cq5/XQs4QIgNoLcoRtDdzsLbLsFM/c6um6ohQkg/MLxWvoIndJA==}
+  /@typescript-eslint/visitor-keys@6.6.0:
+    resolution: {integrity: sha512-L61uJT26cMOfFQ+lMZKoJNbAEckLe539VhTxiGHrWl5XSKQgA0RTBZJW2HFPy5T0ZvPVSD93QsrTKDkfNwJGyQ==}
     engines: {node: ^16.0.0 || >=18.0.0}
     dependencies:
-      '@typescript-eslint/types': 6.4.0
+      '@typescript-eslint/types': 6.6.0
       eslint-visitor-keys: 3.4.3
     dev: true
 
@@ -2014,7 +2019,7 @@ packages:
       eslint: 8.47.0
     dev: true
 
-  /eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.4.0)(eslint@8.47.0):
+  /eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.6.0)(eslint@8.47.0):
     resolution: {integrity: sha512-sduiswLJfZHeeBJ+MQaG+xYzSWdRXoSw61DpU13mzWumCkR0ufD0HmO4kdNokjrkluMHpj/7PJeN35pgbhW3kw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -2024,7 +2029,7 @@ packages:
       '@typescript-eslint/eslint-plugin':
         optional: true
     dependencies:
-      '@typescript-eslint/eslint-plugin': 6.4.0(@typescript-eslint/parser@6.4.0)(eslint@8.47.0)(typescript@5.2.2)
+      '@typescript-eslint/eslint-plugin': 6.6.0(@typescript-eslint/parser@6.6.0)(eslint@8.47.0)(typescript@5.2.2)
       eslint: 8.47.0
       eslint-rule-composer: 0.3.0
     dev: true
@@ -2536,8 +2541,8 @@ packages:
     resolution: {integrity: sha512-RXCmZkaAwV9+cryXyf2kpv5P0I+84FFrMCKy5VaejQuqNSlaAkxFbcwu+tKkS+/LiV93+1aePJUxbD5Q16B3Dw==}
     hasBin: true
     dependencies:
-      '@opvious/stl-errors': 0.21.40
-      '@opvious/stl-utils': 0.21.40
+      '@opvious/stl-errors': 0.21.41
+      '@opvious/stl-utils': 0.21.41
       acorn: 8.10.0
       ast-types: 0.14.2
       commander: 10.0.0

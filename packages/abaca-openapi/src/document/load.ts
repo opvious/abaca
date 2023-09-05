@@ -178,6 +178,7 @@ class Embedder {
           assert(YAML.isMap(node), 'Unexpected embedded node: %j', node);
           this.embed(doc, node, values);
         }
+        this.embeddings.delete(id);
       },
     });
   }
@@ -187,7 +188,10 @@ class Embedder {
     src: YAML.YAMLMap,
     values: ReadonlySet<string>
   ): void {
-    const defs = src.get('$defs');
+    let defs = src.get('$defs');
+    if (YAML.isAlias(defs)) {
+      defs = defs.resolve(doc);
+    }
     assert(YAML.isMap(defs), 'Unexpected definitions: %j', defs);
 
     for (const pair of defs.items) {

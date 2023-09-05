@@ -1,6 +1,6 @@
 {
   "name": "abaca",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "repository": "github:opvious/abaca",
   "description": "OpenAPI SDK generator with strong type guarantees and minimal boilerplate",
   "keywords": [
@@ -38,9 +38,9 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-bootstrap": "^0.21.40",
-    "@opvious/stl-errors": "^0.21.40",
-    "@opvious/stl-utils": "^0.21.40",
+    "@opvious/stl-bootstrap": "^0.21.41",
+    "@opvious/stl-errors": "^0.21.41",
+    "@opvious/stl-utils": "^0.21.41",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "commander": "^10.0.0",
