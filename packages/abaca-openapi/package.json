@@ -26,9 +26,9 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.21.40",
-    "@opvious/stl-telemetry": "^0.21.40",
-    "@opvious/stl-utils": "^0.21.40",
+    "@opvious/stl-errors": "^0.21.41",
+    "@opvious/stl-telemetry": "^0.21.41",
+    "@opvious/stl-utils": "^0.21.41",
     "@stoplight/json-ref-resolver": "^3.1.5",
     "abaca-runtime": "workspace:*",
     "ajv": "^8.12.0",
