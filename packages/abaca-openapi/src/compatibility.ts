@@ -6,12 +6,12 @@ import {
   statusError,
 } from '@opvious/stl-errors';
 import {ifPresent} from '@opvious/stl-utils/functions';
-import {default as ajv, ErrorObject, ValidateFunction} from 'ajv';
+import Ajv_, {ErrorObject, ValidateFunction} from 'ajv';
 
 import {OpenapiDocument} from './document/index.js';
 
-type Ajv = ajv.default;
-const Ajv = ajv.default ?? ajv;
+const Ajv = Ajv_.default ?? Ajv_;
+type Ajv = Ajv_.default;
 
 const [errors, codes] = errorFactories({
   definitions: {
@@ -37,6 +37,7 @@ export function schemaCompatibilityPredicates<
   S,
   N extends keyof S & string
 >(args: {
+  /** OpenAPI specification. Only inline references are supported */
   readonly document: OpenapiDocument<S>;
   /**
    * Schema names for which to generate predicates. By default all schemas are
@@ -77,6 +78,8 @@ export interface CompatibilityPredicate<V> {
   readonly errors?: ReadonlyArray<ErrorObject> | null;
 }
 
+const DOCUMENT_ID = 'file:///openapi.yaml';
+
 class RealSchemaCompatibilityChecker<S>
   implements SchemaCompatibilityChecker<S>
 {
@@ -86,7 +89,9 @@ class RealSchemaCompatibilityChecker<S>
   ) {}
 
   static create<S>(doc: OpenapiDocument): SchemaCompatibilityChecker<S> {
-    return new RealSchemaCompatibilityChecker(doc, new Ajv());
+    const ajv = new Ajv({strict: false});
+    ajv.addSchema(doc, DOCUMENT_ID);
+    return new RealSchemaCompatibilityChecker(doc, ajv);
   }
 
   predicates<N extends keyof S & string>(
@@ -104,7 +109,8 @@ class RealSchemaCompatibilityChecker<S>
     let fn = this.ajv.getSchema(name);
     if (!fn) {
       const schema = documentSchemas(this.document)[name];
-      this.ajv.addSchema(schema, name);
+      const ref = `${DOCUMENT_ID}#/components/schemas/${name}`;
+      this.ajv.addSchema({$ref: ref}, name);
       fn = this.ajv.getSchema(name);
       assert(fn, 'Missing validation function for %s', name);
     }
