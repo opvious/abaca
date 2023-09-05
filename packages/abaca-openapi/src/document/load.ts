@@ -100,32 +100,43 @@ export async function resolveOpenapiDocument<
   // potentially handle embeddings. We use a YAML document to mutate the tree
   // since shared nodes are otherwise frozen. The parser is smart enough to
   // respect identical nodes.
-  const doc = new YAML.Document(resolved);
+  const doc = new YAML.Document({$defs: {}, ...resolved});
 
-  // We now add embedded nodes if any.
+  // We now add embedded nodes if any. We first need to hoist all anchors to the
+  // beginning of the document so that we can safely embed definitions which may
+  // otherwise appear out of order.
+  YAML.visit(doc.contents, {
+    Node: (_key, node) => {
+      if (node instanceof YAML.Alias || node.anchor == null) {
+        return undefined;
+      }
+      const {anchor} = node;
+      doc.setIn(['$defs', anchor], node);
+      return new YAML.Alias(anchor);
+    },
+  });
   embedder.embedSchemas(doc);
   tel.logger.debug('Processed embeddings.');
 
   // Transform aliases into component references where possible. This leads to
   // more robust deduplication and speeds up the following step.
+  // TODO: Consolidate more than just aliases since these do not cover all
+  // identical nodes, in particular top-level resolved references are never
+  // aliased (likely because the resolver library swaps the raw nodes to resolve
+  // inner references).
   const consolidator = new Consolidator(doc);
   consolidator.consolidate();
   tel.logger.debug('Consolidated aliases.');
 
-  // Strip special keys (in particular `$defs` and `$id`).
-  YAML.visit(doc.contents, {
-    Pair: (_key, pair) => {
-      const key = (pair.key as any)?.value;
-      return typeof key == 'string' && key.startsWith('$')
-        ? YAML.visit.REMOVE
-        : undefined;
-    },
-  });
-  tel.logger.debug('Stripped special keys.');
-
   // Note: this step is slow. Currently suspecting it is due to the aliases
   // which traverse the tree each time to `resolve` themselves.
-  const stripped = doc.toJS({maxAliasCount: -1});
+  const {$defs: _defs, ...stripped} = doc.toJS({
+    maxAliasCount: -1,
+    reviver: (key, val) =>
+      typeof key == 'string' && key.startsWith('$') && key !== '$ref'
+        ? undefined
+        : val,
+  });
   tel.logger.debug('Generated stripped document.');
 
   // Check the schema again now that all references have been resolved
@@ -228,7 +239,7 @@ class Consolidator {
   consolidate(): void {
     const components = this.aliasedComponents();
     const consolidated = new Set<string>();
-    YAML.visit(this.document, {
+    YAML.visit(this.document.contents, {
       Node: (_key, node, ancestors) => {
         const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
         if (anchor == null) {
@@ -261,7 +272,7 @@ class Consolidator {
   private aliasedComponents(): ReadonlyMap<string, AliasedComponent> {
     const aliased = new Map<string, YAML.Node>();
     const ret = new Map<string, AliasedComponent>();
-    YAML.visit(this.document, {
+    YAML.visit(this.document.contents, {
       Node: (_key, node, ancestors) => {
         const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
         if (anchor == null) {
@@ -294,13 +305,13 @@ const COMPONENTS_KEY = 'components';
 function componentPointer(
   ancestors: ReadonlyArray<unknown>
 ): JsonPointer | undefined {
-  if (ancestors.length !== 7 || pairKey(ancestors[2]) !== COMPONENTS_KEY) {
+  if (ancestors.length !== 6 || pairKey(ancestors[1]) !== COMPONENTS_KEY) {
     return undefined;
   }
-  const subsection = pairKey(ancestors[4]);
-  assert(subsection != null, 'Missing subsection in %j', ancestors[4]);
-  const name = pairKey(ancestors[6]);
-  assert(name != null, 'Missing name in %j', ancestors[6]);
+  const subsection = pairKey(ancestors[3]);
+  assert(subsection != null, 'Missing subsection in %j', ancestors[3]);
+  const name = pairKey(ancestors[5]);
+  assert(name != null, 'Missing name in %j', ancestors[5]);
   return createPointer([COMPONENTS_KEY, subsection, name]);
 }
 
