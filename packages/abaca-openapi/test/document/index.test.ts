@@ -80,7 +80,7 @@ describe('load OpenAPI document', () => {
   });
 
   test('consolidates complex aliases', async () => {
-    const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
+    await sut.loadOpenapiDocument({
       loader: loader.scoped('document/resources/consolidated'),
       telemetry,
     });
