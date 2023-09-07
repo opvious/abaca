@@ -1,0 +1,15 @@
+$id: resource://abaca-openapi/schemas/start-attempt-request.yaml
+type: object
+required: [candidate]
+properties:
+  candidate:
+    $ref: solve-candidate.yaml
+$defs:
+  JsonResponse:
+    type: object
+    required: [uuid, expiresAt]
+    properties:
+      uuid:
+        type: string
+      expiresAt:
+        type: string

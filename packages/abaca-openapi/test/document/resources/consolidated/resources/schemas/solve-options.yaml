@@ -1,0 +1,38 @@
+$id: resource://abaca-openapi/schemas/solve-options.yaml
+type: object
+properties:
+  relativeGapThreshold:
+    description: |
+      Relative gap threshold at which to consider a solution optimal
+    type: number
+  absoluteGapThreshold:
+    description: |
+      Absolute gap threshold at which to consider a solution optimal
+    type: number
+  timeoutMillis:
+    description: |
+      Upper bound on solving time. Note that the overall attempt time may
+      be greater due to processing outside of the solve itself.
+    type: number
+  zeroValueThreshold:
+    description: |
+      Positive magnitude below which values will be assumed equal to
+      zero. This is also used on solution results, causing values to be
+      omitted from the solution if their dual value is also absent. It is
+      finally used as threshold for rounding integral variables to the
+      nearest integer. The default is 1e-6.
+    type: number
+  infinityValueThreshold:
+    description: |
+      Positive magnitude used to cap all input values. It is illegal for
+      the reified problem to include coefficients higher or equal to this
+      value so the input needs to be such that they are masked out during
+      reification. The default is 1e13.
+    type: number
+  freeBoundThreshold:
+    description: |
+      Positive magnitude used to decide whether a bound is free. This
+      value should typically be slightly smaller to the infinity value
+      threshold to allow for small offsets to infinite values. The
+      default is 1e12.
+    type: number
