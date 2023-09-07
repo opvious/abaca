@@ -238,7 +238,6 @@ class Consolidator {
   /** Mutates the consolidator's document, transforming aliases */
   consolidate(): void {
     const components = this.aliasedComponents();
-    const consolidated = new Set<string>();
     YAML.visit(this.document.contents, {
       Alias: (_key, alias, ancestors) => {
         const anchor = alias.source;
@@ -247,20 +246,13 @@ class Consolidator {
           // This anchor does not have a corresponding component
           return undefined;
         }
-        if (componentPointer(ancestors) != null) {
-          // This is the component's definition
-          if (consolidated.has(anchor)) {
-            // We already replaced the definition. This is used to avoid
-            // infinite recursion when visiting the node which was just used as
-            // replacement.
-            return undefined;
-          }
-          consolidated.add(anchor);
-          return component.alias;
+        const ptr = componentPointer(ancestors);
+        if (ptr == null) {
+          const ref = new YAML.YAMLMap();
+          ref.set('$ref', component.reference);
+          return ref;
         }
-        const ref = new YAML.YAMLMap();
-        ref.set('$ref', component.reference);
-        return ref;
+        return undefined;
       },
     });
   }
