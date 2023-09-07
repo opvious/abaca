@@ -240,11 +240,8 @@ class Consolidator {
     const components = this.aliasedComponents();
     const consolidated = new Set<string>();
     YAML.visit(this.document.contents, {
-      Node: (_key, node, ancestors) => {
-        const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
-        if (anchor == null) {
-          return undefined;
-        }
+      Alias: (_key, alias, ancestors) => {
+        const anchor = alias.source;
         const component = components.get(anchor);
         if (!component) {
           // This anchor does not have a corresponding component
@@ -259,7 +256,7 @@ class Consolidator {
             return undefined;
           }
           consolidated.add(anchor);
-          return component.value;
+          return component.alias;
         }
         const ref = new YAML.YAMLMap();
         ref.set('$ref', component.reference);
@@ -270,29 +267,13 @@ class Consolidator {
 
   /** Returns aliases which are created or referenced from a component */
   private aliasedComponents(): ReadonlyMap<string, AliasedComponent> {
-    const aliased = new Map<string, YAML.Node>();
     const ret = new Map<string, AliasedComponent>();
     YAML.visit(this.document.contents, {
-      Node: (_key, node, ancestors) => {
-        const anchor = node instanceof YAML.Alias ? node.source : node.anchor;
-        if (anchor == null) {
-          // Not an alias or aliased node
-          return undefined;
-        }
-        if (node.anchor != null) {
-          // Aliased node
-          assert(!(node instanceof YAML.Alias), 'Aliased alias %j', node);
-          assert(!aliased.has(node.anchor), 'Duplicate alias %s', node.anchor);
-          aliased.set(node.anchor, node);
-        }
+      Alias: (_key, alias, ancestors) => {
         const pointer = componentPointer(ancestors);
-        if (pointer == null) {
-          // Not a top-level component
-          return undefined;
+        if (pointer != null) {
+          ret.set(alias.source, {reference: '#' + pointer, alias});
         }
-        const value = aliased.get(anchor);
-        assert(value != null, 'Missing value for alias %s', node.anchor);
-        ret.set(anchor, {reference: '#' + pointer, value});
         return undefined;
       },
     });
@@ -327,5 +308,5 @@ function pairKey(node: unknown): string | undefined {
 
 interface AliasedComponent {
   readonly reference: string;
-  readonly value: YAML.Node;
+  readonly alias: YAML.Alias;
 }

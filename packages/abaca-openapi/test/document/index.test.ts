@@ -66,7 +66,7 @@ describe('load OpenAPI document', () => {
     });
   });
 
-  test('consolidates aliases', async () => {
+  test('consolidates simple aliases', async () => {
     const documentLoader = loader.scoped('document');
     const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
       path: documentLoader.localUrl('references.openapi.yaml'),
@@ -77,5 +77,12 @@ describe('load OpenAPI document', () => {
     expect(res.content['application/json'].schema.$ref).toEqual(
       '#/components/schemas/Table'
     );
+  });
+
+  test('consolidates complex aliases', async () => {
+    const doc: sut.OpenapiDocument<number> = await sut.loadOpenapiDocument({
+      loader: loader.scoped('document/resources/consolidated'),
+      telemetry,
+    });
   });
 });
