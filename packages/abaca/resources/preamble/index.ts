@@ -263,7 +263,7 @@ type SdkFunction<
     ) => Output<O, F, Exact<I, X> extends never ? X : {}>
   : <X extends I>(args: X & NeverAdditional<I, X>) => Output<O, F, X>;
 
-type NeverAdditional<I, X> = I extends boolean | number | string
+type NeverAdditional<I, X> = I extends boolean | null | number | string
   ? I
   : unknown extends I
   ? unknown
