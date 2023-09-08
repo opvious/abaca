@@ -250,7 +250,7 @@ async function generateTypes(args: {
     transform(schema, opts) {
       const gen = streamed.get(opts.path);
       if (gen) {
-        return `Streamed<${gen}>`;
+        return `Asyncify<${gen}>`;
       }
       if (!('type' in schema)) {
         return undefined;
