@@ -7,7 +7,7 @@ export type SdkConfig<
 > = Optional<SdkConfigFor<operations, F>, 'address'>;
 
 export function createSdk<
-  F extends BaseFetch = typeof fetch
+  F extends BaseFetch
 >(arg?: Address | SdkConfig<F>): Sdk<F> {
   const config =
     typeof arg == 'string' || arg instanceof URL || (arg && 'port' in arg)
