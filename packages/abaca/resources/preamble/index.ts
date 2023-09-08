@@ -279,7 +279,7 @@ type NeverAdditional<I, X> = I extends boolean | null | number | string
 
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch
+  F extends BaseFetch
 >(
   operations: OperationDefinitions<O>,
   config: SdkConfigFor<O, F>
