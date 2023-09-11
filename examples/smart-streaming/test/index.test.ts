@@ -24,7 +24,7 @@ afterAll(() => {
   server.close();
 });
 
-describe('on-demand streaming', () => {
+describe('smart streaming', () => {
   const messages = [{contents: 'hi'}, {contents: 'there'}];
 
   test('unary', async () => {

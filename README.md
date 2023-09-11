@@ -9,8 +9,8 @@ __minimal boilerplate__.
 
 + Exports __dependency-free, single-file client SDKs__ with a tiny runtime
   footprint
-+ Handles [form and file uploads](/examples/forms-and-files), [on-demand
-  streaming](/examples/on-demand-streaming), [content-type
++ Handles [form and file uploads](/examples/forms-and-files), [smart
+  streaming](/examples/smart-streaming), [content-type
   switching](/examples/content-types), and more
 + Supports both native and custom `fetch` implementations
 + Provides [Koa][] integrations for server routing and proxying
@@ -20,8 +20,8 @@ __minimal boilerplate__.
 
 At [Opvious][], we use OpenAPI to describe both our public and internal APIs. To
 provide a great experience for our users, we support granular response codes and
-a variety of content-types. For example we provide [on-demand
-streaming](examples/on-demand-streaming) when solving optimization models,
+a variety of content-types. For example we provide [smart
+streaming](examples/smart-streaming) when solving optimization models,
 sending results back to clients as early as possible.
 
 We tried various TypeScript SDK generator libraries (see the
@@ -79,7 +79,7 @@ handles various use-cases:
 
 + [JSON API](/examples/json)
 + [Form and file uploads](/examples/forms-and-files)
-+ [On-demand streaming](/examples/on-demand-streaming)
++ [Smart streaming](/examples/smart-streaming)
 + [Content-type switching](/examples/content-types)
 
 
