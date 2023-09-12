@@ -82,7 +82,10 @@ export async function resolveOpenapiDocument<
         for (const [key, val] of r.url.searchParams) {
           switch (key) {
             case QueryKey.EMBED: {
-              assert(!r.parents.length, 'Nested embedding: %s', r.url);
+              if (r.parents.length) {
+                // Embedding inside imported file, we ignore.
+                break;
+              }
               assert(r.result.$defs, 'No definitions to embed in %s', r.url);
               embedder.register(id, val);
               break;
