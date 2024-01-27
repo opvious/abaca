@@ -1,6 +1,6 @@
 {
   "name": "@opvious/abaca-packages",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "private": true,
   "repository": "github:opvious/abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -13,9 +13,9 @@
     "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in examples/* packages/*; do if [ -d \"$p/out/coverage\" ]; then cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; fi; done"
   },
   "devDependencies": {
-    "@opvious/eslint-plugin": "^0.1.26",
-    "@opvious/prettier-typescript": "^0.1.26",
-    "@opvious/tsconfig": "^0.1.26",
+    "@opvious/eslint-plugin": "^0.1.28",
+    "@opvious/prettier-typescript": "^0.1.28",
+    "@opvious/tsconfig": "^0.1.28",
     "@types/node": "^18.8.5",
     "@vitest/coverage-v8": "^0.34.2",
     "eslint": "^8.47.0",

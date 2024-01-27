@@ -1,6 +1,6 @@
 {
   "name": "abaca-koa",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "repository": "github:opvious/abaca",
   "description": "Abaca Koa integrations",
   "keywords": [
@@ -29,16 +29,16 @@
     "gen-test-snippets": "abaca g test/resources/snippets.openapi.yaml -o test/snippets-sdk.gen.ts --generate-ids",
     "gen-test-tables": "abaca g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables && tsc -b test",
-    "prepare": "pnpm run build && inlinable e",
+    "prepare": "pnpm run build && inlinable r",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
     "@koa/router": "^10.1.1",
     "@opentelemetry/api": "~1.4.1",
-    "@opvious/stl-errors": "^0.22.4",
-    "@opvious/stl-telemetry": "^0.22.4",
-    "@opvious/stl-utils": "^0.22.4",
+    "@opvious/stl-errors": "^0.22.18",
+    "@opvious/stl-telemetry": "^0.22.18",
+    "@opvious/stl-utils": "^0.22.18",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "ajv": "^8.12.0",
@@ -60,7 +60,7 @@
     "@types/qs": "^6.9.8",
     "abaca": "workspace:*",
     "abaca-codecs": "workspace:*",
-    "inlinable": "^0.2.7",
+    "inlinable": "^0.3.2",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
     "node-fetch": "^3.3.1",

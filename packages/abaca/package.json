@@ -1,6 +1,6 @@
 {
   "name": "abaca",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "repository": "github:opvious/abaca",
   "description": "OpenAPI SDK generator with strong type guarantees and minimal boilerplate",
   "keywords": [
@@ -33,14 +33,15 @@
     "gen-test-snippets": "./bin/abaca.js g test/resources/snippets.openapi.yaml -o test/snippets-sdk.gen.ts --generate-ids",
     "gen-test-tables": "./bin/abaca.js g test/resources/tables.openapi.yaml -o test/tables-sdk.gen.ts --strict-additional-properties",
     "gen-test": "pnpm run gen-test-pets && pnpm run gen-test-snippets && pnpm run gen-test-tables && tsc -b test",
-    "prepare": "pnpm run gen-preamble && pnpm run build && inlinable e",
+    "prepare": "pnpm run gen-preamble && pnpm run build && inlinable r",
     "test": "pnpm run gen-test && vitest",
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-bootstrap": "^0.22.4",
-    "@opvious/stl-errors": "^0.22.4",
-    "@opvious/stl-utils": "^0.22.4",
+    "@opentelemetry/api": "~1.4.1",
+    "@opvious/stl-bootstrap": "^0.22.18",
+    "@opvious/stl-errors": "^0.22.18",
+    "@opvious/stl-utils": "^0.22.18",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "commander": "^10.0.0",
@@ -54,7 +55,7 @@
     "@koa/router": "^10.1.1",
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
-    "inlinable": "^0.2.7",
+    "inlinable": "^0.3.2",
     "koa": "^2.13.1",
     "koa-body": "^6.0.1",
     "ts-essentials": "^9.3.0"
