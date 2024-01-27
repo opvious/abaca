@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-forms-and-files",
   "private": true,
-  "version": "0.10.10",
+  "version": "0.10.11",
   "repository": "github:opvious/abaca",
   "description": "Form submission example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -22,7 +22,7 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.22.4",
+    "@opvious/stl-errors": "^0.22.18",
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*"
   },
@@ -30,6 +30,6 @@
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
     "abaca": "workspace:*",
-    "koa": "^2.13.1"
+    "koa": "^2.15.0"
   }
 }

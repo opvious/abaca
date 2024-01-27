@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-content-types",
   "private": true,
-  "version": "0.10.10",
+  "version": "0.10.11",
   "repository": "github:opvious/abaca",
   "description": "Multi content-type example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -29,6 +29,6 @@
     "@types/koa": "^2.13.1",
     "@types/koa__router": "^8.0.11",
     "abaca": "workspace:*",
-    "koa": "^2.13.1"
+    "koa": "^2.15.0"
   }
 }
