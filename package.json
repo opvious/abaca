@@ -1,6 +1,6 @@
 {
   "name": "@opvious/abaca-packages",
-  "version": "0.10.11",
+  "version": "0.10.12",
   "private": true,
   "repository": "github:opvious/abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -18,14 +18,14 @@
     "@opvious/prettier-typescript": "^0.1.28",
     "@opvious/tsconfig": "^0.1.28",
     "@types/node": "^18.8.5",
-    "@vitest/coverage-v8": "^1.2.2",
+    "@vitest/coverage-v8": "^1.6.0",
     "eslint": "^8.47.0",
-    "husky": "^7.0.4",
-    "lint-staged": "^12.1.4",
-    "prettier": "^2.6.1",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.5",
+    "prettier": "^3.2.5",
     "ts-essentials": "^9.3.0",
     "typescript": "^5.2.2",
-    "vitest": "^1.2.2"
+    "vitest": "^1.6.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
