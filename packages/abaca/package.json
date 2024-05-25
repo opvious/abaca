@@ -1,6 +1,6 @@
 {
   "name": "abaca",
-  "version": "0.10.12",
+  "version": "0.10.13",
   "repository": "github:opvious/abaca",
   "description": "OpenAPI SDK generator with strong type guarantees and minimal boilerplate",
   "keywords": [
