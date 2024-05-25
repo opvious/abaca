@@ -1,6 +1,10 @@
 {
   "name": "abaca-koa",
+<<<<<<< HEAD
   "version": "0.10.2",
+=======
+  "version": "0.10.11",
+>>>>>>> origin/main
   "repository": "github:opvious/abaca",
   "description": "Abaca Koa integrations",
   "keywords": [
@@ -35,10 +39,17 @@
   },
   "dependencies": {
     "@koa/router": "^12.0.1",
+<<<<<<< HEAD
     "@opentelemetry/api": "~1.8.0",
     "@opvious/stl-errors": "^0.22.24",
     "@opvious/stl-telemetry": "^0.22.24",
     "@opvious/stl-utils": "^0.22.24",
+=======
+    "@opentelemetry/api": "~1.4.1",
+    "@opvious/stl-errors": "^0.22.18",
+    "@opvious/stl-telemetry": "^0.22.18",
+    "@opvious/stl-utils": "^0.22.18",
+>>>>>>> origin/main
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "ajv": "^8.12.0",
@@ -60,8 +71,13 @@
     "@types/qs": "^6.9.8",
     "abaca": "workspace:*",
     "abaca-codecs": "workspace:*",
+<<<<<<< HEAD
     "inlinable": "^0.3.3",
     "koa": "^2.15.3",
+=======
+    "inlinable": "^0.3.2",
+    "koa": "^2.15.0",
+>>>>>>> origin/main
     "koa-body": "^6.0.1",
     "node-fetch": "^3.3.1",
     "qs": "^6.11.2"

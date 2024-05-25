@@ -260,10 +260,10 @@ type SdkFunction<
 > = {} extends I
   ? <X extends I = I>(
       args?: X & NeverAdditional<I, X>
-    ) => Output<O, F, Exact<I, X> extends never ? X : {}>
-  : <X extends I>(args: X & NeverAdditional<I, X>) => Output<O, F, X>;
+    ) => Promise<Output<O, F, Exact<I, X> extends never ? X : {}>>
+  : <X extends I>(args: X & NeverAdditional<I, X>) => Promise<Output<O, F, X>>;
 
-type NeverAdditional<I, X> = I extends boolean | number | string
+type NeverAdditional<I, X> = I extends boolean | null | number | string
   ? I
   : unknown extends I
   ? unknown
@@ -279,7 +279,7 @@ type NeverAdditional<I, X> = I extends boolean | number | string
 
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch
+  F extends BaseFetch
 >(
   operations: OperationDefinitions<O>,
   config: SdkConfigFor<O, F>

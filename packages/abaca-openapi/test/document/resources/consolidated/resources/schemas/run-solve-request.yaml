@@ -1,0 +1,101 @@
+$id: resource://abaca-openapi/schemas/run-solve-request.yaml
+type: object
+required: [candidate]
+properties:
+  candidate:
+    $ref: solve-candidate.yaml
+$defs:
+  JsonResponse:
+    type: object
+    required: [outcome, summary]
+    properties:
+      outcome:
+        $ref: solve-outcome.yaml
+      summary:
+        $ref: solve-summary.yaml
+      outputs:
+        $ref: solve-outputs.yaml
+  JsonSeqResponse:
+    anyOf:
+      - type: object
+        required: [kind, progress]
+        properties:
+          kind:
+            type: string
+            enum: [reifying]
+          progress:
+            $ref: '#/$defs/ReifyProgress'
+      - type: object
+        required: [kind, summary]
+        properties:
+          kind:
+            type: string
+            enum: [reified]
+          summary:
+            $ref: solve-summary.yaml
+      - type: object
+        required: [kind, progress]
+        properties:
+          kind:
+            type: string
+            enum: [solving]
+          progress:
+            $ref: '#/$defs/SolveProgress'
+      - type: object
+        required: [kind, outcome]
+        properties:
+          kind:
+            type: string
+            enum: [solved]
+          outcome:
+            $ref: solve-outcome.yaml
+          outputs:
+            $ref: solve-outputs.yaml
+      - type: object
+        required: [kind, status]
+        properties:
+          kind:
+            type: string
+            enum: [error]
+          status:
+            type: string
+  ReifyProgress:
+    anyOf:
+      - type: object
+        required: [kind, summary]
+        properties:
+          kind:
+            type: string
+            enum: [constraint]
+          summary:
+            $ref: solve-summary.yaml#/$defs/ConstraintSummary
+      - type: object
+        required: [kind, summary]
+        properties:
+          kind:
+            type: string
+            enum: [objective]
+          summary:
+            $ref: solve-summary.yaml#/$defs/ObjectiveSummary
+  SolveProgress:
+    anyOf:
+      - type: object
+        required: [kind]
+        properties:
+          kind:
+            type: string
+            enum: [activity]
+          relativeGap:
+            $ref: extended-float.yaml
+          cutCount:
+            type: integer
+          lpIterationCount:
+            type: integer
+      - type: object
+        required: [kind, objectiveValue]
+        properties:
+          kind:
+            type: string
+            enum: [epsilonConstraint]
+          objectiveValue:
+            type: number

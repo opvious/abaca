@@ -1,6 +1,10 @@
 {
   "name": "abaca-codecs",
+<<<<<<< HEAD
   "version": "0.10.2",
+=======
+  "version": "0.10.11",
+>>>>>>> origin/main
   "repository": "github:opvious/abaca",
   "description": "Abaca SDK codecs",
   "keywords": [
@@ -23,7 +27,11 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@opvious/stl-errors": "^0.22.24",
+=======
+    "@opvious/stl-errors": "^0.22.18",
+>>>>>>> origin/main
     "abaca-runtime": "workspace:*",
     "json-text-sequence": "^1.0.1",
     "node-fetch": "^3.3.1"

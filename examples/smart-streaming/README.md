@@ -1,20 +1,20 @@
-# On-demand streaming example
+# Smart streaming example
 
 ## Overview
 
-This example shows how to use and implement endpoints which stream data via
-[JSON text sequences][json-seq] back to compatible clients and gracefully fall
-back to JSON otherwise. As an extension we also show how to implement
-client-side and bi-directional streaming using the same primitives.
+This example shows how to define OpenAPI endpoints which support both unary
+(non-streaming) and streaming calls. This makes it easy to build services which
+provide real-time information back to clients when possible and fall back to
+standard responses otherwise.
 
-+ Standard JSON API call. `application/json` responses are accepted by default,
-  so we can omit the `accept` header.
++ Unary `application/json` API call.
 
   ```typescript
   const unary = await sdk.processMessages({body});
   switch (unary.code) {
     case 200:
-      // In this case data is available (only) once the call completes.
+      // In the unary case, data is available (only) once the call completes as
+      // a list of messages.
       for (const processed of unary.data) {
         // ...
       }
@@ -22,8 +22,9 @@ client-side and bi-directional streaming using the same primitives.
   }
   ```
 
-+ Streaming JSON API call. The only difference with the call above is the
-  `accept` header which is now updated to accept JSON sequences.
++ Streaming [`application/json-seq`][json-seq] API call. The only difference
+  with the call above is the `accept` header which is now updated to accept JSON
+  sequences.
 
   ```typescript
   const streaming = await sdk.processMessages({
@@ -41,6 +42,9 @@ client-side and bi-directional streaming using the same primitives.
     // ...
   }
   ```
+
+As an extension we also show how to implement client-side and bi-directional
+streaming using the same primitives.
 
 Note that these capabilities are exposed via simple HTTP requests (no WebSockets
 required for instance) and without losing any of the type-safety provided by the

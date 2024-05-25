@@ -1,10 +1,15 @@
 {
   "name": "@opvious/abaca-packages",
+<<<<<<< HEAD
   "version": "0.10.2",
+=======
+  "version": "0.10.11",
+>>>>>>> origin/main
   "private": true,
   "repository": "github:opvious/abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
   "license": "Apache-2.0",
+  "type": "module",
   "scripts": {
     "bump": "pnpm -r --include-workspace-root exec npm version ${BUMP:-patch}",
     "clean": "pnpm -r -F !. run clean && rm -rf node_modules out",
@@ -17,14 +22,22 @@
     "@opvious/prettier-typescript": "^0.1.28",
     "@opvious/tsconfig": "^0.1.28",
     "@types/node": "^18.8.5",
+<<<<<<< HEAD
     "@vitest/coverage-v8": "^1.6.0",
+=======
+    "@vitest/coverage-v8": "^1.2.2",
+>>>>>>> origin/main
     "eslint": "^8.47.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.5",
     "prettier": "^3.2.5",
     "ts-essentials": "^9.3.0",
     "typescript": "^5.2.2",
+<<<<<<< HEAD
     "vitest": "^1.6.0"
+=======
+    "vitest": "^1.2.2"
+>>>>>>> origin/main
   },
   "lint-staged": {
     "*.{ts,tsx}": [

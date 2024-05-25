@@ -1,7 +1,11 @@
 {
-  "name": "abaca-example-on-demand-streaming",
+  "name": "abaca-example-smart-streaming",
   "private": true,
+<<<<<<< HEAD:examples/on-demand-streaming/package.json
   "version": "0.10.2",
+=======
+  "version": "0.10.11",
+>>>>>>> origin/main:examples/smart-streaming/package.json
   "repository": "github:opvious/abaca",
   "description": "Streaming example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -31,6 +35,10 @@
     "@types/koa": "^2.15.0",
     "@types/koa__router": "^12.0.4",
     "abaca": "workspace:*",
+<<<<<<< HEAD:examples/on-demand-streaming/package.json
     "koa": "^2.15.3"
+=======
+    "koa": "^2.15.0"
+>>>>>>> origin/main:examples/smart-streaming/package.json
   }
 }
