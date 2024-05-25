@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-json",
   "private": true,
-  "version": "0.10.11",
+  "version": "0.10.12",
   "repository": "github:opvious/abaca",
   "description": "JSON API example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -26,9 +26,9 @@
     "abaca-openapi": "workspace:*"
   },
   "devDependencies": {
-    "@types/koa": "^2.13.1",
-    "@types/koa__router": "^8.0.11",
+    "@types/koa": "^2.15.0",
+    "@types/koa__router": "^12.0.4",
     "abaca": "workspace:*",
-    "koa": "^2.15.0"
+    "koa": "^2.15.3"
   }
 }

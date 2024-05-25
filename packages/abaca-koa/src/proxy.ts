@@ -35,7 +35,7 @@ type ProxiedOperation<V extends OpenapiVersion> = MarkPresent<
  */
 export function createOperationsProxy<
   V extends OpenapiVersion,
-  U extends Record<string, ProxyServer.ServerOptions>
+  U extends Record<string, ProxyServer.ServerOptions>,
 >(args: {
   /** OpenAPI document. */
   readonly document: OpenapiDocuments[V];
@@ -155,7 +155,7 @@ export function createOperationsProxy<
       ops.set(oid, opObj);
       proxied.add(key, oid);
       keys.add(key);
-      router[meth](oid, opPath, middlewareFor(key));
+      safeCall(router, meth, oid, opPath, middlewareFor(key));
     }
     if (args.proxyOptionsRequests && !pathObj['options'] && keys.size) {
       assert(
@@ -172,4 +172,23 @@ export function createOperationsProxy<
     proxied.size
   );
   return router.routes();
+}
+
+/** Work around function union call typing limitations. */
+function safeCall<
+  O,
+  N extends keyof O,
+  A extends unknown[],
+  V,
+  F extends (...args: A) => V,
+>(
+  obj: O,
+  name: N,
+  ...args: O[N] extends F
+    ? A
+    : O[N] extends (...args: any) => any
+      ? Parameters<O[N]> // To get better error messages.
+      : never
+): V {
+  return (obj[name] as any)(...args);
 }

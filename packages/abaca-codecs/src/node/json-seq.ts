@@ -1,6 +1,6 @@
 import {assert} from '@opvious/stl-errors';
 import {Decoder, Encoder} from 'abaca-runtime';
-import jsonSeq from 'json-text-sequence';
+import * as jsonSeq from 'json-text-sequence';
 import fetch from 'node-fetch';
 import stream from 'stream';
 
