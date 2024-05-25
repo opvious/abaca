@@ -40,7 +40,7 @@
   "devDependencies": {
     "@types/data-urls": "^3.0.1",
     "@types/urijs": "^1.19.19",
-    "data-urls": "^4.0.0",
+    "data-urls": "^5.0.0",
     "inlinable": "^0.3.3",
     "ts-essentials": "^9.3.0"
   }

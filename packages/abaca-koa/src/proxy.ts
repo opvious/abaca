@@ -155,7 +155,7 @@ export function createOperationsProxy<
       ops.set(oid, opObj);
       proxied.add(key, oid);
       keys.add(key);
-      safeCall(router[meth], oid, opPath, middlewareFor(key));
+      safeCall(router, meth, oid, opPath, middlewareFor(key));
     }
     if (args.proxyOptionsRequests && !pathObj['options'] && keys.size) {
       assert(
@@ -175,9 +175,20 @@ export function createOperationsProxy<
 }
 
 /** Work around function union call typing limitations. */
-function safeCall<A extends any[], V, F extends (...args: A) => V>(
-  fn: F,
-  ...args: A
+function safeCall<
+  O,
+  N extends keyof O,
+  A extends unknown[],
+  V,
+  F extends (...args: A) => V,
+>(
+  obj: O,
+  name: N,
+  ...args: O[N] extends F
+    ? A
+    : O[N] extends (...args: any) => any
+      ? Parameters<O[N]> // To get better error messages.
+      : never
 ): V {
-  return fn(...args);
+  return (obj[name] as any)(...args);
 }

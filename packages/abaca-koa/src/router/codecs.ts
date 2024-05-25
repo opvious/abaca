@@ -18,7 +18,7 @@ import {
 } from 'abaca-runtime';
 import busboy from 'busboy';
 import * as coBody from 'co-body';
-import jsonSeq from 'json-text-sequence';
+import * as jsonSeq from 'json-text-sequence';
 import Koa from 'koa';
 import stream from 'stream';
 
