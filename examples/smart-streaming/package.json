@@ -1,7 +1,7 @@
 {
   "name": "abaca-example-smart-streaming",
   "private": true,
-  "version": "0.10.13",
+  "version": "0.10.14",
   "repository": "github:opvious/abaca",
   "description": "Streaming example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
@@ -25,7 +25,7 @@
     "abaca-codecs": "workspace:*",
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*",
-    "node-fetch": "^3.3.1"
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@types/koa": "^2.15.0",

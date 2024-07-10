@@ -1,6 +1,6 @@
 {
   "name": "abaca-koa",
-  "version": "0.10.13",
+  "version": "0.10.14",
   "repository": "github:opvious/abaca",
   "description": "Abaca Koa integrations",
   "keywords": [
@@ -36,34 +36,34 @@
   "dependencies": {
     "@koa/router": "^12.0.1",
     "@opentelemetry/api": "~1.8.0",
-    "@opvious/stl-errors": "^0.22.24",
-    "@opvious/stl-telemetry": "^0.22.24",
-    "@opvious/stl-utils": "^0.22.24",
+    "@opvious/stl-errors": "^0.22.31",
+    "@opvious/stl-telemetry": "^0.22.31",
+    "@opvious/stl-utils": "^0.22.31",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
-    "ajv": "^8.13.0",
+    "ajv": "^8.16.0",
     "busboy": "^1.6.0",
-    "co-body": "^6.1.0",
+    "co-body": "^6.2.0",
     "http-proxy": "^1.18.1",
     "json-text-sequence": "^2.0.2",
     "koa-compose": "^4.1.0",
-    "openapi-types": "^12.1.0",
-    "yaml": "^2.3.1"
+    "openapi-types": "^12.1.3",
+    "yaml": "^2.4.5"
   },
   "devDependencies": {
-    "@types/busboy": "^1.5.0",
-    "@types/co-body": "^6.1.0",
-    "@types/http-proxy": "^1.17.10",
+    "@types/busboy": "^1.5.4",
+    "@types/co-body": "^6.1.3",
+    "@types/http-proxy": "^1.17.14",
     "@types/koa": "^2.15.0",
     "@types/koa-compose": "^3.2.8",
     "@types/koa__router": "^12.0.4",
-    "@types/qs": "^6.9.8",
+    "@types/qs": "^6.9.15",
     "abaca": "workspace:*",
     "abaca-codecs": "workspace:*",
     "inlinable": "^0.3.3",
     "koa": "^2.15.3",
     "koa-body": "^6.0.1",
-    "node-fetch": "^3.3.1",
-    "qs": "^6.11.2"
+    "node-fetch": "^3.3.2",
+    "qs": "^6.12.3"
   }
 }
