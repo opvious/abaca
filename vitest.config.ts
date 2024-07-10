@@ -8,5 +8,6 @@ export default defineConfig({
       reportsDirectory: 'out/coverage',
     },
     globals: true,
+    environment: 'jsdom', // https://stackoverflow.com/a/74076983/1062617
   },
 });
