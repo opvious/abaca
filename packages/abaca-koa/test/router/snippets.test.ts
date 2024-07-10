@@ -3,10 +3,10 @@ import {
   fromAsyncIterable,
   toAsyncIterable,
 } from '@opvious/stl-utils/collections';
+import {waitForEvent} from '@opvious/stl-utils/events';
 import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca-codecs/node/json-seq';
 import {OpenapiDocument} from 'abaca-openapi';
 import {FORM_MIME_TYPE, JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
-import events from 'events';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
@@ -135,7 +135,7 @@ describe('snippets', async () => {
             additional.push(prop.name);
           });
 
-        await events.once(ctx.request.body, 'done');
+        await waitForEvent(ctx.request.body, 'done');
         expect(additional).toEqual(['other']);
         return 204 as const;
       },
@@ -158,7 +158,7 @@ describe('snippets', async () => {
     await resetHandlers({
       '/upload-form#post': async (ctx) => {
         assert(ctx.request.type === 'multipart/form-data');
-        await events.once(ctx.request.body, 'done');
+        await waitForEvent(ctx.request.body, 'done');
         fail();
       },
     });

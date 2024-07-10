@@ -1,6 +1,6 @@
 {
   "name": "abaca",
-  "version": "0.10.13",
+  "version": "0.11.0",
   "repository": "github:opvious/abaca",
   "description": "OpenAPI SDK generator with strong type guarantees and minimal boilerplate",
   "keywords": [
@@ -15,7 +15,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "files": [
     "bin/",
@@ -39,17 +39,17 @@
   },
   "dependencies": {
     "@opentelemetry/api": "~1.8.0",
-    "@opvious/stl-bootstrap": "^0.22.24",
-    "@opvious/stl-errors": "^0.22.24",
-    "@opvious/stl-utils": "^0.22.24",
+    "@opvious/stl-bootstrap": "^0.25.4",
+    "@opvious/stl-errors": "^0.25.4",
+    "@opvious/stl-utils": "^0.25.4",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "commander": "^12.1.0",
     "eta": "^3.4.0",
-    "node-fetch": "^3.3.1",
-    "openapi-typescript": "^6.7.4",
+    "node-fetch": "^3.3.2",
+    "openapi-typescript": "^6.7.6",
     "ora": "^8.0.1",
-    "yaml": "^2.3.1"
+    "yaml": "^2.4.5"
   },
   "devDependencies": {
     "@koa/router": "^12.0.1",
@@ -58,6 +58,6 @@
     "inlinable": "^0.3.3",
     "koa": "^2.15.3",
     "koa-body": "^6.0.1",
-    "ts-essentials": "^9.3.0"
+    "ts-essentials": "^9.4.2"
   }
 }

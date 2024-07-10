@@ -1,5 +1,6 @@
 import Router from '@koa/router';
 import {absurd} from '@opvious/stl-errors';
+import {waitForEvent} from '@opvious/stl-utils/events';
 import {createOperationsRouter} from 'abaca-koa';
 import {loadOpenapiDocument} from 'abaca-openapi';
 import crypto from 'crypto';
@@ -72,7 +73,7 @@ export async function createRouter(): Promise<Router> {
             });
             // The `done` event is emitted once the form's data has been fully
             // consumed. It also validates that all required fields are present.
-            await events.once(ctx.request.body, 'done');
+            await waitForEvent(ctx.request.body, 'done');
             break;
           }
           default:
