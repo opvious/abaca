@@ -39,9 +39,9 @@
   },
   "dependencies": {
     "@opentelemetry/api": "~1.8.0",
-    "@opvious/stl-bootstrap": "^0.22.31",
-    "@opvious/stl-errors": "^0.22.31",
-    "@opvious/stl-utils": "^0.22.31",
+    "@opvious/stl-bootstrap": "^0.25.4",
+    "@opvious/stl-errors": "^0.25.4",
+    "@opvious/stl-utils": "^0.25.4",
     "abaca-openapi": "workspace:*",
     "abaca-runtime": "workspace:*",
     "commander": "^12.1.0",

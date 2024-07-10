@@ -23,7 +23,7 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.22.31",
+    "@opvious/stl-errors": "^0.25.4",
     "abaca-runtime": "workspace:*",
     "json-text-sequence": "^2.0.2",
     "node-fetch": "^3.3.2"
