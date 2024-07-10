@@ -80,7 +80,7 @@ const multipartFormEncoder: Encoder = (body) => {
     } else {
       form.set(
         key,
-        typeof val == 'string' || val instanceof Blob
+        typeof val == 'string'
           ? val
           : new Blob([JSON.stringify(val)], {type: JSON_MIME_TYPE})
       );
