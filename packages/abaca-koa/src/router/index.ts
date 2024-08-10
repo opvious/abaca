@@ -23,6 +23,7 @@ import {
   parseOpenapiDocument,
 } from 'abaca-openapi';
 import {
+  ContentFormat,
   isResponseTypeValid,
   JSON_MIME_TYPE,
   matchingContentType,
@@ -32,7 +33,6 @@ import {
   OperationTypes,
   ResponseClauseMatcher,
   ResponseCode,
-  ResponseContent,
 } from 'abaca-runtime';
 import Ajv_ from 'ajv';
 import events from 'events';
@@ -261,7 +261,8 @@ export function createOperationsRouter<
           return;
         }
         const content = declared?.get(atype);
-        assert(content, 'missing content for type %s', atype);
+        assert(content, 'undeclared content for type %s', atype);
+        // TODO: Check that content.isStream matches the branches below.
         if (isAsyncIterable(data) && !(data instanceof stream.Readable)) {
           data = mapAsyncIterable(data, (d) => {
             registry.validateResponse(d, oid, atype, code, content);
@@ -525,13 +526,13 @@ class Registry {
     oid: string,
     contentType: string,
     code: ResponseCode,
-    content: ResponseContent
+    content: ContentFormat
   ): void {
     const key = schemaId(oid, {kind: 'responseBody', contentType, code});
     const validate = this.cache.getSchema(key);
     assert(validate, 'Missing response schema', key);
     if (
-      content.isBlob &&
+      content.isBinary &&
       (Buffer.isBuffer(data) ||
         data instanceof stream.Readable ||
         data instanceof Blob)

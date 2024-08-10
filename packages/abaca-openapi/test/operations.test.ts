@@ -19,9 +19,9 @@ describe('extract path operation definitions', () => {
         },
         body: undefined,
         responses: {
-          '200': [{mimeType: 'application/json', isBlob: false}],
-          '2XX': [{mimeType: 'text/plain', isBlob: false}],
-          default: [{mimeType: 'application/json', isBlob: false}],
+          '200': [{mimeType: 'application/json'}],
+          '2XX': [{mimeType: 'text/plain'}],
+          default: [{mimeType: 'application/json'}],
         },
       },
       createPet: {
@@ -30,8 +30,8 @@ describe('extract path operation definitions', () => {
         body: {required: true, types: ['application/json']},
         parameters: {},
         responses: {
-          '201': [{mimeType: 'text/plain', isBlob: false}],
-          default: [{mimeType: 'application/json', isBlob: false}],
+          '201': [{mimeType: 'text/plain'}],
+          default: [{mimeType: 'application/json'}],
         },
       },
       getPetAge: {
@@ -40,8 +40,8 @@ describe('extract path operation definitions', () => {
         method: 'get',
         parameters: {petId: {location: 'path', required: true}},
         responses: {
-          '200': [{mimeType: 'application/json', isBlob: false}],
-          '400': [{mimeType: 'text/plain', isBlob: false}],
+          '200': [{mimeType: 'application/json'}],
+          '400': [{mimeType: 'text/plain'}],
           '404': [],
         },
       },
@@ -51,8 +51,8 @@ describe('extract path operation definitions', () => {
         method: 'get',
         parameters: {petId: {location: 'path', required: true}},
         responses: {
-          '200': [{mimeType: 'application/json', isBlob: false}],
-          default: [{mimeType: 'application/json', isBlob: false}],
+          '200': [{mimeType: 'application/json'}],
+          default: [{mimeType: 'application/json'}],
         },
       },
       updatePetTag: {
@@ -61,7 +61,7 @@ describe('extract path operation definitions', () => {
         method: 'put',
         parameters: {petId: {location: 'path', required: true}},
         responses: {
-          '200': [{mimeType: 'application/json', isBlob: false}],
+          '200': [{mimeType: 'application/json'}],
         },
       },
     });

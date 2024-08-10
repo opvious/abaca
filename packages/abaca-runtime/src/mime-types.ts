@@ -1,5 +1,6 @@
 import {Get, Has, KeysOfValues, Lookup, Values} from './common.js';
 import {
+  ContentFormat,
   MimeType,
   OperationDefinition,
   OperationType,
@@ -145,27 +146,21 @@ export class ResponseClauseMatcher {
   private constructor(
     private readonly data: ReadonlyMap<
       ResponseCode,
-      ReadonlyMap<MimeType, ResponseContent>
+      ReadonlyMap<MimeType, ContentFormat>
     >
   ) {}
 
   static create(
     responses: OperationDefinition['responses']
   ): ResponseClauseMatcher {
-    const data = new Map<
-      ResponseCode,
-      ReadonlyMap<MimeType, ResponseContent>
-    >();
+    const data = new Map<ResponseCode, ReadonlyMap<MimeType, ContentFormat>>();
     for (const [code, defs] of Object.entries(responses)) {
       const ncode = +code;
-      const contents = new Map<MimeType, ResponseContent>();
+      const formats = new Map<MimeType, ContentFormat>();
       for (const def of defs) {
-        contents.set(def.mimeType, {
-          mimeType: def.mimeType,
-          isBlob: def.isBlob,
-        });
+        formats.set(def.mimeType, def);
       }
-      data.set(isNaN(ncode) ? code : ncode, contents);
+      data.set(isNaN(ncode) ? code : ncode, formats);
     }
     return new ResponseClauseMatcher(data);
   }
@@ -207,18 +202,13 @@ export class ResponseClauseMatcher {
   }
 }
 
-export interface ResponseContent {
-  readonly mimeType: MimeType;
-  readonly isBlob: boolean;
-}
-
 /**
  * If returns true and `value` is not-null, it is guaranteed that `value` is a
  * key in `declared`.
  */
 export function isResponseTypeValid(args: {
   readonly value: MimeType | undefined;
-  readonly declared: ReadonlyMap<MimeType, ResponseContent> | undefined;
+  readonly declared: ReadonlyMap<MimeType, ContentFormat> | undefined;
   readonly accepted: ReadonlySet<MimeType>;
 }): boolean {
   const {value, declared, accepted} = args;
@@ -247,5 +237,5 @@ export function acceptedMimeTypes(header: string): ReadonlySet<MimeType> {
 
 export interface ResponseClause {
   readonly code: ResponseCode;
-  readonly declared?: ReadonlyMap<MimeType, ResponseContent>;
+  readonly declared?: ReadonlyMap<MimeType, ContentFormat>;
 }

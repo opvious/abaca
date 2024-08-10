@@ -57,13 +57,14 @@ export interface OperationDefinition {
   readonly parameters: {readonly [name: string]: ParameterDefinition};
   readonly body?: BodyDefinition;
   readonly responses: {
-    readonly [code: ResponseCode]: ReadonlyArray<ResponseContentDefinition>;
+    readonly [code: ResponseCode]: ReadonlyArray<ContentFormat>;
   };
 }
 
-export interface ResponseContentDefinition {
+export interface ContentFormat {
   readonly mimeType: MimeType;
-  readonly isBlob: boolean;
+  readonly isBinary?: boolean;
+  readonly isStream?: boolean;
 }
 
 export interface ParameterDefinition {

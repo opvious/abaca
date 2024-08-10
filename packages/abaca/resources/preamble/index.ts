@@ -94,7 +94,7 @@ const fallbackEncoder: Encoder = (_body, ctx) => {
   throw new Error('Unsupported request content-type: ' + ctx.content.mimeType);
 };
 const fallbackDecoder: Decoder = (res, ctx) => {
-  if (ctx.content.isBlob) {
+  if (ctx.content.isBinary) {
     return res.blob();
   }
   throw new Error('Unsupported response content-type: ' + ctx.content.mimeType);
@@ -391,7 +391,10 @@ export function createSdkFor<
         const decode = decoder ?? decoders.getBest(resType);
         data = await decode(res, {
           operationId: id,
-          content: declared?.get(resType) ?? {mimeType: resType, isBlob: false},
+          content: declared?.get(resType) ?? {
+            mimeType: resType,
+            isBinary: false,
+          },
           headers,
           options: init?.options,
         });

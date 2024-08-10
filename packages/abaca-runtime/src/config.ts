@@ -4,10 +4,9 @@ import {
   AllResponseMimeTypes,
   AllResponsesMatchingMimeType,
   BodiesMatchingMimeType,
-  ResponseContent,
   WithMimeTypeGlobs,
 } from './mime-types.js';
-import {MimeType, OperationTypes} from './operations.js';
+import {ContentFormat, MimeType, OperationTypes} from './operations.js';
 
 export interface SdkConfigFor<
   O extends OperationTypes<keyof O & string>,
@@ -97,7 +96,7 @@ export type BodyInitFor<F> = Lookup<RequestInitFor<F>, 'body', unknown>;
 
 export interface EncoderContext<F> {
   readonly operationId: string;
-  readonly content: ResponseContent;
+  readonly content: ContentFormat;
   readonly headers: RequestHeaders;
   readonly options?: RequestOptions<F>;
 }
@@ -123,7 +122,7 @@ export type ResponseFor<F> = F extends (
 
 export interface DecoderContext<F> {
   readonly operationId: string;
-  readonly content: ResponseContent;
+  readonly content: ContentFormat;
   readonly headers: RequestHeaders;
   readonly options?: RequestOptions<F>;
 }
@@ -138,5 +137,5 @@ export interface CoercerContext {
   readonly method: string;
   readonly received: MimeType | undefined;
   readonly accepted: ReadonlySet<MimeType>;
-  readonly declared: ReadonlyMap<MimeType, ResponseContent> | undefined; // undefined if implicit
+  readonly declared: ReadonlyMap<MimeType, ContentFormat> | undefined; // undefined if implicit
 }

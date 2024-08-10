@@ -3,11 +3,11 @@ import {EventProducer} from '@opvious/stl-utils/events';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {GlobMapper} from '@opvious/stl-utils/strings';
 import {
+  ContentFormat,
   MimeType,
   OperationDefinition,
   ParameterDefinition,
   ResponseCode,
-  ResponseContentDefinition,
 } from 'abaca-runtime';
 import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
@@ -118,27 +118,26 @@ export function extractPathOperationDefinitions(args: {
       return {required: !!body.required, types};
     });
 
-    const responses: Record<
-      string,
-      ReadonlyArray<ResponseContentDefinition>
-    > = {};
+    const responses: Record<string, ReadonlyArray<ContentFormat>> = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
       const [res, parts] = deref(resOrRef, [...prefix, 'responses', code]);
-      const defs: ResponseContentDefinition[] = [];
+      const formats: ContentFormat[] = [];
       for (const [key, val] of Object.entries<any>(res.content ?? {})) {
         const schema = val?.schema;
-        defs.push({
+        const isString = schema?.type === 'string';
+        formats.push({
           mimeType: key,
-          isBlob: schema?.type === 'string' && schema?.format === 'binary',
+          isBinary: (isString && schema?.format === 'binary') || undefined,
+          isStream: (isString && schema?.format === 'stream') || undefined,
         });
       }
       if (producer) {
-        for (const def of defs) {
-          const ptr = schemaPointer([...parts, 'content', def.mimeType]);
-          producer.emit('response', oid, ptr, def.mimeType, code);
+        for (const format of formats) {
+          const ptr = schemaPointer([...parts, 'content', format.mimeType]);
+          producer.emit('response', oid, ptr, format.mimeType, code);
         }
       }
-      responses[code] = defs;
+      responses[code] = formats;
     }
 
     defs[oid] = {path, method, parameters: params, body, responses};

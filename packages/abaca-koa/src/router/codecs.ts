@@ -7,13 +7,13 @@ import {
   AsyncOrSync,
   BodiesMatchingMimeType,
   ByMimeType,
+  ContentFormat,
   FORM_MIME_TYPE,
   JSON_MIME_TYPE,
   JSON_SEQ_MIME_TYPE,
   MULTIPART_FORM_MIME_TYPE,
   OCTET_STREAM_MIME_TIME,
   OperationTypes,
-  ResponseContent,
   TEXT_MIME_TYPE,
   WithMimeTypeGlobs,
 } from 'abaca-runtime';
@@ -48,7 +48,7 @@ export type KoaEncodersFor<O extends OperationTypes, S = {}> = {
 export type KoaEncoder<D = any, S = {}> = (
   data: D | (D extends string ? Buffer | stream.Readable : never),
   ctx: Koa.ParameterizedContext<S>,
-  content: ResponseContent
+  content: ContentFormat
 ) => AsyncOrSync<void>;
 
 // Implementations
@@ -68,7 +68,7 @@ export function defaultDecoders(): ByMimeType<KoaDecoder> {
 
 export function defaultEncoders(): ByMimeType<KoaEncoder> {
   const ret = ByMimeType.create<KoaEncoder>(async (data, ctx, content) => {
-    if (content.isBlob) {
+    if (content.isBinary) {
       if (data instanceof Blob) {
         const buf = await data.arrayBuffer();
         data = Buffer.from(buf);
