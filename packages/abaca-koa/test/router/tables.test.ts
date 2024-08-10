@@ -10,7 +10,7 @@ import {
   mapAsyncIterable,
   toAsyncIterable,
 } from '@opvious/stl-utils/collections';
-import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca-codecs/node/json-seq';
+import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca/codecs/node/json-seq';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';

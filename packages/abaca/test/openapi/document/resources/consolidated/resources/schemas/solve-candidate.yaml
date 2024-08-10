@@ -1,0 +1,29 @@
+$id: resource://abaca/schemas/solve-candidate.yaml
+type: object
+required: [formulation, inputs]
+properties:
+  formulation:
+    anyOf:
+      - type: object
+        required: [sources]
+        properties:
+          sources:
+            type: array
+            items:
+              type: string
+      - $ref: '#/$defs/SolveCandidateFormulation'
+  inputs:
+    $ref: solve-inputs.yaml
+  strategy:
+    $ref: solve-strategy.yaml
+  options:
+    $ref: solve-options.yaml
+$defs:
+  SolveCandidateFormulation:
+    type: object
+    required: [name]
+    properties:
+      name:
+        type: string
+      specificationTagName:
+        type: string

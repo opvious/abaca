@@ -1,5 +1,0 @@
-$id: resource://abaca-openapi/schemas/extended-float.yaml
-anyOf:
-  - type: number
-  - type: string
-    enum: ['Infinity', '-Infinity']

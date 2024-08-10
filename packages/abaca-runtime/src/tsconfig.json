@@ -1,7 +1,0 @@
-{
-  "extends": "@opvious/tsconfig",
-  "compilerOptions": {
-    "outDir": "../lib",
-    "tsBuildInfoFile": "../out/.tsbuildinfo"
-  }
-}

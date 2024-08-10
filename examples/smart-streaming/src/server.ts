@@ -1,6 +1,6 @@
 import Router from '@koa/router';
+import {loadOpenapiDocument} from 'abaca';
 import {createOperationsRouter} from 'abaca-koa';
-import {loadOpenapiDocument} from 'abaca-openapi';
 import {setTimeout} from 'timers/promises';
 
 import {Operations, Schema} from './sdk.gen.js';

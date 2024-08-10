@@ -41,7 +41,7 @@ First, generate the SDK from an OpenAPI specification (URL or local path). For
 example from [Stripe's specification](https://github.com/stripe/openapi):
 
 ```sh
-npx abaca generate \
+npx abaca-cli generate \
   https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml \
   --output src/sdk.gen.ts \
   --include '*Account*=y' # Optional operation filter
@@ -85,13 +85,10 @@ handles various use-cases:
 
 ## Packages
 
-+ [`abaca`](/packages/abaca), client SDK generator CLI
-+ [`abaca-codecs`](/packages/abaca-codecs), common client decoders and encoders
++ [`abaca-cli`](/packages/abaca-cli), client SDK generator CLI
++ [`abaca`](/packages/abaca), shared utilities
 + [`abaca-koa`](/packages/abaca-koa), Koa integrations for server routing and
   proxying
-+ [`abaca-openapi`](/packages/abaca-openapi), OpenAPI tools (specification
-  parsing, schema validation, etc.)
-+ [`abaca-runtime`](/packages/abaca-runtime), shared utilities
 
 
 ## Developing

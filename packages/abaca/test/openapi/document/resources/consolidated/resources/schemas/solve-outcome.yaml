@@ -1,0 +1,34 @@
+$id: resource://abaca/schemas/solve-outcome.yaml
+type: object
+required: [status, targets]
+properties:
+  status:
+    $ref: '#/$defs/SolveStatus'
+  objectiveValue: # TODO: Delete (superseded by targets)
+    type: number
+  relativeGap: # TODO: Delete (superseded by targets)
+    $ref: extended-float.yaml
+  targets:
+    type: array
+    items:
+      $ref: '#/$defs/TargetOutcome'
+$defs:
+  SolveStatus:
+    type: string
+    enum:
+      - UNKNOWN
+      - INFEASIBLE
+      - UNBOUNDED
+      - FEASIBLE
+      - OPTIMAL
+      - ABORTED
+  TargetOutcome:
+    type: object
+    required: [target, value]
+    properties:
+      target:
+        $ref: solve-strategy.yaml#/$defs/WeightedSumTarget
+      value:
+        type: number
+      relativeGap:
+        $ref: extended-float.yaml

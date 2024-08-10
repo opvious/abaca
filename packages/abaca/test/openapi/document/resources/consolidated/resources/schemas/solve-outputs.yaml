@@ -1,0 +1,39 @@
+$id: resource://abaca/schemas/solve-outputs.yaml
+type: object
+required: [constraints, variables]
+properties:
+  constraints:
+    description: |
+      All entries where the constraint is active. Unlike for variables,
+      zero-valued entries are included as they represent tight
+      constraints.
+    type: array
+    items:
+      $ref: '#/$defs/TensorResult'
+  variables:
+    description: |
+      Entries with zero primal value and null dual value are omitted.
+    type: array
+    items:
+      $ref: '#/$defs/TensorResult'
+$defs:
+  TensorResult:
+    type: object
+    required: [label, entries]
+    properties:
+      label:
+        type: string
+      entries:
+        type: array
+        items:
+          $ref: '#/$defs/TensorResultEntry'
+  TensorResultEntry:
+    type: object
+    required: [key, value]
+    properties:
+      key:
+        $ref: solve-inputs.yaml#/$defs/EntryKey
+      value:
+        type: number
+      dualValue:
+        type: number

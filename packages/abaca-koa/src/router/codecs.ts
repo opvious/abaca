@@ -11,7 +11,7 @@ import {
   MULTIPART_FORM_MIME_TYPE,
   OCTET_STREAM_MIME_TIME,
   TEXT_MIME_TYPE,
-} from 'abaca-runtime';
+} from 'abaca';
 import busboy from 'busboy';
 import * as coBody from 'co-body';
 import * as jsonSeq from 'json-text-sequence';

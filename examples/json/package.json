@@ -22,13 +22,13 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "abaca-koa": "workspace:*",
-    "abaca-openapi": "workspace:*"
+    "abaca": "workspace:*",
+    "abaca-koa": "workspace:*"
   },
   "devDependencies": {
     "@types/koa": "^2.15.0",
     "@types/koa__router": "^12.0.4",
-    "abaca": "workspace:*",
+    "abaca-cli": "workspace:*",
     "koa": "^2.15.3"
   }
 }

@@ -1,5 +1,5 @@
 import {mergeErrorCodes} from '@opvious/stl-errors';
 
-import command from './command/index.errors.js';
+import openapi from './openapi/index.errors.js';
 
-export default mergeErrorCodes({command});
+export default mergeErrorCodes({openapi});

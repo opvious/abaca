@@ -1,5 +1,5 @@
 import {errorFactories, errorMessage, StandardError} from '@opvious/stl-errors';
-import {IncompatibleValueError} from 'abaca-openapi';
+import {IncompatibleValueError} from 'abaca';
 
 const [errors, errorCodes] = errorFactories({
   definitions: {
