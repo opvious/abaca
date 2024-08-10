@@ -16,4 +16,4 @@ coverage:
       default:
         threshold: 5.0
 ignore:
-  - packages/abaca/ # CLI code is executed before tests
+  - packages/abaca-cli/ # CLI code is executed before tests
