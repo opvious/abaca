@@ -34,8 +34,8 @@ describe('snippets', () => {
 
   test('optional mutiple body additional fields', async () => {
     const res = await sdk['/optional-body#post']({
-      headers: {'content-type': 'application/x-www-form-urlencoded'},
       // @ts-expect-error additional fields
+      headers: {'content-type': 'application/x-www-form-urlencoded'},
       body: {name: 'ann', logoImage: new Blob(['abc'])}, // logoImage
     });
     expect(res.code).toEqual('default');
