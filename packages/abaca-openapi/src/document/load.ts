@@ -24,7 +24,7 @@ const DOCUMENT_FILE = 'openapi.yaml';
  * `resolveOpenapiDocument` for more information.
  */
 export async function loadOpenapiDocument<
-  V extends OpenapiVersion = OpenapiVersion
+  V extends OpenapiVersion = OpenapiVersion,
 >(
   opts?: ResolveOpenapiDocumentOptions<V> & {
     /**
@@ -49,7 +49,7 @@ export async function loadOpenapiDocument<
  * output.
  */
 export async function resolveOpenapiDocument<
-  V extends OpenapiVersion = OpenapiVersion
+  V extends OpenapiVersion = OpenapiVersion,
 >(
   data: string,
   opts?: ResolveOpenapiDocumentOptions<V>
@@ -296,8 +296,8 @@ function pairKey(node: unknown): string | undefined {
     ? node.key instanceof YAML.Scalar
       ? node.key.value
       : typeof node.key == 'string'
-      ? node.key
-      : undefined
+        ? node.key
+        : undefined
     : undefined;
 }
 

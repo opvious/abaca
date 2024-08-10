@@ -4,7 +4,7 @@ export type OperationTypes<N extends string = string> = {
 
 export interface OperationType<
   R extends ResponsesType = {},
-  P extends ParametersType = {}
+  P extends ParametersType = {},
 > {
   readonly parameters?: P;
   readonly requestBody?: {readonly content: ContentTypes};
@@ -71,8 +71,5 @@ export interface BodyDefinition {
   readonly types: ReadonlyArray<MimeType>;
 }
 
-export type Asyncify<V extends ReadonlyArray<any>> = V extends ReadonlyArray<
-  infer I
->
-  ? AsyncIterable<I>
-  : never;
+export type Asyncify<V extends ReadonlyArray<any>> =
+  V extends ReadonlyArray<infer I> ? AsyncIterable<I> : never;

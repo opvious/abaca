@@ -106,7 +106,7 @@ export type AllBodyMimeTypes<O extends OperationTypes> = Values<{
 
 export type BodiesMatchingMimeType<
   O extends OperationTypes<keyof O & string>,
-  G extends MimeType
+  G extends MimeType,
 > = Values<{
   [K in keyof O]: ValuesMatchingMimeTypes<BodyContent<O[K]>, G>;
 }>;
@@ -119,7 +119,7 @@ export type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> =
 
 export type ResponseMimeTypes<
   R extends ResponsesType,
-  C extends keyof R = keyof R
+  C extends keyof R = keyof R,
 > = KeysOfValues<{
   [P in C]: Get<R[P], 'content'>;
 }> &
@@ -127,14 +127,14 @@ export type ResponseMimeTypes<
 
 export type AllResponsesMatchingMimeType<
   O extends OperationTypes,
-  G extends MimeType
+  G extends MimeType,
 > = Values<{
   [K in keyof O]: ResponsesMatchingMimeType<O[K]['responses'], G>;
 }>;
 
 export type ResponsesMatchingMimeType<
   R extends ResponsesType,
-  G extends MimeType
+  G extends MimeType,
 > = Values<{
   [C in keyof R]: R[C] extends Has<'content', infer O>
     ? ValuesMatchingMimeTypes<O, G>

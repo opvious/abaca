@@ -10,7 +10,7 @@ import {MimeType, OperationTypes} from './operations.js';
 
 export interface SdkConfigFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch
+  F extends BaseFetch = typeof fetch,
 > {
   /** API server address. */
   readonly address: Address;
