@@ -30,7 +30,7 @@ describe('smart streaming', () => {
   test('unary', async () => {
     const res = await sdk.processMessages({body: messages});
     assert(res.code === 200);
-    expect(res.data).toEqual([{contents: 'HI'}, {contents: 'THERE'}]);
+    expect(res.body).toEqual([{contents: 'HI'}, {contents: 'THERE'}]);
   });
 
   test('streaming', async () => {
@@ -40,7 +40,7 @@ describe('smart streaming', () => {
     });
     assert(res.code === 200);
     const contents: string[] = [];
-    for await (const msg of res.data) {
+    for await (const msg of res.body) {
       contents.push(msg.contents);
     }
     expect(contents).toEqual(['HI', 'THERE']);
@@ -61,7 +61,7 @@ test('client streaming', async () => {
     headers: {'content-type': 'application/json-seq'},
   });
   assert(res.code === 200);
-  expect(res.data).toEqual(10);
+  expect(res.body).toEqual(10);
 });
 
 test('bi-directional streaming', async () => {
@@ -83,7 +83,7 @@ test('bi-directional streaming', async () => {
   assert(res.code === 200);
 
   const contents: string[] = [];
-  for await (const msg of res.data) {
+  for await (const msg of res.body) {
     contents.push(msg.contents);
   }
   expect(contents).toEqual(['hey', 'hey']);

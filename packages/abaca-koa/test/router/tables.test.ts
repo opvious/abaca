@@ -78,7 +78,7 @@ describe('tables', async () => {
 
     const updateRes = await sdk.setTable({
       params: {id},
-      body: {rows: getRes1.data.rows.slice(1)},
+      body: {rows: getRes1.body.rows.slice(1)},
     });
     expect(updateRes).toMatchObject({code: 204, raw: {status: 204}});
 
@@ -86,12 +86,12 @@ describe('tables', async () => {
       params: {id},
       headers: {accept: 'text/csv'},
     });
-    expect(getRes2).toMatchObject({code: 200, data: 'b,2'});
+    expect(getRes2).toMatchObject({code: 200, body: 'b,2'});
   });
 
   test('get missing', async () => {
     const res = await sdk.getTable({params: {id: 'unknown'}});
-    expect(res).toMatchObject({code: 404, data: undefined});
+    expect(res).toMatchObject({code: 404, body: undefined});
   });
 
   test('set invalid', async () => {
@@ -102,7 +102,7 @@ describe('tables', async () => {
     });
     expect(res).toMatchObject({
       code: 'default',
-      data: {error: {code: 'ERR_INVALID_REQUEST'}},
+      body: {error: {code: 'ERR_INVALID_REQUEST'}},
       raw: {status: 400},
     });
   });
@@ -126,7 +126,7 @@ describe('tables', async () => {
       params: {id},
     });
     assert(getRes.code === 200, '');
-    const got = await fromAsyncIterable(getRes.data);
+    const got = await fromAsyncIterable(getRes.body);
     expect(got).toEqual(rows.map((r) => ({kind: 'row', row: r})));
   });
 });
@@ -151,11 +151,11 @@ class Handler implements sut.KoaHandlersFor<Operations> {
       ctx.accepts(['application/json', 'application/json-seq', 'text/csv'])
     ) {
       case 'application/json':
-        return {data: table};
+        return {body: table};
       case 'application/json-seq':
         return {
           type: 'application/json-seq',
-          data: mapAsyncIterable(toAsyncIterable(table.rows), (r) => ({
+          body: mapAsyncIterable(toAsyncIterable(table.rows), (r) => ({
             kind: 'row',
             row: r,
           })),
@@ -163,7 +163,7 @@ class Handler implements sut.KoaHandlersFor<Operations> {
       case 'text/csv':
         return {
           type: 'text/csv',
-          data: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
+          body: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
         };
       default:
         throw unreachable();

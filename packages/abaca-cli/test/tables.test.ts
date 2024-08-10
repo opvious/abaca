@@ -53,10 +53,10 @@ describe('tables', () => {
     });
     switch (res.code) {
       case 200:
-        expect<Schema<'Table'>>(res.data).toEqual([]);
+        expect<Schema<'Table'>>(res.body).toEqual([]);
         break;
       case 404:
-        expect<undefined>(res.data).toBeUndefined();
+        expect<undefined>(res.body).toBeUndefined();
         break;
     }
   });
@@ -68,10 +68,10 @@ describe('tables', () => {
     });
     switch (res.code) {
       case 200:
-        expect<string>(res.data).toEqual('');
+        expect<string>(res.body).toEqual('');
         break;
       case 404:
-        expect<undefined>(res.data).toBeUndefined();
+        expect<undefined>(res.body).toBeUndefined();
         break;
     }
   });
@@ -83,10 +83,10 @@ describe('tables', () => {
     });
     switch (res.code) {
       case 200:
-        expect<Schema<'Table'> | string>(res.data).toEqual('');
+        expect<Schema<'Table'> | string>(res.body).toEqual('');
         break;
       case 404:
-        expect<undefined>(res.data).toBeUndefined();
+        expect<undefined>(res.body).toBeUndefined();
         break;
     }
   });
@@ -98,10 +98,10 @@ describe('tables', () => {
     });
     switch (res.code) {
       case 200:
-        expect<Schema<'Table'> | string>(res.data).toEqual('');
+        expect<Schema<'Table'> | string>(res.body).toEqual('');
         break;
       case 404:
-        expect<undefined>(res.data).toBeUndefined();
+        expect<undefined>(res.body).toBeUndefined();
         break;
     }
   });
@@ -113,10 +113,10 @@ describe('tables', () => {
     });
     switch (res.code) {
       case 200:
-        expect<Schema<'Table'>>(res.data).toEqual('');
+        expect<Schema<'Table'>>(res.body).toEqual('');
         break;
       case 404:
-        expect<undefined>(res.data).toBeUndefined();
+        expect<undefined>(res.body).toBeUndefined();
         break;
     }
   });

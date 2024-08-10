@@ -22,7 +22,7 @@ export async function createRouter(): Promise<Router> {
         // (save to a file, decode, etc.).
         const sha = await computeSha(ctx.request.body);
         // We now return the computed SHA to be sent back to the client.
-        return {type: 'text/plain', data: sha};
+        return {type: 'text/plain', body: sha};
       },
       uploadForm: async (ctx) => {
         // This operations accepts requests with form bodies, either as

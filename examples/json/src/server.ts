@@ -23,23 +23,23 @@ export async function createRouter(): Promise<Router> {
         // the client).
         const pet = {id: pets.size + 1, ...ctx.request.body};
         pets.set(pet.id, pet);
-        // Data can be sent back by returning an object with status and data
+        // Data can be sent back by returning an object with status and body
         // properties. Both are type-checked against the OpenAPI specification.
-        return {status: 201, data: pet};
+        return {status: 201, body: pet};
       },
       listPets: (ctx) => {
         // Similarly to request bodies, parameters are validated and typed
         // automatically.
         const limit = ctx.params.limit ?? 10;
-        // A 200 status can be omitted when sending data.
-        return {data: [...pets.values()].slice(0, limit)};
+        // A 200 status can be omitted when sending a body.
+        return {body: [...pets.values()].slice(0, limit)};
       },
       showPetById: (ctx) => {
         const pet = pets.get(ctx.params.petId);
         // Returning just a number from a handler produces a response with that
         // number as status and no content. Importantly, the returned number is
         // type-checked, so returning 200 would fail here for example!
-        return pet ? {data: pet} : 404;
+        return pet ? {body: pet} : 404;
       },
       clearPets: () => {
         pets.clear();

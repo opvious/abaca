@@ -43,16 +43,16 @@ class Handler implements KoaHandlersFor<Operations> {
     }
     if (ctx.accepts(['application/json', 'text/csv']) === 'application/json') {
       // When the `type` field is omitted from the return value, the SDK's
-      // default is used (application/json here) and the `data` type-checked
+      // default is used (application/json here) and the `body` type-checked
       // against it.
-      return {data: table};
+      return {body: table};
     }
-    // When a `type` field is set, the `data` field must match exacty that
-    // content-type's expected type (`string` here). Setting `table` as data
+    // When a `type` field is set, the `body` field must match exactly that
+    // content-type's expected type (`string` here). Setting `table` as body
     // directly would fail for example.
     return {
       type: 'text/csv',
-      data: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
+      body: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
     };
   }
 
@@ -68,7 +68,7 @@ class Handler implements KoaHandlersFor<Operations> {
         table = {rows: ctx.request.body.split('\n').map((r) => r.split(','))};
     }
     // The compiler automatically checks for us that the switch statement above
-    // is exhautive (if it wasn't, it would throw an error saying `table` is
+    // is exhaustive (if it wasn't, it would throw an error saying `table` is
     // used before being defined). This guarantees that we aren't forgetting any
     // branches.
     const {id} = ctx.params;

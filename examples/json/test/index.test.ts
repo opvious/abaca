@@ -33,31 +33,31 @@ test('creates and fetches a pet', async () => {
   // useful since different codes typically have different response schemas, for
   // example successful response and errors. In this example we did not declare
   // any errors in our specification so their data's type is `unknown`.
-  assertType<Schema<'Pet'> | unknown>(createRes.data);
+  assertType<Schema<'Pet'> | unknown>(createRes.body);
   // However after asserting that our response is successful...
   assert(createRes.code === 201);
   // ...the response's data type is narrowed accordingly.
-  assertType<Schema<'Pet'>>(createRes.data);
+  assertType<Schema<'Pet'>>(createRes.body);
 
-  const petId = createRes.data.id;
+  const petId = createRes.body.id;
   const showRes = await sdk.showPetById({params: {petId}});
   // It is often convenient to switch on a response's possible codes to access
   // individually narrowed types.
   switch (showRes.code) {
     case 200:
-      assertType<Schema<'Pet'>>(showRes.data); // `data` is typed as `Pet` here
-      expect(showRes.data.name).toEqual('Fido');
+      assertType<Schema<'Pet'>>(showRes.body); // `body` is typed as `Pet` here
+      expect(showRes.body.name).toEqual('Fido');
       break;
     case 404:
       // We did not declare a body in our specification for 404 responses so it
       // is typed as `undefined`.
-      assertType<undefined>(showRes.data);
+      assertType<undefined>(showRes.body);
       break;
     default:
       // Bodies for undeclared response codes are typed as `unknown` since we do
       // not have any type information for them in the schema (ssee also the
       // invalid input test below).
-      assertType<unknown>(showRes.data);
+      assertType<unknown>(showRes.body);
   }
   expect.assertions(1);
 });
@@ -68,7 +68,7 @@ test('fetches a missing pet', async () => {
   const res = await sdk.showPetById({params: {petId: 123}});
 
   assert(res.code === 404);
-  assertType<undefined>(res.data);
+  assertType<undefined>(res.body);
 });
 
 test('list no pets', async () => {
@@ -77,8 +77,8 @@ test('list no pets', async () => {
   const res = await sdk.listPets();
 
   assert(res.code === 200);
-  assertType<ReadonlyArray<Schema<'Pet'>>>(res.data);
-  expect(res.data).toEqual([]);
+  assertType<ReadonlyArray<Schema<'Pet'>>>(res.body);
+  expect(res.body).toEqual([]);
 });
 
 test('handles invalid input', async () => {
@@ -89,8 +89,8 @@ test('handles invalid input', async () => {
 
   assert(res.raw.status === 400);
   // Since we didn't declare 400 error responses in this example's
-  // specification, its data's type is left `unknown`. We can still access its
+  // specification, its body's type is left `unknown`. We can still access its
   // value though: in this case we know that it is a string containing the
   // relevant error message.
-  expect(res.data).contains('Invalid body');
+  expect(res.body).contains('Invalid body');
 });

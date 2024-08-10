@@ -19,7 +19,7 @@ describe('operation proxy', () => {
 
     const readRouter = createOperationsRouter<Operations>({
       document,
-      handlers: {getTable: () => (table ? {data: table} : 404)},
+      handlers: {getTable: () => (table ? {body: table} : 404)},
     });
     readServer = await startApp(new Koa().use(readRouter.routes()));
 
@@ -66,7 +66,7 @@ describe('operation proxy', () => {
     const setRes = await sdk.setTable({params: {id: '1'}, body: table});
     expect(setRes).toMatchObject({code: 204});
     const getRes = await sdk.getTable({params: {id: '1'}});
-    expect(getRes).toMatchObject({code: 200, data: table});
+    expect(getRes).toMatchObject({code: 200, body: table});
   });
 
   test('calls prepare', async () => {

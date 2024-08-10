@@ -15,7 +15,7 @@ standard responses otherwise.
     case 200:
       // In the unary case, data is available (only) once the call completes as
       // a list of messages.
-      for (const processed of unary.data) {
+      for (const processed of unary.body) {
         // ...
       }
     // ...
@@ -36,7 +36,7 @@ standard responses otherwise.
       // Response data is now available incrementally and automatically typed as
       // an `AsyncIterable`! Processing it in real time is as easy as using an
       // asynchronous loop.
-      for await (const processed of streaming.data) {
+      for await (const processed of streaming.body) {
         // ...
       }
     // ...

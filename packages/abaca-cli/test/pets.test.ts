@@ -42,7 +42,7 @@ describe('pets', () => {
     const res = await sdk.listPets();
     switch (res.code) {
       case 200:
-        expect<ReadonlyArray<Schema<'Pet'>>>(res.data).toEqual([]);
+        expect<ReadonlyArray<Schema<'Pet'>>>(res.body).toEqual([]);
         break;
       default:
         throw unexpected(res);
@@ -53,7 +53,7 @@ describe('pets', () => {
     const res = await sdk.listPets({});
     switch (res.code) {
       case 200:
-        expect<ReadonlyArray<Schema<'Pet'>>>(res.data).toEqual([]);
+        expect<ReadonlyArray<Schema<'Pet'>>>(res.body).toEqual([]);
         break;
       default:
         throw unexpected(res);
@@ -69,7 +69,7 @@ describe('pets', () => {
       case '2XX':
         throw unexpected(res);
       default:
-        expect<number>(res.data.code).toEqual(400);
+        expect<number>(res.body.code).toEqual(400);
     }
   });
 
@@ -83,7 +83,7 @@ describe('pets', () => {
       default:
         expect(res.code).toEqual('default');
         expect(res.raw.status).toEqual(406);
-        expect<undefined>(res.data).toBeUndefined();
+        expect<undefined>(res.body).toBeUndefined();
     }
   });
 
@@ -98,7 +98,7 @@ describe('pets', () => {
       default:
         expect(res.code).toEqual('default');
         expect(res.raw.status).toEqual(406);
-        expect<Schema<'Error'>>(res.data).toBeUndefined();
+        expect<Schema<'Error'>>(res.body).toBeUndefined();
     }
   });
 
@@ -117,15 +117,15 @@ describe('pets', () => {
 
   test('optional query parameter', async () => {
     const res = await sdk.listPets({params: {limit: 1}});
-    let data: ResponseData<'listPets', 200> | undefined;
+    let body: ResponseData<'listPets', 200> | undefined;
     switch (res.code) {
       case 200:
-        data = res.data;
+        body = res.body;
         break;
       default:
         throw unexpected(res);
     }
-    expect(data).toEqual([]);
+    expect(body).toEqual([]);
   });
 
   test('required body', async () => {
@@ -136,12 +136,12 @@ describe('pets', () => {
     if (cres.code !== 201) {
       throw unreachable();
     }
-    const id: string = cres.data;
+    const id: string = cres.body;
     const body: RequestBody<'updatePetTag'> = {name: 'a'};
     const res = await sdk.updatePetTag({body, params: {petId: id}});
     switch (res.code) {
       case 200:
-        expect<Schema<'Pet'>>(res.data).toEqual({id, name: 'a', tag: 't'});
+        expect<Schema<'Pet'>>(res.body).toEqual({id, name: 'a', tag: 't'});
         break;
       default:
         throw unexpected(res);
@@ -157,7 +157,7 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
-        expect(res.data).toEqual([]);
+        expect(res.body).toEqual([]);
         break;
       default:
         throw unexpected(res);
@@ -168,10 +168,10 @@ describe('pets', () => {
     const res = await sdk.getPetAge({params: {petId: 'hi'}});
     switch (res.code) {
       case 200:
-        assertType<number>(res.data);
+        assertType<number>(res.body);
         throw unexpected(res);
       case 400:
-        assertType<string>(res.data);
+        assertType<string>(res.body);
         throw unexpected(res);
       case 404:
         break;
@@ -189,13 +189,13 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
-        assertType<number>(res.data);
+        assertType<number>(res.body);
         throw unexpected(res);
       case 400:
-        assertType<undefined>(res.data);
+        assertType<undefined>(res.body);
         throw unexpected(res);
       case 404:
-        assertType<undefined>(res.data);
+        assertType<undefined>(res.body);
         break;
       case 'default':
         throw unexpected(res);
@@ -211,13 +211,13 @@ describe('pets', () => {
     });
     switch (res.code) {
       case 200:
-        assertType<undefined>(res.data);
+        assertType<undefined>(res.body);
         throw unexpected(res);
       case 400:
-        assertType<string>(res.data);
+        assertType<string>(res.body);
         throw unexpected(res);
       case 404:
-        assertType<undefined>(res.data);
+        assertType<undefined>(res.body);
         break;
       case 'default':
         throw unexpected(res);

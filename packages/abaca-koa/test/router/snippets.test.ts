@@ -37,7 +37,7 @@ describe('snippets', async () => {
         [JSON_SEQ_MIME_TYPE]: jsonSeqDecoder(),
       },
       encoders: {
-        [FORM_MIME_TYPE]: (data) => qs.stringify(data),
+        [FORM_MIME_TYPE]: (body) => qs.stringify(body),
         [JSON_SEQ_MIME_TYPE]: jsonSeqEncoder(),
       },
     });
@@ -54,7 +54,7 @@ describe('snippets', async () => {
   test('echos binary data', async () => {
     await resetHandlers({
       '/binary-echo#post': (ctx) => {
-        return {type: 'application/octet-stream', data: ctx.request.body};
+        return {type: 'application/octet-stream', body: ctx.request.body};
       },
     });
 
@@ -66,13 +66,13 @@ describe('snippets', async () => {
       body: new Blob(['abc']),
     });
     assert(res.code === 200);
-    expect(await res.data.text()).toEqual('abc');
+    expect(await res.body.text()).toEqual('abc');
   });
 
   test('echos object data', async () => {
     await resetHandlers({
       '/object-echo#post': (ctx) => {
-        return {type: 'application/json-seq', data: ctx.request.body};
+        return {type: 'application/json-seq', body: ctx.request.body};
       },
     });
 
@@ -85,7 +85,7 @@ describe('snippets', async () => {
       body: toAsyncIterable(messages),
     });
     assert(res.code === 200);
-    expect(await fromAsyncIterable(res.data)).toEqual(messages);
+    expect(await fromAsyncIterable(res.body)).toEqual(messages);
   });
 
   test('uploads URL encoded form', async () => {
@@ -175,7 +175,7 @@ describe('snippets', async () => {
       '/custom-binary-response#get': async () => {
         return {
           type: 'application/vnd.opvious.example',
-          data: new Blob(['123']),
+          body: new Blob(['123']),
         };
       },
     });
@@ -184,7 +184,7 @@ describe('snippets', async () => {
       headers: {accept: '*/*'},
     });
     assert(res.code === 200);
-    const text = await res.data.text();
+    const text = await res.body.text();
     expect(text).toEqual('123');
   });
 });

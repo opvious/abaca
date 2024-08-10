@@ -26,7 +26,7 @@ test('upload binary data', async () => {
     body: new Blob(['some-binary-data']),
   });
   assert(res.code === 200);
-  expect(res.data).toContain('a489'); // Computed SHA returned by the server
+  expect(res.body).toContain('a489'); // Computed SHA returned by the server
 });
 
 test('upload urlencoded form', async () => {

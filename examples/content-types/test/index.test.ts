@@ -48,7 +48,7 @@ test('fetches missing table as JSON', async () => {
     headers: {accept: 'application/json'},
   });
   assert(res.code === 404);
-  expect(res.data).toBeUndefined();
+  expect(res.body).toBeUndefined();
 });
 
 describe('fetches existing table', () => {
@@ -61,8 +61,8 @@ describe('fetches existing table', () => {
   test('as JSON', async () => {
     const res = await sdk.getTable({params: {id: 'id4'}});
     assert(res.code === 200);
-    assertType<Schema<'Table'>>(res.data);
-    expect(res.data).toEqual(table);
+    assertType<Schema<'Table'>>(res.body);
+    expect(res.body).toEqual(table);
   });
 
   test('fetches tables as CSV', async () => {
@@ -71,8 +71,8 @@ describe('fetches existing table', () => {
       headers: {accept: 'text/csv'},
     });
     assert(res.code === 200);
-    assertType<string>(res.data);
-    expect(res.data).toEqual('r1,v1');
+    assertType<string>(res.body);
+    expect(res.body).toEqual('r1,v1');
   });
 });
 
@@ -83,10 +83,10 @@ test('fetches table using glob', async () => {
   });
   switch (res.code) {
     case 200:
-      expect<Schema<'Table'> | string>(res.data).toEqual('');
+      expect<Schema<'Table'> | string>(res.body).toEqual('');
       break;
     case 404:
-      expect<undefined>(res.data).toBeUndefined();
+      expect<undefined>(res.body).toBeUndefined();
       break;
   }
 });

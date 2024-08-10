@@ -29,34 +29,34 @@ export async function messagesRouter(): Promise<Router> {
 
         if (ctx.accepts('application/json-seq')) {
           // The client accepts streaming responses. We can directly return an
-          // `AsyncIterable` of messages as data. Each message will be sent back
+          // `AsyncIterable` of messages as body. Each message will be sent back
           // to the client as it becomes available here.
-          return {type: 'application/json-seq', data: processedMessages()};
+          return {type: 'application/json-seq', body: processedMessages()};
         }
         // Otherwise the client only accepts unary responses. We wait for all
         // messages to be processed locally to be able to gather the entire
         // response and send it back.
-        const data: Schema<'Message'>[] = [];
+        const body: Schema<'Message'>[] = [];
         for await (const msg of processedMessages()) {
-          data.push(msg);
+          body.push(msg);
         }
-        return {type: 'application/json', data};
+        return {type: 'application/json', body};
       },
       ingestMessages: async (ctx) => {
         // The body of a request with a streaming type is a standard
         // `AsyncIterable`. It can for example be consumed via an asynchronous
         // loop, which will yield inputs as soon as they are received.
-        let data = 0;
+        let body = 0;
         for await (const msg of ctx.request.body) {
-          data += msg.contents.length;
+          body += msg.contents.length;
         }
-        return {data};
+        return {body};
       },
       echoMessages: (ctx) => {
         // Since streaming request bodies are also typed as `AsyncIterable`
-        // instances so we can simply return it as data to echo each message to
+        // instances so we can simply return it as body to echo each message to
         // the client right as it is received here!
-        return {type: 'application/json-seq', data: ctx.request.body};
+        return {type: 'application/json-seq', body: ctx.request.body};
       },
     },
   });

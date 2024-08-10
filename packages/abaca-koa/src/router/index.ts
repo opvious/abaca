@@ -202,29 +202,32 @@ export function createOperationsRouter<
               requestErrors.unsupportedContentType(qtype)
             );
           }
-          let body;
+          let reqBody;
           try {
-            body = await decoder(ctx);
+            reqBody = await decoder(ctx);
           } catch (err) {
             throw errors.invalidRequest(requestErrors.unreadableBody(err));
           }
-          if (body instanceof stream.Readable && !body.readableObjectMode) {
+          if (
+            reqBody instanceof stream.Readable &&
+            !reqBody.readableObjectMode
+          ) {
             // Binary mode stream
-            registry.validateRequestBody(body, oid, qtype);
-          } else if (isAsyncIterable(body)) {
+            registry.validateRequestBody(reqBody, oid, qtype);
+          } else if (isAsyncIterable(reqBody)) {
             // Object-mode stream or native async iterable
-            body = mapAsyncIterable(body, (b) => {
+            reqBody = mapAsyncIterable(reqBody, (b) => {
               registry.validateRequestBody(b, oid, qtype);
               return b;
             });
-          } else if (body instanceof events.EventEmitter) {
+          } else if (reqBody instanceof events.EventEmitter) {
             // Multipart instance
-            body = registry.translateRequestBody(body, oid, qtype);
+            reqBody = registry.translateRequestBody(reqBody, oid, qtype);
           } else {
             // Decoded value
-            registry.validateRequestBody(body, oid, qtype);
+            registry.validateRequestBody(reqBody, oid, qtype);
           }
-          Object.assign(ctx.request, {body});
+          Object.assign(ctx.request, {body: reqBody});
         } else if (def.body?.required) {
           throw errors.invalidRequest(requestErrors.missingBody());
         }
@@ -239,7 +242,7 @@ export function createOperationsRouter<
 
         const atype =
           typeof res == 'number' ? undefined : res.type ?? defaultType;
-        let data = typeof res == 'number' ? undefined : res.data;
+        let resBody = typeof res == 'number' ? undefined : res.body;
         const {code, declared} = matcher.getBest(status);
         if (!isResponseTypeValid({value: atype, declared, accepted})) {
           throw errors.unacceptableResponseType(
@@ -250,7 +253,7 @@ export function createOperationsRouter<
           );
         }
         if (!atype) {
-          if (data != null) {
+          if (resBody != null) {
             throw errors.unexpectedResponseBody();
           }
           ctx.body = null;
@@ -262,17 +265,17 @@ export function createOperationsRouter<
         const content = declared?.get(atype);
         assert(content, 'undeclared content for type %s', atype);
         // TODO: Check that content.isStream matches the branches below.
-        if (isAsyncIterable(data) && !(data instanceof stream.Readable)) {
-          data = mapAsyncIterable(data, (d) => {
+        if (isAsyncIterable(resBody) && !(resBody instanceof stream.Readable)) {
+          resBody = mapAsyncIterable(resBody, (d) => {
             registry.validateResponse(d, oid, atype, code, content);
             return d;
           });
         } else {
-          registry.validateResponse(data, oid, atype, code, content);
+          registry.validateResponse(resBody, oid, atype, code, content);
         }
         const encoder = encoders.getBest(atype);
         try {
-          await encoder(data, ctx, content);
+          await encoder(resBody, ctx, content);
         } finally {
           ctx.status = status;
         }

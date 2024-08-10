@@ -41,19 +41,19 @@ describe('pets', async () => {
       listPets: async (ctx) => {
         const limit = ctx.params.limit ?? 2;
         if (limit! > 2) {
-          return {status: 400, data: {code: 400, message: 'Limit too high'}};
+          return {status: 400, body: {code: 400, message: 'Limit too high'}};
         }
-        return {data: pets};
+        return {body: pets};
       },
     });
 
     const res1 = await sdk.listPets();
-    expect(res1).toMatchObject({code: 200, data: []});
+    expect(res1).toMatchObject({code: 200, body: []});
 
     const res2 = await sdk.listPets({params: {limit: 3}});
     expect(res2).toMatchObject({
       code: 'default',
-      data: {code: 400},
+      body: {code: 400},
       raw: {status: 400},
     });
   });
@@ -63,7 +63,7 @@ describe('pets', async () => {
     await resetHandlers({
       createPet: (ctx) => {
         pet = {id: 11, ...ctx.request.body};
-        return {status: 201, type: 'text/plain', data: 'ok'};
+        return {status: 201, type: 'text/plain', body: 'ok'};
       },
     });
 
@@ -71,7 +71,7 @@ describe('pets', async () => {
       body: {name: 'n1', tag: 't1'},
       headers: {accept: '*/*'},
     });
-    expect(res1).toMatchObject({code: 201, data: 'ok'});
+    expect(res1).toMatchObject({code: 201, body: 'ok'});
 
     const res2 = await sdk.createPet({
       body: {name: 'n1', tag: 't2'},
