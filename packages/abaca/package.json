@@ -22,6 +22,7 @@
     "clean": "rm -rf lib node_modules out",
     "fix": "prettier --write",
     "prepare": "pnpm run build",
+    "test": "vitest",
     "watch": "tsc -b -w src"
   },
   "dependencies": {

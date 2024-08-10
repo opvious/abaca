@@ -1,4 +1,4 @@
-import * as sut from '../src/common.js';
+import * as sut from '../../src/openapi/common.js';
 
 describe('json pointer', () => {
   describe('create', () => {
