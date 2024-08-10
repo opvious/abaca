@@ -55,6 +55,16 @@ paths:
       responses:
         '204':
           description: Successfully uploaded
+  /custom-binary-response:
+    get:
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.opvious.example:
+              schema:
+                type: string
+                format: binary
 components:
   responses:
     MessageStream:

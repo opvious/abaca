@@ -7,6 +7,7 @@ import {
   OperationDefinition,
   ParameterDefinition,
   ResponseCode,
+  ResponseContentDefinition,
 } from 'abaca-runtime';
 import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
@@ -117,17 +118,27 @@ export function extractPathOperationDefinitions(args: {
       return {required: !!body.required, types};
     });
 
-    const responses: Record<string, ReadonlyArray<MimeType>> = {};
+    const responses: Record<
+      string,
+      ReadonlyArray<ResponseContentDefinition>
+    > = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
       const [res, parts] = deref(resOrRef, [...prefix, 'responses', code]);
-      const types = Object.keys(res.content ?? {});
+      const defs: ResponseContentDefinition[] = [];
+      for (const [key, val] of Object.entries<any>(res.content ?? {})) {
+        const schema = val?.schema;
+        defs.push({
+          mimeType: key,
+          isBlob: schema?.type === 'string' && schema?.format === 'binary',
+        });
+      }
       if (producer) {
-        for (const key of types) {
-          const ptr = schemaPointer([...parts, 'content', key]);
-          producer.emit('response', oid, ptr, key, code);
+        for (const def of defs) {
+          const ptr = schemaPointer([...parts, 'content', def.mimeType]);
+          producer.emit('response', oid, ptr, def.mimeType, code);
         }
       }
-      responses[code] = types;
+      responses[code] = defs;
     }
 
     defs[oid] = {path, method, parameters: params, body, responses};

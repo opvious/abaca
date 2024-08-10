@@ -45,21 +45,21 @@ export type ValuesMatchingMimeTypes<O, G extends MimeType> = Values<{
     : O[M];
 }>;
 
-export function contentTypeMatches(
+export function matchingContentType(
   exact: MimeType,
   accepted: Iterable<MimeType>
-): boolean {
-  for (const item of accepted) {
-    if (exact === item || item === FALLBACK_MIME_TYPE) {
-      return true;
+): MimeType | undefined {
+  for (const elem of accepted) {
+    if (exact === elem || elem === FALLBACK_MIME_TYPE) {
+      return elem;
     }
     const got = exact.split('/');
-    const want = item.split('/');
+    const want = elem.split('/');
     if (got[0] === want[0] && (got[1] === want[1] || want[1] === '*')) {
-      return true;
+      return elem;
     }
   }
-  return false;
+  return undefined;
 }
 
 export class ByMimeType<V> {
@@ -143,16 +143,29 @@ export type ResponsesMatchingMimeType<
 
 export class ResponseClauseMatcher {
   private constructor(
-    private readonly data: ReadonlyMap<ResponseCode, ReadonlySet<MimeType>>
+    private readonly data: ReadonlyMap<
+      ResponseCode,
+      ReadonlyMap<MimeType, ResponseContent>
+    >
   ) {}
 
   static create(
     responses: OperationDefinition['responses']
   ): ResponseClauseMatcher {
-    const data = new Map<ResponseCode, ReadonlySet<MimeType>>();
-    for (const [code, mtypes] of Object.entries(responses)) {
+    const data = new Map<
+      ResponseCode,
+      ReadonlyMap<MimeType, ResponseContent>
+    >();
+    for (const [code, defs] of Object.entries(responses)) {
       const ncode = +code;
-      data.set(isNaN(ncode) ? code : ncode, new Set(mtypes));
+      const contents = new Map<MimeType, ResponseContent>();
+      for (const def of defs) {
+        contents.set(def.mimeType, {
+          mimeType: def.mimeType,
+          isBlob: def.isBlob,
+        });
+      }
+      data.set(isNaN(ncode) ? code : ncode, contents);
     }
     return new ResponseClauseMatcher(data);
   }
@@ -180,8 +193,8 @@ export class ResponseClauseMatcher {
         continue;
       }
       let overlap = false;
-      for (const mtype of mtypes) {
-        if (contentTypeMatches(mtype, accepted)) {
+      for (const mtype of mtypes.keys()) {
+        if (matchingContentType(mtype, accepted) !== undefined) {
           overlap = true;
           break;
         }
@@ -194,14 +207,23 @@ export class ResponseClauseMatcher {
   }
 }
 
+export interface ResponseContent {
+  readonly mimeType: MimeType;
+  readonly isBlob: boolean;
+}
+
+/**
+ * If returns true and `value` is not-null, it is guaranteed that `value` is a
+ * key in `declared`.
+ */
 export function isResponseTypeValid(args: {
   readonly value: MimeType | undefined;
-  readonly declared: ReadonlySet<MimeType> | undefined;
+  readonly declared: ReadonlyMap<MimeType, ResponseContent> | undefined;
   readonly accepted: ReadonlySet<MimeType>;
 }): boolean {
   const {value, declared, accepted} = args;
   if (declared == null) {
-    return value == null || contentTypeMatches(value, accepted);
+    return value == null || matchingContentType(value, accepted) != null;
   }
   if (!declared.size) {
     return value == null;
@@ -209,7 +231,7 @@ export function isResponseTypeValid(args: {
   if (value == null || !declared.has(value)) {
     return false;
   }
-  return contentTypeMatches(value, accepted);
+  return matchingContentType(value, accepted) != null;
 }
 
 export function acceptedMimeTypes(header: string): ReadonlySet<MimeType> {
@@ -225,5 +247,5 @@ export function acceptedMimeTypes(header: string): ReadonlySet<MimeType> {
 
 export interface ResponseClause {
   readonly code: ResponseCode;
-  readonly declared?: ReadonlySet<MimeType>;
+  readonly declared?: ReadonlyMap<MimeType, ResponseContent>;
 }

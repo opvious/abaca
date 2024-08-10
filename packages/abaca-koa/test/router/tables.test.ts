@@ -163,9 +163,7 @@ class Handler implements sut.KoaHandlersFor<Operations> {
       case 'text/csv':
         return {
           type: 'text/csv',
-          data: Buffer.from(
-            table.rows?.map((r) => r.join(',')).join('\n') ?? ''
-          ),
+          data: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
         };
       default:
         throw unreachable();

@@ -170,4 +170,22 @@ describe('snippets', async () => {
     });
     assert(res.raw.status === 400);
   });
+
+  test('fetches binary data without explicit codecs', async () => {
+    await resetHandlers({
+      '/custom-binary-response#get': async () => {
+        return {
+          type: 'application/vnd.opvious.example',
+          data: new Blob(['123']),
+        };
+      },
+    });
+
+    const res = await sdk['/custom-binary-response#get']({
+      headers: {accept: '*/*'},
+    });
+    assert(res.code === 200);
+    const text = await res.data.text();
+    expect(text).toEqual('123');
+  });
 });
