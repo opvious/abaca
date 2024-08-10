@@ -4,8 +4,8 @@ import parseDataUrl from 'data-urls';
 import path from 'path';
 import YAML from 'yaml';
 
-import errorCodes from '../../src/resolvable/index.errors.js';
-import * as sut from '../../src/resolvable/index.js';
+import errorCodes from '../../../src/openapi/resolvable/index.errors.js';
+import * as sut from '../../../src/openapi/resolvable/index.js';
 
 const loader = ResourceLoader.create({
   root: path.dirname(localPath(import.meta.url)),

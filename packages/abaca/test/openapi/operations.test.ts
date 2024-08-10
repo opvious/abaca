@@ -1,9 +1,9 @@
 import {ResourceLoader} from '@opvious/stl-utils/files';
 import YAML from 'yaml';
 
-import * as sut from '../src/operations.js';
+import * as sut from '../../src/openapi/operations.js';
 
-const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
+const loader = ResourceLoader.enclosing(import.meta.url).scoped('test/openapi');
 
 describe('extract path operation definitions', () => {
   test('null hook', async () => {

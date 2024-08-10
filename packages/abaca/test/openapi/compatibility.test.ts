@@ -1,9 +1,12 @@
 import {ResourceLoader} from '@opvious/stl-utils/files';
 
-import * as sut from '../src/compatibility.js';
-import {loadOpenapiDocument, OpenapiDocument} from '../src/document/index.js';
+import * as sut from '../../src/openapi/compatibility.js';
+import {
+  loadOpenapiDocument,
+  OpenapiDocument,
+} from '../../src/openapi/document/index.js';
 
-const loader = ResourceLoader.enclosing(import.meta.url).scoped('test');
+const loader = ResourceLoader.enclosing(import.meta.url).scoped('test/openapi');
 
 interface Schemas {
   Pet: {
