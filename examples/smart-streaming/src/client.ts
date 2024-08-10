@@ -1,4 +1,4 @@
-import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca-codecs/node/json-seq';
+import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca/codecs/node/json-seq';
 import net from 'net';
 import fetch from 'node-fetch';
 
@@ -10,7 +10,7 @@ export function messagesSdk(address: net.AddressInfo | string): MessagesSdk {
     address,
     fetch,
     // The decoder and encoder are just a few lines of code each. Their source
-    // can be found in the `packages/abaca-codecs` folder in this repository.
+    // can be found in the `packages/abaca` folder in this repository.
     decoders: {'application/json-seq': jsonSeqDecoder()},
     encoders: {'application/json-seq': jsonSeqEncoder()},
   });

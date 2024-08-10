@@ -24,6 +24,7 @@
   "dependencies": {
     "@opvious/stl-errors": "^0.25.4",
     "@opvious/stl-utils": "^0.25.4",
+    "abaca-cli": "workspace:*",
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*"
   },

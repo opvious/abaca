@@ -1,8 +1,9 @@
 import {assert} from '@opvious/stl-errors';
-import {Decoder, Encoder} from 'abaca-runtime';
 import * as jsonSeq from 'json-text-sequence';
 import fetch from 'node-fetch';
 import stream from 'stream';
+
+import {Decoder, Encoder} from '../../index.js';
 
 /** Decoder for `application/json-seq` content-types */
 export function jsonSeqDecoder(): Decoder<typeof fetch> {

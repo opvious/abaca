@@ -47,6 +47,9 @@ importers:
 
   examples/content-types:
     dependencies:
+      abaca-cli:
+        specifier: workspace:*
+        version: link:../../packages/abaca-cli
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
@@ -75,6 +78,9 @@ importers:
       '@opvious/stl-utils':
         specifier: ^0.25.4
         version: 0.25.4
+      abaca-cli:
+        specifier: workspace:*
+        version: link:../../packages/abaca-cli
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
@@ -97,6 +103,9 @@ importers:
 
   examples/json:
     dependencies:
+      abaca-cli:
+        specifier: workspace:*
+        version: link:../../packages/abaca-cli
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
@@ -119,9 +128,12 @@ importers:
 
   examples/smart-streaming:
     dependencies:
-      abaca-codecs:
+      abaca:
         specifier: workspace:*
-        version: link:../../packages/abaca-codecs
+        version: link:../../packages/abaca
+      abaca-cli:
+        specifier: workspace:*
+        version: link:../../packages/abaca-cli
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
@@ -138,14 +150,23 @@ importers:
       '@types/koa__router':
         specifier: ^12.0.4
         version: 12.0.4
-      abaca:
-        specifier: workspace:*
-        version: link:../../packages/abaca
       koa:
         specifier: ^2.15.3
         version: 2.15.3
 
   packages/abaca:
+    dependencies:
+      '@opvious/stl-errors':
+        specifier: ^0.25.4
+        version: 0.25.4
+      json-text-sequence:
+        specifier: ^2.0.2
+        version: 2.0.2
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
+
+  packages/abaca-cli:
     dependencies:
       '@opentelemetry/api':
         specifier: ~1.8.0
@@ -159,12 +180,12 @@ importers:
       '@opvious/stl-utils':
         specifier: ^0.25.4
         version: 0.25.4
+      abaca:
+        specifier: workspace:*
+        version: link:../abaca
       abaca-openapi:
         specifier: workspace:*
         version: link:../abaca-openapi
-      abaca-runtime:
-        specifier: workspace:*
-        version: link:../abaca-runtime
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -206,21 +227,6 @@ importers:
         specifier: ^9.4.2
         version: 9.4.2(typescript@5.5.3)
 
-  packages/abaca-codecs:
-    dependencies:
-      '@opvious/stl-errors':
-        specifier: ^0.25.4
-        version: 0.25.4
-      abaca-runtime:
-        specifier: workspace:*
-        version: link:../abaca-runtime
-      json-text-sequence:
-        specifier: ^2.0.2
-        version: 2.0.2
-      node-fetch:
-        specifier: ^3.3.2
-        version: 3.3.2
-
   packages/abaca-koa:
     dependencies:
       '@koa/router':
@@ -238,12 +244,12 @@ importers:
       '@opvious/stl-utils':
         specifier: ^0.25.4
         version: 0.25.4
+      abaca:
+        specifier: workspace:*
+        version: link:../abaca
       abaca-openapi:
         specifier: workspace:*
         version: link:../abaca-openapi
-      abaca-runtime:
-        specifier: workspace:*
-        version: link:../abaca-runtime
       ajv:
         specifier: ^8.16.0
         version: 8.16.0
@@ -290,12 +296,6 @@ importers:
       '@types/qs':
         specifier: ^6.9.15
         version: 6.9.15
-      abaca:
-        specifier: workspace:*
-        version: link:../abaca
-      abaca-codecs:
-        specifier: workspace:*
-        version: link:../abaca-codecs
       inlinable:
         specifier: ^0.3.3
         version: 0.3.3
@@ -326,9 +326,9 @@ importers:
       '@stoplight/json-ref-resolver':
         specifier: ^3.1.6
         version: 3.1.6
-      abaca-runtime:
+      abaca:
         specifier: workspace:*
-        version: link:../abaca-runtime
+        version: link:../abaca
       ajv:
         specifier: ^8.16.0
         version: 8.16.0
@@ -360,8 +360,6 @@ importers:
       ts-essentials:
         specifier: ^9.4.2
         version: 9.4.2(typescript@5.5.3)
-
-  packages/abaca-runtime: {}
 
 packages:
 

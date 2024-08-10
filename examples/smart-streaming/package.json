@@ -22,7 +22,8 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "abaca-codecs": "workspace:*",
+    "abaca": "workspace:*",
+    "abaca-cli": "workspace:*",
     "abaca-koa": "workspace:*",
     "abaca-openapi": "workspace:*",
     "node-fetch": "^3.3.2"

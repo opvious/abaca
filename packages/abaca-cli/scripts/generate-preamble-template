@@ -10,7 +10,7 @@ shopt -s nullglob
 
 __dirname="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-preamble_imports="$__dirname/../../abaca-runtime/src"
+preamble_imports="$__dirname/../../abaca/src"
 
 preamble_template="$__dirname/../resources/preamble/index.ts"
 

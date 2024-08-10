@@ -14,15 +14,6 @@ import {typedEmitter} from '@opvious/stl-utils/events';
 import {atMostOnce, ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {
-  dereferencePointer,
-  extractPathOperationDefinitions,
-  incompatibleValueError,
-  JsonPointer,
-  OpenapiDocument,
-  OperationListeners,
-  parseOpenapiDocument,
-} from 'abaca-openapi';
-import {
   ContentFormat,
   isResponseTypeValid,
   JSON_MIME_TYPE,
@@ -33,7 +24,16 @@ import {
   OperationTypes,
   ResponseClauseMatcher,
   ResponseCode,
-} from 'abaca-runtime';
+} from 'abaca';
+import {
+  dereferencePointer,
+  extractPathOperationDefinitions,
+  incompatibleValueError,
+  JsonPointer,
+  OpenapiDocument,
+  OperationListeners,
+  parseOpenapiDocument,
+} from 'abaca-openapi';
 import Ajv_ from 'ajv';
 import events from 'events';
 import stream from 'stream';

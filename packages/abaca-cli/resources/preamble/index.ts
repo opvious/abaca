@@ -37,7 +37,7 @@ import {
   Values,
   ValuesMatchingMimeTypes,
   WithMimeTypeGlobs,
-} from 'abaca-runtime';
+} from 'abaca';
 
 type DA = typeof DEFAULT_ACCEPT;
 type DM = typeof DEFAULT_CONTENT_TYPE;

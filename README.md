@@ -85,13 +85,12 @@ handles various use-cases:
 
 ## Packages
 
-+ [`abaca`](/packages/abaca), client SDK generator CLI
-+ [`abaca-codecs`](/packages/abaca-codecs), common client decoders and encoders
++ [`abaca-cli`](/packages/abaca-cli), client SDK generator CLI
++ [`abaca`](/packages/abaca), runtime utilities
 + [`abaca-koa`](/packages/abaca-koa), Koa integrations for server routing and
   proxying
 + [`abaca-openapi`](/packages/abaca-openapi), OpenAPI tools (specification
   parsing, schema validation, etc.)
-+ [`abaca-runtime`](/packages/abaca-runtime), shared utilities
 
 
 ## Developing

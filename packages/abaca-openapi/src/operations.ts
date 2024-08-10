@@ -8,7 +8,7 @@ import {
   OperationDefinition,
   ParameterDefinition,
   ResponseCode,
-} from 'abaca-runtime';
+} from 'abaca';
 import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';
 

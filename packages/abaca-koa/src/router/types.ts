@@ -11,7 +11,7 @@ import {
   OperationTypes,
   ResponsesType,
   Values,
-} from 'abaca-runtime';
+} from 'abaca';
 import Koa from 'koa';
 import stream from 'stream';
 

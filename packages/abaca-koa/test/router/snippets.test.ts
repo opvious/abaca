@@ -4,9 +4,9 @@ import {
   toAsyncIterable,
 } from '@opvious/stl-utils/collections';
 import {waitForEvent} from '@opvious/stl-utils/events';
-import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca-codecs/node/json-seq';
+import {FORM_MIME_TYPE, JSON_SEQ_MIME_TYPE} from 'abaca';
+import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca/codecs/node/json-seq';
 import {OpenapiDocument} from 'abaca-openapi';
-import {FORM_MIME_TYPE, JSON_SEQ_MIME_TYPE} from 'abaca-runtime';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';
