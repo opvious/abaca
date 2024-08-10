@@ -2,13 +2,9 @@ export const serverAddresses = <%= JSON.stringify(it.serverAddresses, null, 2) %
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
-export type SdkConfig<
-  F extends BaseFetch = typeof fetch
-> = Optional<SdkConfigFor<operations, F>, 'address'>;
-
 export function createSdk<
   F extends BaseFetch
->(arg?: Address | SdkConfig<F>): Sdk<F> {
+>(arg?: Address | Optional<SdkConfig<F>, 'address'>): Sdk<F> {
   const config =
     typeof arg == 'string' || arg instanceof URL || (arg && 'port' in arg)
       ? {address: arg}

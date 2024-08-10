@@ -46,7 +46,7 @@ export type ValuesMatchingMimeTypes<O, G extends MimeType> = Values<{
     : O[M];
 }>;
 
-export function matchingContentType(
+export function matchingMimeType(
   exact: MimeType,
   accepted: Iterable<MimeType>
 ): MimeType | undefined {
@@ -93,13 +93,15 @@ export class ByMimeType<V> {
   }
 }
 
-export type BodyContent<O extends OperationType> = Exclude<
+export type RequestBodyContent<O extends OperationType> = Exclude<
   Lookup<O, 'requestBody'>,
   undefined
 >['content'];
 
 export type BodyMimeTypes<O extends OperationType> =
-  BodyContent<O> extends never ? never : keyof BodyContent<O> & MimeType;
+  RequestBodyContent<O> extends never
+    ? never
+    : keyof RequestBodyContent<O> & MimeType;
 
 export type AllBodyMimeTypes<O extends OperationTypes> = Values<{
   [K in keyof O]: BodyMimeTypes<O[K]>;
@@ -109,7 +111,7 @@ export type BodiesMatchingMimeType<
   O extends OperationTypes<keyof O & string>,
   G extends MimeType,
 > = Values<{
-  [K in keyof O]: ValuesMatchingMimeTypes<BodyContent<O[K]>, G>;
+  [K in keyof O]: ValuesMatchingMimeTypes<RequestBodyContent<O[K]>, G>;
 }>;
 
 export type AllResponseMimeTypes<O extends OperationTypes<keyof O & string>> =
@@ -189,7 +191,7 @@ export class ResponseClauseMatcher {
       }
       let overlap = false;
       for (const mtype of mtypes.keys()) {
-        if (matchingContentType(mtype, accepted) !== undefined) {
+        if (matchingMimeType(mtype, accepted) != null) {
           overlap = true;
           break;
         }
@@ -203,25 +205,27 @@ export class ResponseClauseMatcher {
 }
 
 /**
- * If returns true and `value` is not-null, it is guaranteed that `value` is a
- * key in `declared`.
+ * Returns whether the given mime-type is compatible with declared (from the
+ * OpenAPI specification) and acceptable (from the request) values.  If returns
+ * true and `received` is not-null, it is guaranteed that `received` is a key in
+ * `declared`.
  */
-export function isResponseTypeValid(args: {
-  readonly value: MimeType | undefined;
+export function isContentCompatible(args: {
+  readonly received: MimeType | undefined;
   readonly declared: ReadonlyMap<MimeType, ContentFormat> | undefined;
   readonly accepted: ReadonlySet<MimeType>;
 }): boolean {
-  const {value, declared, accepted} = args;
+  const {received, declared, accepted} = args;
   if (declared == null) {
-    return value == null || matchingContentType(value, accepted) != null;
+    return received == null || matchingMimeType(received, accepted) != null;
   }
   if (!declared.size) {
-    return value == null;
+    return received == null;
   }
-  if (value == null || !declared.has(value)) {
+  if (received == null || !declared.has(received)) {
     return false;
   }
-  return matchingContentType(value, accepted) != null;
+  return matchingMimeType(received, accepted) != null;
 }
 
 export function acceptedMimeTypes(header: string): ReadonlySet<MimeType> {

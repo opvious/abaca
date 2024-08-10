@@ -25,3 +25,6 @@ export type Values<O> = O[keyof O];
 export type KeysOfValues<O> = Values<{
   [K in keyof O]: O[K] extends never ? never : keyof O[K];
 }>;
+
+export type Asyncify<V extends ReadonlyArray<any>> =
+  V extends ReadonlyArray<infer I> ? AsyncIterable<I> : never;

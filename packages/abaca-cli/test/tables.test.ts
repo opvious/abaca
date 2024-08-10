@@ -29,7 +29,6 @@ describe('tables', () => {
     await sdk.setTable({
       params: {id: 'id1'},
       body: {
-        // bar: '',
         rows: [
           ['r1', 'v1'],
           ['r2', 'v2'],

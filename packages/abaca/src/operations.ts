@@ -78,6 +78,3 @@ export interface BodyDefinition {
   readonly required: boolean;
   readonly types: ReadonlyArray<MimeType>;
 }
-
-export type Asyncify<V extends ReadonlyArray<any>> =
-  V extends ReadonlyArray<infer I> ? AsyncIterable<I> : never;

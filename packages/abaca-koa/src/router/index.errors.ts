@@ -7,8 +7,8 @@ const [errors, errorCodes] = errorFactories({
       message: 'Invalid request: ' + reason.message,
       tags: {reason},
     }),
-    invalidResponseData: (cause: IncompatibleValueError) => ({
-      message: 'Invalid response data: ' + cause.message,
+    invalidResponseBody: (cause: IncompatibleValueError) => ({
+      message: 'Invalid response body: ' + cause.message,
       tags: cause.tags,
       cause,
     }),
