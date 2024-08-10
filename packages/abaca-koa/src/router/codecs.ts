@@ -7,6 +7,7 @@ import {
   AsyncOrSync,
   BodiesMatchingMimeType,
   ByMimeType,
+  ContentFormat,
   FORM_MIME_TYPE,
   JSON_MIME_TYPE,
   JSON_SEQ_MIME_TYPE,
@@ -46,7 +47,8 @@ export type KoaEncodersFor<O extends OperationTypes, S = {}> = {
 
 export type KoaEncoder<D = any, S = {}> = (
   data: D | (D extends string ? Buffer | stream.Readable : never),
-  ctx: Koa.ParameterizedContext<S>
+  ctx: Koa.ParameterizedContext<S>,
+  content: ContentFormat
 ) => AsyncOrSync<void>;
 
 // Implementations
@@ -65,7 +67,15 @@ export function defaultDecoders(): ByMimeType<KoaDecoder> {
 }
 
 export function defaultEncoders(): ByMimeType<KoaEncoder> {
-  const ret = ByMimeType.create<KoaEncoder>((_data, ctx) => {
+  const ret = ByMimeType.create<KoaEncoder>(async (data, ctx, content) => {
+    if (content.isBinary) {
+      if (data instanceof Blob) {
+        const buf = await data.arrayBuffer();
+        data = Buffer.from(buf);
+      }
+      ctx.body = data;
+      return;
+    }
     throw errors.unwritableResponseType(ctx.type);
   });
   ret.add(JSON_MIME_TYPE, (data, ctx) => {

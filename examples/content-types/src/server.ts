@@ -52,7 +52,7 @@ class Handler implements KoaHandlersFor<Operations> {
     // directly would fail for example.
     return {
       type: 'text/csv',
-      data: Buffer.from(table.rows?.map((r) => r.join(',')).join('\n') ?? ''),
+      data: table.rows?.map((r) => r.join(',')).join('\n') ?? '',
     };
   }
 

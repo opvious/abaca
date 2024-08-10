@@ -23,9 +23,10 @@ import {
   parseOpenapiDocument,
 } from 'abaca-openapi';
 import {
-  contentTypeMatches,
+  ContentFormat,
   isResponseTypeValid,
   JSON_MIME_TYPE,
+  matchingContentType,
   MimeType,
   MULTIPART_MIME_TYPE,
   OperationDefinition,
@@ -242,7 +243,12 @@ export function createOperationsRouter<
         let data = typeof res == 'number' ? undefined : res.data;
         const {code, declared} = matcher.getBest(status);
         if (!isResponseTypeValid({value: atype, declared, accepted})) {
-          throw errors.unacceptableResponseType(oid, atype, accepted, declared);
+          throw errors.unacceptableResponseType(
+            oid,
+            atype,
+            accepted,
+            declared?.keys()
+          );
         }
         if (!atype) {
           if (data != null) {
@@ -254,21 +260,24 @@ export function createOperationsRouter<
           ctx.status = status;
           return;
         }
-        ctx.type = atype;
+        const content = declared?.get(atype);
+        assert(content, 'undeclared content for type %s', atype);
+        // TODO: Check that content.isStream matches the branches below.
         if (isAsyncIterable(data) && !(data instanceof stream.Readable)) {
           data = mapAsyncIterable(data, (d) => {
-            registry.validateResponse(d, oid, atype, code);
+            registry.validateResponse(d, oid, atype, code, content);
             return d;
           });
         } else {
-          registry.validateResponse(data, oid, atype, code);
+          registry.validateResponse(data, oid, atype, code, content);
         }
         const encoder = encoders.getBest(atype);
         try {
-          await encoder(data, ctx);
+          await encoder(data, ctx, content);
         } finally {
           ctx.status = status;
         }
+        ctx.type = atype;
       }
     );
   }
@@ -344,7 +353,7 @@ class Registry {
 
     // Add individual multipart properties to be able to validate them as they
     // are streamed in.
-    if (contentTypeMatches(contentType, [MULTIPART_MIME_TYPE])) {
+    if (matchingContentType(contentType, [MULTIPART_MIME_TYPE]) != null) {
       assert(
         schema.type === 'object',
         'Non-object multipart request body: %j',
@@ -516,14 +525,21 @@ class Registry {
     data: unknown,
     oid: string,
     contentType: string,
-    code: ResponseCode
+    code: ResponseCode,
+    content: ContentFormat
   ): void {
     const key = schemaId(oid, {kind: 'responseBody', contentType, code});
     const validate = this.cache.getSchema(key);
     assert(validate, 'Missing response schema', key);
-    const value =
-      Buffer.isBuffer(data) || data instanceof stream.Readable ? '' : data;
-    ifPresent(incompatibleValueError(validate, {value}), (err) => {
+    if (
+      content.isBinary &&
+      (Buffer.isBuffer(data) ||
+        data instanceof stream.Readable ||
+        data instanceof Blob)
+    ) {
+      return;
+    }
+    ifPresent(incompatibleValueError(validate, {value: data}), (err) => {
       throw errors.invalidResponseData(err);
     });
   }

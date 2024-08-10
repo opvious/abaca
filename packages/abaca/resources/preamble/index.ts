@@ -90,10 +90,14 @@ const multipartFormEncoder: Encoder = (body) => {
 };
 
 const fallbackEncoder: Encoder = (_body, ctx) => {
-  throw new Error('Unsupported request content-type: ' + ctx.contentType);
+  // TODO: Support blob pass-through.
+  throw new Error('Unsupported request content-type: ' + ctx.content.mimeType);
 };
-const fallbackDecoder: Decoder<never> = (_res, ctx) => {
-  throw new Error('Unsupported response content-type: ' + ctx.contentType);
+const fallbackDecoder: Decoder = (res, ctx) => {
+  if (ctx.content.isBinary) {
+    return res.blob();
+  }
+  throw new Error('Unsupported response content-type: ' + ctx.content.mimeType);
 };
 
 const defaultCoercer: Coercer<BaseFetch> = async (res, ctx) => {
@@ -102,9 +106,9 @@ const defaultCoercer: Coercer<BaseFetch> = async (res, ctx) => {
     (mtype && ctx.declared == null) ||
     (mtype === PLAIN_MIME_TYPE && !ctx.declared?.has(mtype))
   ) {
-    await res.text(); // Consume response body.
     return undefined;
   }
+  await res.text(); // Consume response body
   throw new Error(
     `Unexpected ${ctx.method.toUpperCase()} ${ctx.path} response content ` +
       `type ${mtype} for status ${res.status} (accepted: ` +
@@ -219,6 +223,7 @@ interface HasHeader<H extends string, V extends string> {
 interface CommonOutput<F> {
   readonly code: ResponseCode;
   readonly raw: ResponseFor<F>;
+  readonly debug?: string;
 }
 
 type DataOutput<M extends MimeType, R extends ResponsesType> =
@@ -367,31 +372,37 @@ export function createSdkFor<
         body,
       });
 
-      let responseType =
+      let resType =
         res.headers.get('content-type')?.split(';')?.[0] || undefined;
       const accepted = acceptedMimeTypes(accept);
       const {code, declared} = clauseMatcher.getBest(res.status);
-      if (!isResponseTypeValid({value: responseType, declared, accepted})) {
-        responseType = await coercer(res, {
+      if (!isResponseTypeValid({value: resType, declared, accepted})) {
+        resType = await coercer(res, {
           path: op.path,
           method: op.method,
-          received: responseType,
+          received: resType,
           declared,
           accepted,
         });
       }
 
-      let data;
-      if (responseType) {
-        const decode = decoder ?? decoders.getBest(responseType);
+      let data, debug;
+      if (resType) {
+        const decode = decoder ?? decoders.getBest(resType);
         data = await decode(res, {
           operationId: id,
-          contentType: responseType,
+          content: declared?.get(resType) ?? {
+            mimeType: resType,
+            isBinary: false,
+          },
           headers,
           options: init?.options,
         });
+      } else {
+        // We add any response text here to help debug.
+        debug = await res.text();
       }
-      const ret = {code, data};
+      const ret = {code, data, debug};
       // Add the raw response as non-enumerable property so that it doesn't get
       // displayed in error messages.
       Object.defineProperty(ret, 'raw', {value: res});

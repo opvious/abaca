@@ -3,6 +3,7 @@ import {EventProducer} from '@opvious/stl-utils/events';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {GlobMapper} from '@opvious/stl-utils/strings';
 import {
+  ContentFormat,
   MimeType,
   OperationDefinition,
   ParameterDefinition,
@@ -117,17 +118,30 @@ export function extractPathOperationDefinitions(args: {
       return {required: !!body.required, types};
     });
 
-    const responses: Record<string, ReadonlyArray<MimeType>> = {};
+    const responses: Record<string, ReadonlyArray<ContentFormat>> = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
-      const [res, parts] = deref(resOrRef, [...prefix, 'responses', code]);
-      const types = Object.keys(res.content ?? {});
-      if (producer) {
-        for (const key of types) {
-          const ptr = schemaPointer([...parts, 'content', key]);
+      const [res, resPrefix] = deref(resOrRef, [...prefix, 'responses', code]);
+      const formats: ContentFormat[] = [];
+      for (const [key, val] of Object.entries<any>(res.content ?? {})) {
+        assert(val?.schema, 'missing response content schema');
+        const [schema, ptrParts] = deref(val?.schema, [
+          ...resPrefix,
+          'content',
+          key,
+          'schema',
+        ]);
+        const isString = schema.type === 'string';
+        formats.push({
+          mimeType: key,
+          isBinary: (isString && schema.format === 'binary') || undefined,
+          isStream: (isString && schema.format === 'stream') || undefined,
+        });
+        if (producer) {
+          const ptr = createPointer(ptrParts);
           producer.emit('response', oid, ptr, key, code);
         }
       }
-      responses[code] = types;
+      responses[code] = formats;
     }
 
     defs[oid] = {path, method, parameters: params, body, responses};
