@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/solve-strategy.yaml
+$id: resource://abaca/schemas/solve-strategy.yaml
 type: object
 required: [isMaximization, target]
 properties:

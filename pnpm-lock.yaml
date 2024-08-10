@@ -47,15 +47,12 @@ importers:
 
   examples/content-types:
     dependencies:
-      abaca-cli:
+      abaca:
         specifier: workspace:*
-        version: link:../../packages/abaca-cli
+        version: link:../../packages/abaca
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
-      abaca-openapi:
-        specifier: workspace:*
-        version: link:../../packages/abaca-openapi
     devDependencies:
       '@types/koa':
         specifier: ^2.15.0
@@ -63,9 +60,9 @@ importers:
       '@types/koa__router':
         specifier: ^12.0.4
         version: 12.0.4
-      abaca:
+      abaca-cli:
         specifier: workspace:*
-        version: link:../../packages/abaca
+        version: link:../../packages/abaca-cli
       koa:
         specifier: ^2.15.3
         version: 2.15.3
@@ -78,15 +75,12 @@ importers:
       '@opvious/stl-utils':
         specifier: ^0.25.4
         version: 0.25.4
-      abaca-cli:
+      abaca:
         specifier: workspace:*
-        version: link:../../packages/abaca-cli
+        version: link:../../packages/abaca
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
-      abaca-openapi:
-        specifier: workspace:*
-        version: link:../../packages/abaca-openapi
     devDependencies:
       '@types/koa':
         specifier: ^2.15.0
@@ -94,24 +88,21 @@ importers:
       '@types/koa__router':
         specifier: ^12.0.4
         version: 12.0.4
-      abaca:
+      abaca-cli:
         specifier: workspace:*
-        version: link:../../packages/abaca
+        version: link:../../packages/abaca-cli
       koa:
         specifier: ^2.15.3
         version: 2.15.3
 
   examples/json:
     dependencies:
-      abaca-cli:
+      abaca:
         specifier: workspace:*
-        version: link:../../packages/abaca-cli
+        version: link:../../packages/abaca
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
-      abaca-openapi:
-        specifier: workspace:*
-        version: link:../../packages/abaca-openapi
     devDependencies:
       '@types/koa':
         specifier: ^2.15.0
@@ -119,9 +110,9 @@ importers:
       '@types/koa__router':
         specifier: ^12.0.4
         version: 12.0.4
-      abaca:
+      abaca-cli:
         specifier: workspace:*
-        version: link:../../packages/abaca
+        version: link:../../packages/abaca-cli
       koa:
         specifier: ^2.15.3
         version: 2.15.3
@@ -131,15 +122,9 @@ importers:
       abaca:
         specifier: workspace:*
         version: link:../../packages/abaca
-      abaca-cli:
-        specifier: workspace:*
-        version: link:../../packages/abaca-cli
       abaca-koa:
         specifier: workspace:*
         version: link:../../packages/abaca-koa
-      abaca-openapi:
-        specifier: workspace:*
-        version: link:../../packages/abaca-openapi
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -150,6 +135,9 @@ importers:
       '@types/koa__router':
         specifier: ^12.0.4
         version: 12.0.4
+      abaca-cli:
+        specifier: workspace:*
+        version: link:../../packages/abaca-cli
       koa:
         specifier: ^2.15.3
         version: 2.15.3
@@ -159,12 +147,55 @@ importers:
       '@opvious/stl-errors':
         specifier: ^0.25.4
         version: 0.25.4
+      '@opvious/stl-telemetry':
+        specifier: ^0.25.4
+        version: 0.25.4(@opentelemetry/api@1.8.0)
+      '@opvious/stl-utils':
+        specifier: ^0.25.4
+        version: 0.25.4
+      '@stoplight/json-ref-resolver':
+        specifier: ^3.1.6
+        version: 3.1.6
+      abaca:
+        specifier: workspace:*
+        version: 'link:'
+      ajv:
+        specifier: ^8.16.0
+        version: 8.16.0
       json-text-sequence:
         specifier: ^2.0.2
         version: 2.0.2
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
+      openapi-schema-validator:
+        specifier: ^12.1.3
+        version: 12.1.3
+      openapi-types:
+        specifier: ^12.1.3
+        version: 12.1.3
+      urijs:
+        specifier: ^1.19.11
+        version: 1.19.11
+      yaml:
+        specifier: ^2.4.5
+        version: 2.4.5
+    devDependencies:
+      '@types/data-urls':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@types/urijs':
+        specifier: ^1.19.25
+        version: 1.19.25
+      data-urls:
+        specifier: ^5.0.0
+        version: 5.0.0
+      inlinable:
+        specifier: ^0.3.3
+        version: 0.3.3
+      ts-essentials:
+        specifier: ^9.4.2
+        version: 9.4.2(typescript@5.5.3)
 
   packages/abaca-cli:
     dependencies:
@@ -183,9 +214,6 @@ importers:
       abaca:
         specifier: workspace:*
         version: link:../abaca
-      abaca-openapi:
-        specifier: workspace:*
-        version: link:../abaca-openapi
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -247,9 +275,6 @@ importers:
       abaca:
         specifier: workspace:*
         version: link:../abaca
-      abaca-openapi:
-        specifier: workspace:*
-        version: link:../abaca-openapi
       ajv:
         specifier: ^8.16.0
         version: 8.16.0
@@ -296,6 +321,9 @@ importers:
       '@types/qs':
         specifier: ^6.9.15
         version: 6.9.15
+      abaca-cli:
+        specifier: workspace:*
+        version: link:../abaca-cli
       inlinable:
         specifier: ^0.3.3
         version: 0.3.3
@@ -311,55 +339,6 @@ importers:
       qs:
         specifier: ^6.12.3
         version: 6.12.3
-
-  packages/abaca-openapi:
-    dependencies:
-      '@opvious/stl-errors':
-        specifier: ^0.25.4
-        version: 0.25.4
-      '@opvious/stl-telemetry':
-        specifier: ^0.25.4
-        version: 0.25.4(@opentelemetry/api@1.8.0)
-      '@opvious/stl-utils':
-        specifier: ^0.25.4
-        version: 0.25.4
-      '@stoplight/json-ref-resolver':
-        specifier: ^3.1.6
-        version: 3.1.6
-      abaca:
-        specifier: workspace:*
-        version: link:../abaca
-      ajv:
-        specifier: ^8.16.0
-        version: 8.16.0
-      openapi-schema-validator:
-        specifier: ^12.1.3
-        version: 12.1.3
-      openapi-types:
-        specifier: ^12.1.3
-        version: 12.1.3
-      urijs:
-        specifier: ^1.19.11
-        version: 1.19.11
-      yaml:
-        specifier: ^2.4.5
-        version: 2.4.5
-    devDependencies:
-      '@types/data-urls':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@types/urijs':
-        specifier: ^1.19.25
-        version: 1.19.25
-      data-urls:
-        specifier: ^5.0.0
-        version: 5.0.0
-      inlinable:
-        specifier: ^0.3.3
-        version: 0.3.3
-      ts-essentials:
-        specifier: ^9.4.2
-        version: 9.4.2(typescript@5.5.3)
 
 packages:
 

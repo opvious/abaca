@@ -3,6 +3,7 @@ import {JSON_MIME_TYPE} from './mime-types.js';
 export * from './common.js';
 export * from './config.js';
 export * from './mime-types.js';
+export * from './openapi/index.js';
 export * from './operations.js';
 
 // Defaults to use in the preamble template. They are defined here (v.s. one of

@@ -1,4 +1,4 @@
-import {OpenapiDocument} from 'abaca-openapi';
+import {OpenapiDocument} from 'abaca';
 import http from 'http';
 import Koa from 'koa';
 import fetch from 'node-fetch';

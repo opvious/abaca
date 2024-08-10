@@ -1,6 +1,6 @@
 import {assert} from '@opvious/stl-errors';
 import {ResourceLoader} from '@opvious/stl-utils/files';
-import {loadOpenapiDocument, OpenapiDocument} from 'abaca-openapi';
+import {loadOpenapiDocument, OpenapiDocument} from 'abaca';
 import events from 'events';
 import http from 'http';
 import Koa from 'koa';

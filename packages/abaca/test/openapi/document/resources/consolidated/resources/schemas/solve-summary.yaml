@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/solve-summary.yaml
+$id: resource://abaca/schemas/solve-summary.yaml
 type: object
 required:
   - size

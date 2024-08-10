@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/solve-options.yaml
+$id: resource://abaca/schemas/solve-options.yaml
 type: object
 properties:
   relativeGapThreshold:

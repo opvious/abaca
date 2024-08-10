@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/solve-candidate.yaml
+$id: resource://abaca/schemas/solve-candidate.yaml
 type: object
 required: [formulation, inputs]
 properties:

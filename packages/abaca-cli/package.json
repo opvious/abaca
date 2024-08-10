@@ -45,7 +45,6 @@
     "@opvious/stl-errors": "^0.25.4",
     "@opvious/stl-utils": "^0.25.4",
     "abaca": "workspace:*",
-    "abaca-openapi": "workspace:*",
     "commander": "^12.1.0",
     "eta": "^3.4.0",
     "node-fetch": "^3.3.2",

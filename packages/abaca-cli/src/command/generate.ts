@@ -2,12 +2,14 @@ import {assert} from '@opvious/stl-errors';
 import {localPath} from '@opvious/stl-utils/files';
 import {ifPresent} from '@opvious/stl-utils/functions';
 import {GlobMapper} from '@opvious/stl-utils/strings';
-import {DEFAULT_ACCEPT, JSON_MIME_TYPE, OperationDefinition} from 'abaca';
 import {
+  DEFAULT_ACCEPT,
   documentPathOperations,
   extractPathOperationDefinitions,
+  JSON_MIME_TYPE,
   OpenapiDocument,
-} from 'abaca-openapi';
+  OperationDefinition,
+} from 'abaca';
 import {Command} from 'commander';
 import {Eta} from 'eta';
 import openapiTypescript, {OpenAPITSOptions} from 'openapi-typescript';

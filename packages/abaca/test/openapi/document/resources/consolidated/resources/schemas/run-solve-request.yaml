@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/run-solve-request.yaml
+$id: resource://abaca/schemas/run-solve-request.yaml
 type: object
 required: [candidate]
 properties:

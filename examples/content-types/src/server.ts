@@ -1,11 +1,11 @@
 import Router from '@koa/router';
+import {loadOpenapiDocument} from 'abaca';
 import {
   createOperationsRouter,
   KoaContextsFor,
   KoaHandlersFor,
   KoaValuesFor,
 } from 'abaca-koa';
-import {loadOpenapiDocument} from 'abaca-openapi';
 
 import {Operations, Schema} from './sdk.gen.js';
 

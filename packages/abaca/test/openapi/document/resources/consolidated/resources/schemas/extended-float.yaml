@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/extended-float.yaml
+$id: resource://abaca/schemas/extended-float.yaml
 anyOf:
   - type: number
   - type: string

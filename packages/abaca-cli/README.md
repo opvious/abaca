@@ -9,7 +9,7 @@ boilerplate.
 1. Install this package as development dependency:
 
   ```sh
-  npm i -D abaca
+  npm i -D abaca-cli
   ```
 
 2. Use its `generate` command (or `g` for short) to create a TypeScript SDK from

@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/solve-outputs.yaml
+$id: resource://abaca/schemas/solve-outputs.yaml
 type: object
 required: [constraints, variables]
 properties:

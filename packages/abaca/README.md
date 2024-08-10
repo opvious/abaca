@@ -1,3 +1,3 @@
 # Abaca runtime utilities
 
-Internal utilities shared by the various Abaca packages.
+Runtime utilities used by the `abaca` CLI and SDK users.

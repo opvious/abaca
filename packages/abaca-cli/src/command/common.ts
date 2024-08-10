@@ -16,8 +16,8 @@ import {
   OpenapiDocument,
   ReferenceResolvers,
   resolveOpenapiDocument,
-} from 'abaca-openapi';
-import openapiErrorCodes from 'abaca-openapi/errors';
+} from 'abaca';
+import abacaErrorCodes from 'abaca/errors';
 import {Command} from 'commander';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import fetch from 'node-fetch';
@@ -58,7 +58,10 @@ export async function resolveDocument(args: {
       telemetry,
     });
   } catch (err) {
-    rethrowUnless(isStandardError(err, openapiErrorCodes.InvalidDocument), err);
+    rethrowUnless(
+      isStandardError(err, abacaErrorCodes.openapi.InvalidDocument),
+      err
+    );
     const {issueCount, issues} = err.tags;
     let msg =
       'OpenAPI specification does not match the schema for its version: ' +

@@ -8,7 +8,7 @@ import {
   OpenapiDocuments,
   OpenapiOperations,
   OpenapiVersion,
-} from 'abaca-openapi';
+} from 'abaca';
 import ProxyServer from 'http-proxy';
 import Koa from 'koa';
 

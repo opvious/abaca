@@ -42,7 +42,7 @@ export const openapiVersions = ['3.0', '3.1'] as const;
 export type OpenapiVersion = keyof OpenapiDocuments;
 
 // Not using a symbol for interoperability with compatible library versions.
-const documentTag = 'abaca-openapi:documentTag+v1';
+const documentTag = 'abaca:documentTag+v1';
 
 /**
  * An OpenAPI document with optional (virtual) type information about its

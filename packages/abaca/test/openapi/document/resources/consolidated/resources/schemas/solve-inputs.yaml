@@ -1,4 +1,4 @@
-$id: resource://abaca-openapi/schemas/solve-inputs.yaml
+$id: resource://abaca/schemas/solve-inputs.yaml
 type: object
 required: [parameters]
 properties:
