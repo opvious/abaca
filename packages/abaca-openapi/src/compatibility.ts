@@ -35,7 +35,7 @@ export const errorCodes = codes;
  */
 export function schemaCompatibilityPredicates<
   S,
-  N extends keyof S & string
+  N extends keyof S & string,
 >(args: {
   /** OpenAPI specification. Only inline references are supported */
   readonly document: OpenapiDocument<S>;

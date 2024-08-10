@@ -67,7 +67,7 @@ const Ajv = Ajv_.default ?? Ajv_;
 export function createOperationsRouter<
   O extends OperationTypes<keyof O & string>,
   S = {},
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends MimeType = typeof JSON_MIME_TYPE,
 >(args: {
   /** Fully resolved OpenAPI document or its YAML representation. */
   readonly document: OpenapiDocument | string;

@@ -18,7 +18,7 @@ import stream from 'stream';
 export type KoaHandlersFor<
   O extends OperationTypes<keyof O & string>,
   S = {},
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends MimeType = typeof JSON_MIME_TYPE,
 > = {
   readonly [K in keyof O]?: KoaHandlerFor<O[K], S, M>;
 };
@@ -26,12 +26,12 @@ export type KoaHandlersFor<
 export type KoaHandlerFor<
   O extends OperationType,
   S = {},
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends MimeType = typeof JSON_MIME_TYPE,
 > = (ctx: KoaContext<O, S>) => AsyncOrSync<KoaValue<O, M>>;
 
 export type KoaContextsFor<
   O extends OperationTypes<keyof O & string>,
-  S = {}
+  S = {},
 > = {
   readonly [K in keyof O]: KoaContext<O[K], S>;
 };
@@ -52,8 +52,8 @@ type ContextFor<O extends OperationType> = ContextForBody<MaybeBodyContent<O>> &
 type ContextForBody<B> = [B] extends [undefined]
   ? ContextWithoutBody
   : undefined extends B
-  ? ContextWithBody<Exclude<B, undefined>> | ContextWithoutBody
-  : ContextWithBody<B>;
+    ? ContextWithBody<Exclude<B, undefined>> | ContextWithoutBody
+    : ContextWithBody<B>;
 
 interface ContextWithoutBody {
   readonly request: {readonly type: ''};
@@ -92,8 +92,8 @@ type MultipartProperty<O> = Values<{
 type MultipartPropertyValue<N, V> = V extends never
   ? never
   : V extends Blob
-  ? MultipartStreamProperty<N>
-  : MultipartFieldProperty<N, V>;
+    ? MultipartStreamProperty<N>
+    : MultipartFieldProperty<N, V>;
 
 export type AdditionalMultipartProperty =
   | MultipartFieldProperty
@@ -122,23 +122,18 @@ type LookupObject<O, K extends string> = Partialize<Lookup<O, K, {}>>;
 
 type Partialize<V> = V extends undefined ? Partial<Exclude<V, undefined>> : V;
 
-type OperationParams<O extends OperationType> = O extends OperationType<
-  any,
-  infer P
->
-  ? P
-  : {};
+type OperationParams<O extends OperationType> =
+  O extends OperationType<any, infer P> ? P : {};
 
 export type KoaValuesFor<
   O extends OperationTypes<keyof O & string>,
-  M extends MimeType = typeof JSON_MIME_TYPE
+  M extends MimeType = typeof JSON_MIME_TYPE,
 > = {
   readonly [K in keyof O]: KoaValue<O[K], M>;
 };
 
-type KoaValue<O, M extends MimeType> = O extends OperationType<infer R>
-  ? EmptyData<R> | NonEmptyData<R, M>
-  : never;
+type KoaValue<O, M extends MimeType> =
+  O extends OperationType<infer R> ? EmptyData<R> | NonEmptyData<R, M> : never;
 
 type EmptyData<R extends ResponsesType> = Values<{
   [C in keyof R]: Get<R[C], 'content'> extends never
@@ -172,7 +167,7 @@ type StatusDigit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
 type StatusString<
   P extends StatusPrefix = StatusPrefix,
   D1 extends StatusDigit = StatusDigit,
-  D2 extends StatusDigit = StatusDigit
+  D2 extends StatusDigit = StatusDigit,
 > = `${P}${D1}${D2}`;
 
 type CodeRangeFor<P extends StatusPrefix> = `${P}XX`;
@@ -184,9 +179,9 @@ type StatusesMatching<C, X = never> = C extends number
     ? C
     : never
   : C extends CodeRangeFor<infer P>
-  ? StatusString<P> extends `${infer N extends number}`
-    ? Exclude<N, X>
-    : never
-  : C extends 'default'
-  ? Exclude<AllCodes, StatusesMatching<Exclude<X, 'default'>>>
-  : never;
+    ? StatusString<P> extends `${infer N extends number}`
+      ? Exclude<N, X>
+      : never
+    : C extends 'default'
+      ? Exclude<AllCodes, StatusesMatching<Exclude<X, 'default'>>>
+      : never;
