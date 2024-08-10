@@ -2,16 +2,12 @@ import {AsyncOrSync, Lookup} from './common.js';
 import {
   ContentFormat,
   MimeType,
-  OperationTypes,
   ResponseCode,
 } from './operations.js';
 
 // Configuration
 
-export interface SdkConfigFor<
-  O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = BaseFetch,
-> {
+export interface SdkConfig<F extends BaseFetch = BaseFetch> {
   /** API server address. */
   readonly address: Address;
 

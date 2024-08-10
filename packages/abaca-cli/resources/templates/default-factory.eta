@@ -1,7 +1,3 @@
-export type SdkConfig<
-  F extends BaseFetch = typeof fetch
-> = SdkConfigFor<operations, F>;
-
 export function createSdk<
   F extends BaseFetch
 >(arg: Address | SdkConfig<F>): Sdk<F> {

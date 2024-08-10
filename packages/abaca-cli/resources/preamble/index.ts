@@ -28,7 +28,7 @@ import {
   ResponseFor,
   ResponseMimeTypes,
   ResponsesType,
-  SdkConfigFor,
+  SdkConfig,
   SdkFunction,
   SdkRequest,
   SdkResponse,
@@ -276,10 +276,7 @@ type NeverAdditional<I, X> = I extends boolean | null | number | string
 export function createSdkFor<
   O extends OperationTypes<keyof O & string>,
   F extends BaseFetch,
->(
-  operations: OperationDefinitions<O>,
-  config: SdkConfigFor<O, F>
-): SdkFor<O, F> {
+>(operations: OperationDefinitions<O>, config: SdkConfig<F>): SdkFor<O, F> {
   const realFetch: BaseFetch = (config.fetch as any) ?? fetch;
 
   const target = config.address;
