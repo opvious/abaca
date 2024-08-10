@@ -201,7 +201,7 @@ type MaybeParam<V> = keyof V extends never
 
 type Output<O extends OperationType, F extends BaseFetch, X> =
   O extends OperationType<infer R>
-    ? CommonOutput<F> & DataOutput<GetHeader<X, 'accept', DA> & MimeType, R>
+    ? CommonOutput<F> & BodyOutput<GetHeader<X, 'accept', DA> & MimeType, R>
     : never;
 
 type GetHeader<X, H extends string, D> =
@@ -219,26 +219,24 @@ interface CommonOutput<F> {
   readonly debug?: string;
 }
 
-type DataOutput<M extends MimeType, R extends ResponsesType> =
-  | ExpectedDataOutput<M, R>
+type BodyOutput<M extends MimeType, R extends ResponsesType> =
+  | ExpectedBodyOutput<M, R>
   | MaybeUnknownOutput<R>;
 
-type ExpectedDataOutput<M extends MimeType, R extends ResponsesType> = Values<{
+type ExpectedBodyOutput<M extends MimeType, R extends ResponsesType> = Values<{
   [C in keyof R]: R[C] extends Has<'content', infer O>
     ? WithCode<C, ValuesMatchingMimeTypes<O, M>>
-    : CodedData<C, undefined>;
+    : WithCode<C, undefined>;
 }>;
-
-type WithCode<C, D> = CodedData<C, D extends never ? undefined : D>;
-
-interface CodedData<C, D = unknown> {
-  readonly code: C;
-  readonly data: D;
-}
 
 type MaybeUnknownOutput<R extends ResponsesType> = 'default' extends keyof R
   ? never
-  : CodedData<'default'>;
+  : WithCode<'default'>;
+
+interface WithCode<C, B = unknown> {
+  readonly code: C;
+  readonly body: B extends never ? undefined : B;
+}
 
 type SdkFor<
   O extends OperationTypes<keyof O & string>,
@@ -313,7 +311,7 @@ export function createSdkFor<
   for (const [id, op] of Object.entries<OperationDefinition>(operations)) {
     const clauseMatcher = ResponseClauseMatcher.create(op.responses);
     fetchers[id] = async (init: any): Promise<any> => {
-      const {body: rawBody, encoder, decoder, ...input} = init ?? {};
+      const {body: rawReqBody, encoder, decoder, ...input} = init ?? {};
       const params = input?.params ?? {};
 
       const url = new URL(
@@ -343,17 +341,17 @@ export function createSdkFor<
         accept,
       };
 
-      let body;
-      if (rawBody !== undefined) {
+      let reqBody;
+      if (rawReqBody !== undefined) {
         const encode = encoder ?? encoders.getBest(requestType);
-        body = await encode(rawBody, {
+        reqBody = await encode(rawReqBody, {
           operationId: id,
           contentType: requestType,
           headers,
           options: init?.options,
         });
       }
-      if (body === undefined || body instanceof FormData) {
+      if (reqBody === undefined || reqBody instanceof FormData) {
         delete headers['content-type'];
       }
 
@@ -362,7 +360,7 @@ export function createSdkFor<
         ...input.options,
         headers,
         method: op.method,
-        body,
+        body: reqBody,
       });
 
       let resType =
@@ -379,10 +377,10 @@ export function createSdkFor<
         });
       }
 
-      let data, debug;
+      let resBody, debug;
       if (resType) {
         const decode = decoder ?? decoders.getBest(resType);
-        data = await decode(res, {
+        resBody = await decode(res, {
           operationId: id,
           content: declared?.get(resType) ?? {
             mimeType: resType,
@@ -395,7 +393,7 @@ export function createSdkFor<
         // We add any response text here to help debug.
         debug = await res.text();
       }
-      const ret = {code, data, debug};
+      const ret = {code, body: resBody, debug};
       // Add the raw response as non-enumerable property so that it doesn't get
       // displayed in error messages.
       Object.defineProperty(ret, 'raw', {value: res});

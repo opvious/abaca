@@ -41,12 +41,14 @@ type KoaContext<O extends OperationType, S = {}> = Koa.ParameterizedContext<
   ContextFor<O>
 >;
 
-type MaybeBodyContent<O extends OperationType> = Lookup<
+type MaybeRequestBodyContent<O extends OperationType> = Lookup<
   Lookup<O, 'requestBody'>,
   'content'
 >;
 
-type ContextFor<O extends OperationType> = ContextForBody<MaybeBodyContent<O>> &
+type ContextFor<O extends OperationType> = ContextForBody<
+  MaybeRequestBodyContent<O>
+> &
   ContextWithParams<OperationParams<O>>;
 
 type ContextForBody<B> = [B] extends [undefined]
@@ -133,21 +135,21 @@ export type KoaValuesFor<
 };
 
 type KoaValue<O, M extends MimeType> =
-  O extends OperationType<infer R> ? EmptyData<R> | NonEmptyData<R, M> : never;
+  O extends OperationType<infer R> ? EmptyBody<R> | NonEmptyBody<R, M> : never;
 
-type EmptyData<R extends ResponsesType> = Values<{
+type EmptyBody<R extends ResponsesType> = Values<{
   [C in keyof R]: Get<R[C], 'content'> extends never
     ? StatusesMatching<C>
     : never;
 }>;
 
-type NonEmptyData<R extends ResponsesType, M extends MimeType> = Values<{
-  [C in keyof R]: DataForCode<C, Get<R[C], 'content'>, keyof R, M>;
+type NonEmptyBody<R extends ResponsesType, M extends MimeType> = Values<{
+  [C in keyof R]: ResponseBodyForCode<C, Get<R[C], 'content'>, keyof R, M>;
 }>;
 
-type DataForCode<C, D, X, M> = Values<{
+type ResponseBodyForCode<C, D, X, M> = Values<{
   [K in keyof D]: {
-    readonly data:
+    readonly body:
       | D[K]
       | (D[K] extends Blob | string ? Buffer | stream.Readable : never);
   } & WithType<K, M> &

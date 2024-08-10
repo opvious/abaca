@@ -34,7 +34,7 @@ boilerplate.
   const res = await sdk.someOperation(/* Request body, parameters, ... */);
   switch (res.code) {
     case 200:
-      doSomething(res.data); // Narrowed response data
+      doSomething(res.body); // Narrowed response body
       break;
     // ...
   }
@@ -63,7 +63,7 @@ const res = await sdk.doSomething({
   options: {/* ... */}, // 5
 });
 if (res.code === 200) { // 6
-  return res.data; // 7
+  return res.body; // 7
 }
 ```
 
@@ -135,10 +135,10 @@ operation defined [here][tables]:
 const res = await sdk.downloadTable({params: {id: 'my-id'}});
 switch (res.code) {
   case 200:
-    res.data; // Narrowed type: `Table`
+    res.body; // Narrowed type: `Table`
     break;
   case 404:
-    res.data; // Narrowed type: `undefined`
+    res.body; // Narrowed type: `undefined`
     break;
 }
 ```
@@ -152,10 +152,10 @@ const res = await sdk.downloadTable({
 });
 switch (res.code) {
   case 200:
-    res.data; // Narrowed type: `string`
+    res.body; // Narrowed type: `string`
     break;
   case 404:
-    res.data; // Narrowed type: `undefined`
+    res.body; // Narrowed type: `undefined`
     break;
 }
 ```
@@ -169,7 +169,7 @@ const res = await sdk.downloadTable({
   headers: {accept: '*/*'},
 });
 if (res.code === 200) {
-  res.data; // Narrowed type: `Table | string`
+  res.body; // Narrowed type: `Table | string`
 }
 ```
 
@@ -234,7 +234,7 @@ const res = await sdk.runSomeOperation({
 
 switch (res.code) {
   case 200:
-    res.data; // Narrowed (based on code and `accept` header)
+    res.body; // Narrowed (based on code and `accept` header)
   // ...
 }
 ```
