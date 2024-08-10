@@ -120,21 +120,25 @@ export function extractPathOperationDefinitions(args: {
 
     const responses: Record<string, ReadonlyArray<ContentFormat>> = {};
     for (const [code, resOrRef] of Object.entries<any>(val.responses ?? {})) {
-      const [res, parts] = deref(resOrRef, [...prefix, 'responses', code]);
+      const [res, resPrefix] = deref(resOrRef, [...prefix, 'responses', code]);
       const formats: ContentFormat[] = [];
       for (const [key, val] of Object.entries<any>(res.content ?? {})) {
-        const schema = val?.schema;
-        const isString = schema?.type === 'string';
+        assert(val?.schema, 'missing response content schema');
+        const [schema, ptrParts] = deref(val?.schema, [
+          ...resPrefix,
+          'content',
+          key,
+          'schema',
+        ]);
+        const isString = schema.type === 'string';
         formats.push({
           mimeType: key,
-          isBinary: (isString && schema?.format === 'binary') || undefined,
-          isStream: (isString && schema?.format === 'stream') || undefined,
+          isBinary: (isString && schema.format === 'binary') || undefined,
+          isStream: (isString && schema.format === 'stream') || undefined,
         });
-      }
-      if (producer) {
-        for (const format of formats) {
-          const ptr = schemaPointer([...parts, 'content', format.mimeType]);
-          producer.emit('response', oid, ptr, format.mimeType, code);
+        if (producer) {
+          const ptr = createPointer(ptrParts);
+          producer.emit('response', oid, ptr, key, code);
         }
       }
       responses[code] = formats;
