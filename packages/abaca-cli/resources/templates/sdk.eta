@@ -16,6 +16,28 @@ export type Schemas = components['schemas'];
 
 export type Schema<K extends keyof Schemas> = Schemas[K];
 
+type RequestBodyFor<
+  O extends OperationType,
+  M extends BodyMimeTypes<O> = BodyMimeTypes<O>,
+> = Lookup<Lookup<Lookup<O, 'requestBody'>, 'content'>, M, never>;
+
+type RequestParametersFor<O extends OperationType> = Lookup<
+  O['parameters'],
+  'path',
+  {}
+> &
+  Lookup<O['parameters'], 'query', {}> &
+  Lookup<O['parameters'], 'headers', {}>;
+
+type ResponseBodyFor<
+  O extends OperationType,
+  C extends keyof O['responses'],
+  M extends ResponseMimeTypes<O['responses'], C> = ResponseMimeTypes<
+    O['responses'],
+    C
+  >,
+> = Get<Lookup<O['responses'][C], 'content'>, M>;
+
 export type RequestBody<
   K extends keyof operations,
   M extends BodyMimeTypes<operations[K]> = BodyMimeTypes<operations[K]>
@@ -25,13 +47,13 @@ export type RequestParameters<
   K extends keyof operations
 > = RequestParametersFor<operations[K]>;
 
-export type ResponseData<
+export type ResponseBody<
   K extends keyof operations,
   C extends keyof operations[K]['responses'] = keyof operations[K]['responses'],
   M extends ResponseMimeTypes<operations[K]['responses'], C> = ResponseMimeTypes<operations[K]['responses'], C>
-> = ResponseDataFor<operations[K], C, M>;
+> = ResponseBodyFor<operations[K], C, M>;
 
-export type Sdk<F extends BaseFetch = typeof fetch> = SdkFor<operations, F>;
+export type Sdk<F extends BaseFetch = BaseFetch> = SdkFor<operations, F>;
 
 <% if (it.defaultAddress || it.serverAddresses.length) { %>
 <%~ include("./smart-factory.eta", it) %>

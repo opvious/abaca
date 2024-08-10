@@ -1,5 +1,12 @@
 import {AsyncOrSync, Lookup} from './common.js';
-import {ContentFormat, MimeType, OperationTypes} from './operations.js';
+import {
+  ContentFormat,
+  MimeType,
+  OperationTypes,
+  ResponseCode,
+} from './operations.js';
+
+// Configuration
 
 export interface SdkConfigFor<
   O extends OperationTypes<keyof O & string>,
@@ -127,4 +134,25 @@ export interface CoercerContext {
   readonly received: MimeType | undefined;
   readonly accepted: ReadonlySet<MimeType>;
   readonly declared: ReadonlyMap<MimeType, ContentFormat> | undefined; // undefined if implicit
+}
+
+// Execution
+
+export type SdkFunction<F extends BaseFetch = BaseFetch> = (
+  op: string,
+  req: SdkRequest<F>
+) => Promise<SdkResponse<F>>;
+
+export interface SdkRequest<F extends BaseFetch = BaseFetch> {
+  readonly headers?: RequestHeaders;
+  readonly params?: unknown;
+  readonly body?: unknown;
+  readonly options?: RequestOptions<F>;
+}
+
+export interface SdkResponse<F extends BaseFetch = BaseFetch> {
+  readonly code: ResponseCode;
+  readonly body?: unknown;
+  readonly raw: ResponseFor<F>;
+  readonly debug?: string;
 }

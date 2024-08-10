@@ -18,10 +18,10 @@ import {
   dereferencePointer,
   extractPathOperationDefinitions,
   incompatibleValueError,
-  isResponseTypeValid,
+  isContentCompatible,
   JSON_MIME_TYPE,
   JsonPointer,
-  matchingContentType,
+  matchingMimeType,
   MimeType,
   MULTIPART_MIME_TYPE,
   OpenapiDocument,
@@ -244,7 +244,7 @@ export function createOperationsRouter<
           typeof res == 'number' ? undefined : res.type ?? defaultType;
         let resBody = typeof res == 'number' ? undefined : res.body;
         const {code, declared} = matcher.getBest(status);
-        if (!isResponseTypeValid({value: atype, declared, accepted})) {
+        if (!isContentCompatible({received: atype, declared, accepted})) {
           throw errors.unacceptableResponseType(
             oid,
             atype,
@@ -355,7 +355,7 @@ class Registry {
 
     // Add individual multipart properties to be able to validate them as they
     // are streamed in.
-    if (matchingContentType(contentType, [MULTIPART_MIME_TYPE]) != null) {
+    if (matchingMimeType(contentType, [MULTIPART_MIME_TYPE]) != null) {
       assert(
         schema.type === 'object',
         'Non-object multipart request body: %j',
@@ -542,7 +542,7 @@ class Registry {
       return;
     }
     ifPresent(incompatibleValueError(validate, {value: data}), (err) => {
-      throw errors.invalidResponseData(err);
+      throw errors.invalidResponseBody(err);
     });
   }
 }

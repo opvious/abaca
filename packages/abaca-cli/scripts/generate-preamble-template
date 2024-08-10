@@ -20,7 +20,7 @@ main() {
       "$preamble_imports/common.ts" \
       "$preamble_imports/operations.ts" \
       "$preamble_imports/mime-types.ts" \
-      "$preamble_imports/config.ts" \
+      "$preamble_imports/sdk.ts" \
       "$preamble_template" \
     | sed -E \
       -e '/^import \{$/,/^\} from/d' \

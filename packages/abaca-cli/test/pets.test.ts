@@ -12,7 +12,7 @@ import {startApp} from './helpers.js';
 import {
   createSdk,
   RequestBody,
-  ResponseData,
+  ResponseBody,
   Schema,
   Sdk,
 } from './pets-sdk.gen.js';
@@ -117,7 +117,7 @@ describe('pets', () => {
 
   test('optional query parameter', async () => {
     const res = await sdk.listPets({params: {limit: 1}});
-    let body: ResponseData<'listPets', 200> | undefined;
+    let body: ResponseBody<'listPets', 200> | undefined;
     switch (res.code) {
       case 200:
         body = res.body;
