@@ -1,16 +1,9 @@
 import {AsyncOrSync, Lookup} from './common.js';
-import {
-  AllBodyMimeTypes,
-  AllResponseMimeTypes,
-  AllResponsesMatchingMimeType,
-  BodiesMatchingMimeType,
-  WithMimeTypeGlobs,
-} from './mime-types.js';
 import {ContentFormat, MimeType, OperationTypes} from './operations.js';
 
 export interface SdkConfigFor<
   O extends OperationTypes<keyof O & string>,
-  F extends BaseFetch = typeof fetch,
+  F extends BaseFetch = BaseFetch,
 > {
   /** API server address. */
   readonly address: Address;
@@ -28,10 +21,10 @@ export interface SdkConfigFor<
   readonly fetch?: FetchOption<F>;
 
   /** Global request body encoders. */
-  readonly encoders?: EncodersFor<O, F>;
+  readonly encoders?: Encoders<F>;
 
   /** Global response decoders. */
-  readonly decoders?: DecodersFor<O, F>;
+  readonly decoders?: Decoders<F>;
 
   /**
    * Unexpected response coercion. The default will ignore bodies of responses
@@ -61,12 +54,14 @@ export interface BaseResponse {
   readonly headers: {
     get(name: string): string | null | undefined;
   };
+  blob(): Promise<Blob>;
+  json(): Promise<any>;
   text(): Promise<string>;
 }
 
-export type BaseFetch = (url: string, init: BaseInit) => Promise<BaseResponse>;
+export type BaseFetch = (url: string, init?: BaseInit) => Promise<BaseResponse>;
 
-export type FetchOption<F extends BaseFetch = typeof fetch> = (
+export type FetchOption<F extends BaseFetch = BaseFetch> = (
   url: string,
   init: BaseInit<BodyInitFor<F>> & RequestOptions<F>
 ) => Promise<ResponseFor<F>>;
@@ -80,15 +75,12 @@ type RequestInitFor<F> = F extends (url: any, init?: infer R) => any
   ? R
   : never;
 
-export type EncodersFor<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [K in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: Encoder<
-    BodiesMatchingMimeType<O, K>,
-    F
-  >;
-};
+export interface Encoders<F extends BaseFetch> {
+  readonly [mimeType: MimeType]: Encoder<F>;
+}
 
-export type Encoder<B = any, F extends BaseFetch = typeof fetch> = (
-  body: B,
+export type Encoder<F extends BaseFetch = BaseFetch> = (
+  body: unknown,
   ctx: EncoderContext<F>
 ) => AsyncOrSync<BodyInitFor<F>>;
 
@@ -101,17 +93,14 @@ export interface EncoderContext<F> {
   readonly options?: RequestOptions<F>;
 }
 
-export type DecodersFor<O extends OperationTypes, F extends BaseFetch> = {
-  readonly [K in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: Decoder<
-    AllResponsesMatchingMimeType<O, K>,
-    F
-  >;
-};
+export interface Decoders<F extends BaseFetch> {
+  readonly [mimeType: MimeType]: Decoder<F>;
+}
 
-export type Decoder<R = any, F extends BaseFetch = typeof fetch> = (
+export type Decoder<F extends BaseFetch = BaseFetch> = (
   res: ResponseFor<F>,
   ctx: DecoderContext<F>
-) => AsyncOrSync<R>;
+) => AsyncOrSync<unknown>;
 
 export type ResponseFor<F> = F extends (
   url: any,

@@ -30,7 +30,6 @@ import {
   ResponseCode,
   ResponseFor,
   ResponseMimeTypes,
-  ResponsesMatchingMimeType,
   ResponsesType,
   SdkConfigFor,
   SplitMimeTypes,
@@ -43,21 +42,21 @@ import {
 type DA = typeof DEFAULT_ACCEPT;
 type DM = typeof DEFAULT_CONTENT_TYPE;
 
-const binaryEncoder: Encoder<Blob> = (body) => body;
-const binaryDecoder: Decoder<Blob> = (res) => res.blob();
+const binaryEncoder: Encoder = (body) => body;
+const binaryDecoder: Decoder = (res) => res.blob();
 
 const jsonEncoder: Encoder = (body) => JSON.stringify(body);
 const jsonDecoder: Decoder = (res) => res.json();
 
 const textEncoder: Encoder = (body) => (body == null ? '' : '' + body);
-const textDecoder: Decoder<string> = (res) => res.text();
+const textDecoder: Decoder = (res) => res.text();
 
 // This doesn't supported nested objects. See also
 // https://stackoverflow.com/a/37562814 for information on why we can return the
 // params directly.
 const formEncoder: Encoder = (body) => {
   const params = new URLSearchParams();
-  for (const [key, val] of Object.entries(body)) {
+  for (const [key, val] of Object.entries(body as any)) {
     if (Array.isArray(val)) {
       for (const elem of val) {
         params.append(key, '' + elem);
@@ -144,7 +143,7 @@ type DefaultBodyInput<B, F extends BaseFetch> = DM extends keyof B
   ? {
       readonly headers?: {'content-type'?: DM};
       readonly body: B[DM];
-      readonly encoder?: Encoder<B[DM], F>;
+      readonly encoder?: Encoder<F>;
     }
   : never;
 
@@ -152,7 +151,7 @@ type CustomBodyInput<B, F extends BaseFetch> = Values<{
   [K in keyof B & MimeType]: {
     readonly headers: {'content-type': K};
     readonly body: B[K];
-    readonly encoder?: Encoder<B[K], F>;
+    readonly encoder?: Encoder<F>;
   };
 }>;
 
@@ -171,30 +170,24 @@ type DefaultAcceptInput<
   ? never
   : {
       readonly headers?: {readonly accept?: DA};
-      readonly decoder?: AcceptDecoder<R, F, DA>;
+      readonly decoder?: Decoder<F>;
     };
 
 type SimpleAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
   [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
     readonly headers: {readonly accept: M};
-    readonly decoder?: AcceptDecoder<R, F, M>;
+    readonly decoder?: Decoder<F>;
   };
 }>;
 
 type CustomAcceptInput<R extends ResponsesType, F extends BaseFetch> = Values<{
   [M in WithMimeTypeGlobs<ResponseMimeTypes<R>> & string]: {
     readonly headers: {readonly accept: PrefixedMimeType<M>};
-    readonly decoder?: AcceptDecoder<R, F, ResponseMimeTypes<R>>;
+    readonly decoder?: Decoder<F>;
   };
 }>;
 
 type PrefixedMimeType<M extends MimeType> = `${M}${string}`;
-
-type AcceptDecoder<
-  R extends ResponsesType,
-  F extends BaseFetch,
-  M extends MimeType,
-> = Decoder<ResponsesMatchingMimeType<R, M>, F>;
 
 type MaybeParamInput<P extends ParametersType> = MaybeParam<
   Lookup<P, 'path', {}> & Lookup<P, 'query', {}> & Lookup<P, 'headers', {}>

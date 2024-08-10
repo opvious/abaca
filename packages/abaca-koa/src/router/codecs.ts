@@ -1,21 +1,16 @@
-import {statusErrors} from '@opvious/stl-errors';
+import {assert, statusErrors} from '@opvious/stl-errors';
 import {EventConsumer, typedEmitter} from '@opvious/stl-utils/events';
 import {
-  AllBodyMimeTypes,
-  AllResponseMimeTypes,
-  AllResponsesMatchingMimeType,
   AsyncOrSync,
-  BodiesMatchingMimeType,
   ByMimeType,
   ContentFormat,
   FORM_MIME_TYPE,
   JSON_MIME_TYPE,
   JSON_SEQ_MIME_TYPE,
+  MimeType,
   MULTIPART_FORM_MIME_TYPE,
   OCTET_STREAM_MIME_TIME,
-  OperationTypes,
   TEXT_MIME_TYPE,
-  WithMimeTypeGlobs,
 } from 'abaca-runtime';
 import busboy from 'busboy';
 import * as coBody from 'co-body';
@@ -27,26 +22,20 @@ import {errors, requestErrors} from './index.errors.js';
 
 // Types
 
-export type KoaDecodersFor<O extends OperationTypes, S = {}> = {
-  readonly [G in WithMimeTypeGlobs<AllBodyMimeTypes<O>>]?: KoaDecoder<
-    BodiesMatchingMimeType<O, G>,
-    S
-  >;
-};
+export interface KoaDecoders<S = {}> {
+  readonly [mimeType: MimeType]: KoaDecoder<S>;
+}
 
-export type KoaDecoder<B = any, S = {}> = (
+export type KoaDecoder<S = {}> = (
   ctx: Koa.ParameterizedContext<S>
-) => AsyncOrSync<B>;
+) => AsyncOrSync<unknown>;
 
-export type KoaEncodersFor<O extends OperationTypes, S = {}> = {
-  readonly [G in WithMimeTypeGlobs<AllResponseMimeTypes<O>>]?: KoaEncoder<
-    AllResponsesMatchingMimeType<O, G>,
-    S
-  >;
-};
+export interface KoaEncoders<S = {}> {
+  readonly [mimeType: MimeType]: KoaEncoder<S>;
+}
 
-export type KoaEncoder<D = any, S = {}> = (
-  data: D | (D extends string ? Buffer | stream.Readable : never),
+export type KoaEncoder<S = {}> = (
+  data: unknown,
   ctx: Koa.ParameterizedContext<S>,
   content: ContentFormat
 ) => AsyncOrSync<void>;
@@ -91,7 +80,7 @@ export function defaultEncoders(): ByMimeType<KoaEncoder> {
   return ret;
 }
 
-const multipartFormDecoder: KoaDecoder<MultipartForm> = (ctx) => {
+const multipartFormDecoder: KoaDecoder = (ctx) => {
   const ee = typedEmitter<MultipartFormListeners>();
 
   const bb = busboy({headers: ctx.headers})
@@ -179,14 +168,21 @@ function jsonValue(
     });
 }
 
-const jsonSeqDecoder: KoaDecoder<AsyncIterable<unknown>> = (ctx) => {
+const jsonSeqDecoder: KoaDecoder = (ctx) => {
   const decoder = new jsonSeq.Parser();
   ctx.req.pipe(decoder);
   return decoder;
 };
 
-const jsonSeqEncoder: KoaEncoder<AsyncIterable<unknown>> = (iter, ctx) => {
+const jsonSeqEncoder: KoaEncoder = (arg, ctx) => {
+  assert(
+    arg &&
+      typeof arg == 'object' &&
+      (Symbol.iterator in arg || Symbol.asyncIterator in arg),
+    'Not an iterable: %s',
+    arg
+  );
   const encoder = new jsonSeq.Generator();
-  stream.Readable.from(iter).pipe(encoder);
+  stream.Readable.from(arg as any).pipe(encoder);
   ctx.body = encoder;
 };

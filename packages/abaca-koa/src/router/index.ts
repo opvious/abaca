@@ -42,8 +42,8 @@ import {packageInfo, routerPath} from '../common.js';
 import {
   defaultDecoders,
   defaultEncoders,
-  KoaDecodersFor,
-  KoaEncodersFor,
+  KoaDecoders,
+  KoaEncoders,
   MultipartForm,
 } from './codecs.js';
 import codes, {errors, requestErrors} from './index.errors.js';
@@ -95,16 +95,17 @@ export function createOperationsRouter<
   readonly defaultType?: M;
 
   /**
-   * Additional request decoders. The default supports uncompressed `text/*` and
-   * `application/json` content-types.
+   * Additional request decoders. The default supports uncompressed `text/*`,
+   * `application/json`, `application/json-seq`, forms (multipart or not), and
+   * binary content-types.
    */
-  readonly decoders?: KoaDecodersFor<O, S>;
+  readonly decoders?: KoaDecoders<S>;
 
   /**
-   * Additional response encoders. The default supports uncompressed `text/*`
-   * and `application/json` content-types.
+   * Additional response encoders. The default supports uncompressed `text/*`,
+   * `application/json`, `application/json-seq`, and binary content-types.
    */
-  readonly encoders?: KoaEncodersFor<O, S>;
+  readonly encoders?: KoaEncoders<S>;
 
   /**
    * Handle invalid request errors by returning plain text responses with
