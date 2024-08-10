@@ -5,10 +5,7 @@ import fetch from 'node-fetch';
 import stream from 'stream';
 
 /** Decoder for `application/json-seq` content-types */
-export function jsonSeqDecoder<V = unknown>(): Decoder<
-  AsyncIterable<V>,
-  typeof fetch
-> {
+export function jsonSeqDecoder(): Decoder<typeof fetch> {
   return (res) => {
     const parser = new jsonSeq.Parser();
     assert(res.body, 'Missing response body');
@@ -18,13 +15,17 @@ export function jsonSeqDecoder<V = unknown>(): Decoder<
 }
 
 /** Encoder for `application/json-seq` content-types */
-export function jsonSeqEncoder<V = unknown>(): Encoder<
-  AsyncIterable<V>,
-  typeof fetch
-> {
-  return (iter) => {
+export function jsonSeqEncoder(): Encoder<typeof fetch> {
+  return (arg) => {
+    assert(
+      arg &&
+        typeof arg == 'object' &&
+        (Symbol.iterator in arg || Symbol.asyncIterator in arg),
+      'Not an iterable: %s',
+      arg
+    );
     const encoder = new jsonSeq.Generator();
-    stream.Readable.from(iter).pipe(encoder);
+    stream.Readable.from(arg as any).pipe(encoder);
     return encoder;
   };
 }
