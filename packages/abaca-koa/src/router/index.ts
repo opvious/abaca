@@ -10,6 +10,7 @@ import {
   isAsyncIterable,
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
+import {running} from '@opvious/stl-utils/environment';
 import {typedEmitter} from '@opvious/stl-utils/events';
 import {atMostOnce, ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
@@ -111,6 +112,12 @@ export function createOperationsRouter<
    * `INVALID_ARGUMENT` and code `InvalidRequest`.
    */
   readonly handleInvalidRequests?: boolean;
+
+  /**
+   * Throw if a handler returns a value with a type that doesn't match its
+   * schema. By default this is disabled in production and enabled otherwise.
+   */
+  readonly validateResponses?: boolean;
 }): Router<S> {
   const {fallback} = args;
   const tel = args.telemetry?.via(packageInfo) ?? noopTelemetry();
@@ -118,6 +125,7 @@ export function createOperationsRouter<
   const handlerContext = args.handlerContext ?? defaultHandlerContext(handlers);
   const defaultType = args.defaultType ?? JSON_MIME_TYPE;
   const rethrow = !args.handleInvalidRequests;
+  const checkReturn = args.validateResponses ?? !running.inProduction();
 
   const doc =
     typeof args.document == 'string'
@@ -264,14 +272,19 @@ export function createOperationsRouter<
         }
         const content = declared?.get(atype);
         assert(content, 'undeclared content for type %s', atype);
-        // TODO: Check that content.isStream matches the branches below.
-        if (isAsyncIterable(resBody) && !(resBody instanceof stream.Readable)) {
-          resBody = mapAsyncIterable(resBody, (d) => {
-            registry.validateResponse(d, oid, atype, code, content);
-            return d;
-          });
-        } else {
-          registry.validateResponse(resBody, oid, atype, code, content);
+        if (checkReturn) {
+          // TODO: Check that content.isStream matches the branches below.
+          if (
+            isAsyncIterable(resBody) &&
+            !(resBody instanceof stream.Readable)
+          ) {
+            resBody = mapAsyncIterable(resBody, (d) => {
+              registry.validateResponse(d, oid, atype, code, content);
+              return d;
+            });
+          } else {
+            registry.validateResponse(resBody, oid, atype, code, content);
+          }
         }
         const encoder = encoders.getBest(atype);
         try {
