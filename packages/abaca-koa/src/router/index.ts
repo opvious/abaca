@@ -10,8 +10,8 @@ import {
   isAsyncIterable,
   mapAsyncIterable,
 } from '@opvious/stl-utils/collections';
-import {typedEmitter} from '@opvious/stl-utils/events';
 import {running} from '@opvious/stl-utils/environment';
+import {typedEmitter} from '@opvious/stl-utils/events';
 import {atMostOnce, ifPresent} from '@opvious/stl-utils/functions';
 import {KindAmong} from '@opvious/stl-utils/objects';
 import {
