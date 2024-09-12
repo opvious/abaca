@@ -1,9 +1,5 @@
 import {AsyncOrSync, Lookup} from './common.js';
-import {
-  ContentFormat,
-  MimeType,
-  ResponseCode,
-} from './operations.js';
+import {ContentFormat, MimeType, ResponseCode} from './operations.js';
 
 // Configuration
 

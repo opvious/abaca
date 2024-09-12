@@ -533,11 +533,12 @@ class Registry {
     const key = schemaId(oid, {kind: 'responseBody', contentType, code});
     const validate = this.cache.getSchema(key);
     assert(validate, 'Missing response schema', key);
+    // We always allow buffers and readable streams so that implementers can use
+    // an optimized handler implementation.
     if (
-      content.isBinary &&
-      (Buffer.isBuffer(data) ||
-        data instanceof stream.Readable ||
-        data instanceof Blob)
+      Buffer.isBuffer(data) ||
+      data instanceof stream.Readable ||
+      (content.isBinary && data instanceof Blob)
     ) {
       return;
     }

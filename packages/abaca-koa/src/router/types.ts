@@ -151,7 +151,13 @@ type ResponseBodyForCode<C, D, X, M> = Values<{
   [K in keyof D]: {
     readonly body:
       | D[K]
-      | (D[K] extends Blob | string ? Buffer | stream.Readable : never);
+      // We don't augment the return type for async iterables to improve
+      // inference at call sites. The additional union prevents the type checker
+      // from correctly promoting literals into union discriminators for
+      // example (see `router/tables.test.ts#L158`).
+      | (D[K] extends AsyncIterable<unknown>
+          ? never
+          : Buffer | stream.Readable);
   } & WithType<K, M> &
     WithStatus<StatusesMatching<C, X>>;
 }>;
