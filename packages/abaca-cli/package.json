@@ -40,23 +40,23 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opentelemetry/api": "~1.8.0",
-    "@opvious/stl-bootstrap": "^0.25.4",
-    "@opvious/stl-errors": "^0.25.4",
-    "@opvious/stl-utils": "^0.25.4",
+    "@opentelemetry/api": "~1.9.0",
+    "@opvious/stl-bootstrap": "^0.26.1",
+    "@opvious/stl-errors": "^0.26.1",
+    "@opvious/stl-utils": "^0.26.1",
     "abaca": "workspace:*",
     "commander": "^12.1.0",
-    "eta": "^3.4.0",
+    "eta": "^3.5.0",
     "node-fetch": "^3.3.2",
     "openapi-typescript": "^6.7.6",
-    "ora": "^8.0.1",
-    "yaml": "^2.4.5"
+    "ora": "^8.1.1",
+    "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "@koa/router": "^12.0.1",
+    "@koa/router": "^13.1.0",
     "@types/koa": "^2.15.0",
     "@types/koa__router": "^12.0.4",
-    "inlinable": "^0.3.3",
+    "inlinable": "^0.3.4",
     "koa": "^2.15.3",
     "koa-body": "^6.0.1",
     "ts-essentials": "^9.4.2"
