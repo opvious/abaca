@@ -248,7 +248,7 @@ function newRouter(): Router {
     .use(koaBody())
     .get('/pets', (ctx) => {
       ctx.status = 200;
-      const limit = +ctx.query.limit! ?? 2;
+      const limit = +(ctx.query.limit ?? 2);
       if (limit > 2) {
         ctx.status = 400;
         ctx.body = {code: 400, message: 'Limit too high'};

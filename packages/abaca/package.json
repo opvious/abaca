@@ -26,24 +26,24 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.25.4",
-    "json-text-sequence": "^2.0.2",
-    "node-fetch": "^3.3.2",
-    "@opvious/stl-telemetry": "^0.25.4",
-    "@opvious/stl-utils": "^0.25.4",
+    "@opvious/stl-errors": "^0.26.1",
+    "@opvious/stl-telemetry": "^0.26.1",
+    "@opvious/stl-utils": "^0.26.1",
     "@stoplight/json-ref-resolver": "^3.1.6",
     "abaca": "workspace:*",
-    "ajv": "^8.16.0",
+    "ajv": "^8.17.1",
+    "json-text-sequence": "^2.0.2",
+    "node-fetch": "^3.3.2",
     "openapi-schema-validator": "^12.1.3",
     "openapi-types": "^12.1.3",
     "urijs": "^1.19.11",
-    "yaml": "^2.4.5"
+    "yaml": "^2.6.1"
   },
   "devDependencies": {
     "@types/data-urls": "^3.0.4",
     "@types/urijs": "^1.19.25",
     "data-urls": "^5.0.0",
-    "inlinable": "^0.3.3",
+    "inlinable": "^0.3.4",
     "ts-essentials": "^9.4.2"
   }
 }
