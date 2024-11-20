@@ -75,8 +75,6 @@ describe('Yoga router', () => {
       schema: createSchema({
         typeDefs,
         resolvers: createResolvers(),
-        graphiql: false,
-        maskedErrors: false,
       }),
     });
 
