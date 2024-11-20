@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@opvious/eslint-plugin':
-        specifier: file:/home/mtth/Code/sources/opvious/standards.ts/packages/eslint-plugin/
-        version: file:../standards.ts/packages/eslint-plugin(@typescript-eslint/eslint-plugin@8.15.0(@typescript-eslint/parser@8.15.0(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3)
+        specifier: ^0.9.1
+        version: 0.9.1(@typescript-eslint/eslint-plugin@8.15.0(@typescript-eslint/parser@8.15.0(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3)
       '@opvious/prettier-typescript':
         specifier: ^0.9.1
         version: 0.9.1
@@ -707,8 +707,8 @@ packages:
     resolution: {integrity: sha512-sAay1RrB+ONOem0OZanAR1ZI/k7yDpnOQSQmTMuGImUQb2y8EbSaCJ94FQluM74xoU03vlb2d2U90hZluL6nQg==}
     engines: {node: '>=14'}
 
-  '@opvious/eslint-plugin@file:../standards.ts/packages/eslint-plugin':
-    resolution: {directory: ../standards.ts/packages/eslint-plugin, type: directory}
+  '@opvious/eslint-plugin@0.9.1':
+    resolution: {integrity: sha512-VC4AlWSxvWGHCSMAd4fo/xAdI2i6wRVrsTe1EqE+J14+cvlejpuxUPCSkDPJ/KYI+C2jVNeSBL/mz5gBudU16w==, tarball: https://npm.pkg.github.com/download/@opvious/eslint-plugin/0.9.1/e90c32cbcf99b1746f88a8b3e1a0e47c82972087}
     peerDependencies:
       eslint: ^9.15.0
 
@@ -2756,7 +2756,7 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.27.0': {}
 
-  '@opvious/eslint-plugin@file:../standards.ts/packages/eslint-plugin(@typescript-eslint/eslint-plugin@8.15.0(@typescript-eslint/parser@8.15.0(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3)':
+  '@opvious/eslint-plugin@0.9.1(@typescript-eslint/eslint-plugin@8.15.0(@typescript-eslint/parser@8.15.0(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3))(eslint@9.15.0)(typescript@5.6.3)':
     dependencies:
       '@eslint/js': 9.15.0
       '@stylistic/eslint-plugin': 2.11.0(eslint@9.15.0)(typescript@5.6.3)
