@@ -1,0 +1,55 @@
+$id: resource://abaca-graphql/schemas/result.yaml
+type: object
+properties:
+  data:
+    $ref: '#/$defs/Data'
+  errors:
+    nullable: true
+    type: array
+    items:
+      $ref: '#/$defs/FormattedError'
+  extensions:
+    $ref: '#/$defs/Extensions'
+$defs:
+  Data:
+    nullable: true
+    anyOf:
+      - type: array
+      - type: boolean
+      - type: number
+      - type: object
+        additionalProperties: true
+      - type: string
+  FormattedError:
+    type: object
+    required:
+      - message
+    additionalProperties: false
+    properties:
+      message:
+        type: string
+      locations:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required:
+            - line
+            - column
+          properties:
+            line:
+              type: number
+            column:
+              type: number
+      path:
+        type: array
+        items:
+          anyOf:
+            - type: number
+            - type: string
+      extensions:
+        type: object
+        additionalProperties: true
+  Extensions:
+    type: object
+    additionalProperties: true

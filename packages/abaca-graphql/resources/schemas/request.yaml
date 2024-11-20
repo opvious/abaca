@@ -1,0 +1,11 @@
+$id: resource://abaca-graphql/schemas/request.yaml
+type: object
+required:
+  - query
+additionalProperties: false
+properties:
+  query:
+    type: string
+  variables:
+    type: object
+    additionalProperties: true
