@@ -1,10 +1,9 @@
-import {errors, errorFactories, statusErrors} from '@opvious/stl-errors';
+import {errorFactories, errors, statusErrors} from '@opvious/stl-errors';
 import events from 'events';
 import * as gql from 'graphql';
 import {createSchema, createYoga} from 'graphql-yoga';
 import http from 'http';
 import fetch from 'node-fetch';
-import request from 'supertest';
 
 import * as sut from '../src/index.js';
 
@@ -80,7 +79,10 @@ describe('Yoga router', () => {
 
     server = http.createServer(yoga).listen();
     await events.once(server, 'listening');
-    const sdk = sut.createSdk<typeof fetch>({address: server.address()!, fetch});
+    const sdk = sut.createSdk<typeof fetch>({
+      address: server.address()!,
+      fetch,
+    });
     executor = sut.graphqlExecutor(sdk.runQuery);
   });
 
@@ -182,7 +184,6 @@ describe('Yoga router', () => {
       message: expect.any(String),
     });
   });
-
 
   test.skip('handles non-nullable field errors', async () => {
     const res = await executor('mutation{addBook(title:"T"){never}}');

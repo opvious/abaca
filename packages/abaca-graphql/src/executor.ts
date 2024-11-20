@@ -1,4 +1,4 @@
-import { newError, statusError} from '@opvious/stl-errors';
+import {newError, statusError} from '@opvious/stl-errors';
 import {
   graphqlErrorFromFailure,
   StandardGraphqlExtensions,
