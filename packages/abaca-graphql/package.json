@@ -28,6 +28,7 @@
   "dependencies": {
     "@opvious/stl-errors": "^0.26.2",
     "@opvious/stl-graphql": "^0.26.2",
+    "@opvious/stl-telemetry": "^0.26.2",
     "@opvious/stl-utils": "^0.26.2",
     "abaca": "workspace:*",
     "graphql": "^16.9.0"
@@ -35,8 +36,9 @@
   "devDependencies": {
     "@opentelemetry/api": "~1.9.0",
     "abaca-cli": "workspace:*",
-    "graphql-yoga": "^3.9.1",
+    "graphql-yoga": "^5.10.2",
     "inlinable": "^0.3.5",
+    "node-fetch": "^3.3.2",
     "supertest": "^7.0.0"
   }
 }
