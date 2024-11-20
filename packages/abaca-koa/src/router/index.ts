@@ -246,10 +246,10 @@ export function createOperationsRouter<
           return;
         }
         const res = await handler.call(handlerContext, ctx);
-        const status = typeof res == 'number' ? res : res.status ?? 200;
+        const status = typeof res == 'number' ? res : (res.status ?? 200);
 
         const atype =
-          typeof res == 'number' ? undefined : res.type ?? defaultType;
+          typeof res == 'number' ? undefined : (res.type ?? defaultType);
         let resBody = typeof res == 'number' ? undefined : res.body;
         const {code, declared} = matcher.getBest(status);
         if (!isContentCompatible({received: atype, declared, accepted})) {

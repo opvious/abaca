@@ -1,0 +1,11 @@
+{
+  "extends": "@opvious/tsconfig/tsconfig.vitest.json",
+  "compilerOptions": {
+    "outDir": "../out/test",
+  },
+  "references": [
+    {
+      "path": "../src"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "abaca-graphql",
+  "version": "0.0.0",
+  "repository": "github:opvious/abaca",
+  "description": "Abaca GraphQL utilities",
+  "keywords": [
+    "abaca",
+    "graphql"
+  ],
+  "author": "Opvious Engineering <oss@opvious.io>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "lib/",
+    "resources/"
+  ],
+  "exports": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -b src test",
+    "clean": "rm -rf lib node_modules out",
+    "fix": "prettier --write",
+    "gen": "abaca g resources/openapi.tpl.yaml -o src/sdk.gen.ts -d resources/openapi.yaml",
+    "prepare": "pnpm run gen && pnpm run build",
+    "test": "vitest",
+    "watch": "tsc -b -w src test"
+  },
+  "dependencies": {
+    "@opvious/stl-errors": "^0.26.2",
+    "@opvious/stl-graphql": "^0.26.2",
+    "@opvious/stl-telemetry": "^0.26.2",
+    "@opvious/stl-utils": "^0.26.2",
+    "abaca": "workspace:*",
+    "graphql": "^16.9.0"
+  },
+  "devDependencies": {
+    "@opentelemetry/api": "~1.9.0",
+    "abaca-cli": "workspace:*",
+    "graphql-yoga": "^5.10.2",
+    "inlinable": "^0.3.5",
+    "node-fetch": "^3.3.2",
+    "supertest": "^7.0.0"
+  }
+}

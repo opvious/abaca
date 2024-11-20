@@ -1,0 +1,46 @@
+$id: resource://abaca-graphql/openapi.tpl.yaml
+openapi: 3.0.0
+info:
+  title: Standard GraphQL API
+  version: 0.0.0
+paths:
+  /graphql:
+    post:
+      operationId: runQuery
+      description: GraphQL endpoint
+      requestBody:
+        $ref: '#/components/requestBodies/Query'
+      responses:
+        200:
+          $ref: '#/components/responses/Expected'
+        default:
+          $ref: '#/components/responses/Unexpected'
+components:
+  requestBodies:
+    Query:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Request'
+  responses:
+    Expected:
+      description: Expected response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Result'
+    Unexpected:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: resource://opvious@stl-errors/schemas/failure.yaml
+        text/plain:
+          schema:
+            type: string
+  schemas:
+    Request:
+      $ref: resource://abaca-graphql/schemas/request.yaml
+    Result:
+      $ref: resource://abaca-graphql/schemas/result.yaml?embed=*
