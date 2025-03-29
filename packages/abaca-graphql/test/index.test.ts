@@ -1,4 +1,4 @@
-import {errorFactories, defaultErrors, statusErrors} from '@mtth/stl-errors';
+import {defaultErrors, errorFactories, statusErrors} from '@mtth/stl-errors';
 import events from 'events';
 import * as gql from 'graphql';
 import {createSchema, createYoga} from 'graphql-yoga';
