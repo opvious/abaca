@@ -1,4 +1,4 @@
-import {EventConsumer} from '@opvious/stl-utils/events';
+import {EventConsumer} from '@mtth/stl-utils/events';
 import {
   AsyncOrSync,
   Get,

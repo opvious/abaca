@@ -13,9 +13,9 @@
     "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in examples/* packages/*; do if [ -d \"$p/out/coverage\" ]; then cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; fi; done"
   },
   "devDependencies": {
-    "@opvious/eslint-plugin": "^0.9.1",
-    "@opvious/prettier-typescript": "^0.9.1",
-    "@opvious/tsconfig": "^0.9.1",
+    "@mtth/eslint-plugin": "^0.7.0",
+    "@mtth/prettier-typescript": "^0.7.0",
+    "@mtth/tsconfig": "^0.7.0",
     "@types/node": "^20.17.6",
     "@vitest/coverage-v8": "^2.1.5",
     "eslint": "^9.15.0",
@@ -32,5 +32,5 @@
       "eslint --fix"
     ]
   },
-  "prettier": "@opvious/prettier-typescript"
+  "prettier": "@mtth/prettier-typescript"
 }

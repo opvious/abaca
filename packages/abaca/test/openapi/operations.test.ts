@@ -1,4 +1,4 @@
-import {ResourceLoader} from '@opvious/stl-utils/files';
+import {ResourceLoader} from '@mtth/stl-utils/files';
 import YAML from 'yaml';
 
 import * as sut from '../../src/openapi/operations.js';

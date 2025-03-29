@@ -1,5 +1,5 @@
 import Router from '@koa/router';
-import {absurd, assert, unexpected, unreachable} from '@opvious/stl-errors';
+import {absurd, assert, unexpected, unreachable} from '@mtth/stl-errors';
 import http from 'http';
 import Koa from 'koa';
 import koaBody_ from 'koa-body';

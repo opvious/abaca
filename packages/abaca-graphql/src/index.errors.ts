@@ -1,4 +1,4 @@
-import {assert, errorFactories} from '@opvious/stl-errors';
+import {assert, errorFactories} from '@mtth/stl-errors';
 import * as gql from 'graphql';
 
 const [errors, codes] = errorFactories({

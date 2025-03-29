@@ -1,4 +1,4 @@
-import {assert} from '@opvious/stl-errors';
+import {assert} from '@mtth/stl-errors';
 import * as jsonSeq from 'json-text-sequence';
 import fetch from 'node-fetch';
 import stream from 'stream';

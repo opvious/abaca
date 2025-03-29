@@ -1,4 +1,4 @@
-import {errorFactories} from '@opvious/stl-errors';
+import {errorFactories} from '@mtth/stl-errors';
 import {OpenAPISchemaValidatorResult} from 'openapi-schema-validator';
 import {OpenAPIV3, OpenAPIV3_1} from 'openapi-types';
 import {DeepReadonly} from 'ts-essentials';

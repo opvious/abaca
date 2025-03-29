@@ -1,7 +1,7 @@
-import {assert} from '@opvious/stl-errors';
-import {localPath} from '@opvious/stl-utils/files';
-import {ifPresent} from '@opvious/stl-utils/functions';
-import {GlobMapper} from '@opvious/stl-utils/strings';
+import {assert} from '@mtth/stl-errors';
+import {localPath} from '@mtth/stl-utils/files';
+import {ifPresent} from '@mtth/stl-utils/functions';
+import {GlobMapper} from '@mtth/stl-utils/strings';
 import {
   DEFAULT_ACCEPT,
   documentPathOperations,

@@ -1,4 +1,4 @@
-import {errorFactories, errorMessage, StandardError} from '@opvious/stl-errors';
+import {errorFactories, errorMessage, StandardError} from '@mtth/stl-errors';
 import {IncompatibleValueError} from 'abaca';
 
 const [errors, errorCodes] = errorFactories({

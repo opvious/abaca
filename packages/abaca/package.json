@@ -26,9 +26,9 @@
     "watch": "tsc -b -w src"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.26.2",
-    "@opvious/stl-telemetry": "^0.26.2",
-    "@opvious/stl-utils": "^0.26.2",
+    "@mtth/stl-errors": "^0.7.0",
+    "@mtth/stl-telemetry": "^0.7.0",
+    "@mtth/stl-utils": "^0.7.0",
     "@stoplight/json-ref-resolver": "^3.1.6",
     "abaca": "workspace:*",
     "ajv": "^8.17.1",
@@ -43,7 +43,7 @@
     "@types/data-urls": "^3.0.4",
     "@types/urijs": "^1.19.25",
     "data-urls": "^5.0.0",
-    "inlinable": "^0.3.5",
+    "inlinable": "^0.7.0",
     "ts-essentials": "^10.0.3"
   }
 }

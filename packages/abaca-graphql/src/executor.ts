@@ -1,10 +1,10 @@
-import {newError, statusError} from '@opvious/stl-errors';
+import {newError, statusError} from '@mtth/stl-errors';
 import {
   graphqlErrorFromFailure,
   StandardGraphqlExtensions,
   standardizeGraphqlError,
-} from '@opvious/stl-graphql';
-import {ifPresent} from '@opvious/stl-utils/functions';
+} from '@mtth/stl-graphql';
+import {ifPresent} from '@mtth/stl-utils/functions';
 import {
   BaseFetch,
   DEFAULT_ACCEPT,

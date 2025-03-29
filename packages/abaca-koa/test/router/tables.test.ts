@@ -4,12 +4,12 @@ import {
   failure,
   statusProtocolCode,
   unreachable,
-} from '@opvious/stl-errors';
+} from '@mtth/stl-errors';
 import {
   fromAsyncIterable,
   mapAsyncIterable,
   toAsyncIterable,
-} from '@opvious/stl-utils/collections';
+} from '@mtth/stl-utils/collections';
 import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca/codecs/node/json-seq';
 import http from 'http';
 import Koa from 'koa';

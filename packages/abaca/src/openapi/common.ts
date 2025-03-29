@@ -1,4 +1,4 @@
-import {assert} from '@opvious/stl-errors';
+import {assert} from '@mtth/stl-errors';
 import __inlinable from 'inlinable';
 
 export const packageInfo = __inlinable((ctx) =>
