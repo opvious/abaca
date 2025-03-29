@@ -22,8 +22,6 @@ jobs:
         with:
           node-version: '>=20'
           cache: pnpm
-          registry-url: https://npm.pkg.github.com
-          scope: opvious
       - name: Install
         run: pnpm i
         env:

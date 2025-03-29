@@ -24,8 +24,6 @@ jobs:
         with:
           node-version: '>=20'
           cache: pnpm
-          registry-url: https://npm.pkg.github.com
-          scope: opvious
       - name: Install
         run: pnpm i
         env:
@@ -48,7 +46,7 @@ jobs:
           custom_release_rules: 'build:patch,deps:patch,refactor:patch'
   publish-npm:
     name: Publish packages to NPM
-    timeout-minutes: 2
+    timeout-minutes: 3
     runs-on: ubuntu-latest
     needs: test
     if: needs.test.outputs.new-version != ''
@@ -63,8 +61,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache: pnpm
-          registry-url: https://npm.pkg.github.com
-          scope: opvious
+          registry-url: 'https://registry.npmjs.org'
       - name: Install
         run: pnpm i
         env:
@@ -73,7 +70,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           cache: pnpm
-          registry-url: https://registry.npmjs.org
       - name: Publish
         run: |
           pnpm -r exec pnpm version ${{ needs.test.outputs.new-version }}
