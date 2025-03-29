@@ -26,8 +26,6 @@ jobs:
           cache: pnpm
       - name: Install
         run: pnpm i
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GPR_RO_TOKEN }}
       - name: Lint
         run: pnpm run lint
       - name: Test
@@ -62,8 +60,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Install
         run: pnpm i
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GPR_RO_TOKEN }}
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
