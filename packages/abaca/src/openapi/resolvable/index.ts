@@ -163,7 +163,7 @@ class Parser {
       assert(declared != null, 'ID %s is not a valid resource URL', id);
       const expected = new URL(ru);
       expected.search = '';
-      assert('' + declared === '' + expected, 'ID %s doesn\'t match', id);
+      assert('' + declared === '' + expected, "ID %s doesn't match", id);
     } catch (cause) {
       throw errors.invalidResourceReference(ru, cause);
     }

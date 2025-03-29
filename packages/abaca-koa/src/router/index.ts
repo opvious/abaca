@@ -1,15 +1,7 @@
 import Router from '@koa/router';
-import {
-  absurd,
-  assert,
-  isStandardError,
-  statusErrors,
-} from '@mtth/stl-errors';
+import {absurd, assert, isStandardError, statusErrors} from '@mtth/stl-errors';
 import {noopTelemetry, Telemetry} from '@mtth/stl-telemetry';
-import {
-  isAsyncIterable,
-  mapAsyncIterable,
-} from '@mtth/stl-utils/collections';
+import {isAsyncIterable, mapAsyncIterable} from '@mtth/stl-utils/collections';
 import {running} from '@mtth/stl-utils/environment';
 import {typedEmitter} from '@mtth/stl-utils/events';
 import {atMostOnce, ifPresent} from '@mtth/stl-utils/functions';
