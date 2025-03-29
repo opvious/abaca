@@ -1,5 +1,5 @@
-import {check} from '@opvious/stl-errors';
-import {localPath, ResourceLoader} from '@opvious/stl-utils/files';
+import {check} from '@mtth/stl-errors';
+import {localPath, ResourceLoader} from '@mtth/stl-utils/files';
 import parseDataUrl from 'data-urls';
 import path from 'path';
 import YAML from 'yaml';

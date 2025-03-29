@@ -1,6 +1,6 @@
-import {fail} from '@opvious/stl-errors';
-import {RecordingTelemetry} from '@opvious/stl-telemetry';
-import {ResourceLoader} from '@opvious/stl-utils/files';
+import {fail} from '@mtth/stl-errors';
+import {RecordingTelemetry} from '@mtth/stl-telemetry';
+import {ResourceLoader} from '@mtth/stl-utils/files';
 
 import codes from '../../../src/openapi/document/index.errors.js';
 import * as sut from '../../../src/openapi/document/index.js';

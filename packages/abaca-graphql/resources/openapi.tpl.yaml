@@ -35,7 +35,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: resource://opvious@stl-errors/schemas/failure.yaml
+            $ref: resource://mtth@stl-errors/schemas/failure.yaml
         text/plain:
           schema:
             type: string

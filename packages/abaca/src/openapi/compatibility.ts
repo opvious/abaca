@@ -4,8 +4,8 @@ import {
   ErrorStatus,
   StandardErrorForCode,
   statusError,
-} from '@opvious/stl-errors';
-import {ifPresent} from '@opvious/stl-utils/functions';
+} from '@mtth/stl-errors';
+import {ifPresent} from '@mtth/stl-utils/functions';
 import Ajv_, {ErrorObject, ValidateFunction} from 'ajv';
 
 import {OpenapiDocument} from './document/index.js';

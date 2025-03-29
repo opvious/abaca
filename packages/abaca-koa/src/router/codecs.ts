@@ -1,5 +1,5 @@
-import {assert, statusErrors} from '@opvious/stl-errors';
-import {EventConsumer, typedEmitter} from '@opvious/stl-utils/events';
+import {assert, statusErrors} from '@mtth/stl-errors';
+import {EventConsumer, typedEmitter} from '@mtth/stl-utils/events';
 import {
   AsyncOrSync,
   ByMimeType,

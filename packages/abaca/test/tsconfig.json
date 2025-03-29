@@ -1,5 +1,5 @@
 {
-  "extends": "@opvious/tsconfig/tsconfig.vitest.json",
+  "extends": "@mtth/tsconfig/tsconfig.vitest.json",
   "references": [
     {
       "path": "../src"

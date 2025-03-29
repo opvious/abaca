@@ -1,4 +1,4 @@
-import {mergeErrorCodes} from '@opvious/stl-errors';
+import {mergeErrorCodes} from '@mtth/stl-errors';
 
 import {errorCodes as compatibility} from './compatibility.js';
 import document, {DocumentValidationIssue} from './document/index.errors.js';

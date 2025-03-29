@@ -1,4 +1,4 @@
-import {errorFactories, errorMessage} from '@opvious/stl-errors';
+import {errorFactories, errorMessage} from '@mtth/stl-errors';
 
 export const [errors, codes] = errorFactories({
   definitions: {

@@ -1,5 +1,5 @@
-import {appTelemetry} from '@opvious/stl-bootstrap';
-import {ResourceLoader} from '@opvious/stl-utils/files';
+import {appTelemetry} from '@mtth/stl-bootstrap';
+import {ResourceLoader} from '@mtth/stl-utils/files';
 import __inlinable from 'inlinable';
 import os from 'os';
 import path from 'path';

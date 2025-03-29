@@ -3,15 +3,15 @@ import {
   isStandardError,
   rethrowUnless,
   statusErrors,
-} from '@opvious/stl-errors';
+} from '@mtth/stl-errors';
 import {
   LocalPath,
   localPath,
   localUrl,
   PathLike,
   ResourceLoader,
-} from '@opvious/stl-utils/files';
-import {ifPresent} from '@opvious/stl-utils/functions';
+} from '@mtth/stl-utils/files';
+import {ifPresent} from '@mtth/stl-utils/functions';
 import {
   OpenapiDocument,
   ReferenceResolvers,

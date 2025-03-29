@@ -1,9 +1,6 @@
-import {absurd, fail} from '@opvious/stl-errors';
-import {
-  fromAsyncIterable,
-  toAsyncIterable,
-} from '@opvious/stl-utils/collections';
-import {waitForEvent} from '@opvious/stl-utils/events';
+import {absurd, fail} from '@mtth/stl-errors';
+import {fromAsyncIterable, toAsyncIterable} from '@mtth/stl-utils/collections';
+import {waitForEvent} from '@mtth/stl-utils/events';
 import {FORM_MIME_TYPE, JSON_SEQ_MIME_TYPE, OpenapiDocument} from 'abaca';
 import {jsonSeqDecoder, jsonSeqEncoder} from 'abaca/codecs/node/json-seq';
 import http from 'http';

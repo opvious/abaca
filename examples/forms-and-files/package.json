@@ -22,8 +22,8 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@opvious/stl-errors": "^0.26.2",
-    "@opvious/stl-utils": "^0.26.2",
+    "@mtth/stl-errors": "^0.7.0",
+    "@mtth/stl-utils": "^0.7.0",
     "abaca": "workspace:*",
     "abaca-koa": "workspace:*"
   },

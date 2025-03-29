@@ -1,4 +1,4 @@
-import {errorFactories, errors, statusErrors} from '@opvious/stl-errors';
+import {defaultErrors, errorFactories, statusErrors} from '@mtth/stl-errors';
 import events from 'events';
 import * as gql from 'graphql';
 import {createSchema, createYoga} from 'graphql-yoga';
@@ -44,7 +44,7 @@ function createResolvers(): any {
             duplicateBook({
               message: 'Title exists already',
               tags: {title},
-              cause: errors.internal({message: 'boom'}),
+              cause: defaultErrors.internal({message: 'boom'}),
             })
           );
         }
@@ -55,7 +55,7 @@ function createResolvers(): any {
         if (!args.title) {
           throw new Error('Empty title');
         }
-        throw errors.internal({message: 'Unsupported'});
+        throw defaultErrors.internal({message: 'Unsupported'});
       },
       clearBooks() {
         books.clear();

@@ -1,7 +1,7 @@
-import {assert, check} from '@opvious/stl-errors';
-import {ResourceLoader} from '@opvious/stl-utils/files';
-import {ifPresent} from '@opvious/stl-utils/functions';
-import {mapValues} from '@opvious/stl-utils/objects';
+import {assert, check} from '@mtth/stl-errors';
+import {ResourceLoader} from '@mtth/stl-utils/files';
+import {ifPresent} from '@mtth/stl-utils/functions';
+import {mapValues} from '@mtth/stl-utils/objects';
 import {Resolver} from '@stoplight/json-ref-resolver';
 import {AsyncOrSync} from 'ts-essentials';
 import URI from 'urijs'; // Needed because of the resolver library.
@@ -163,7 +163,7 @@ class Parser {
       assert(declared != null, 'ID %s is not a valid resource URL', id);
       const expected = new URL(ru);
       expected.search = '';
-      assert('' + declared === '' + expected, 'ID %s doesn\'t match', id);
+      assert('' + declared === '' + expected, "ID %s doesn't match", id);
     } catch (cause) {
       throw errors.invalidResourceReference(ru, cause);
     }

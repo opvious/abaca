@@ -1,7 +1,7 @@
-import {assert} from '@opvious/stl-errors';
-import {localPath} from '@opvious/stl-utils/files';
-import {ifPresent} from '@opvious/stl-utils/functions';
-import {GlobMapper} from '@opvious/stl-utils/strings';
+import {assert} from '@mtth/stl-errors';
+import {localPath} from '@mtth/stl-utils/files';
+import {ifPresent} from '@mtth/stl-utils/functions';
+import {GlobMapper} from '@mtth/stl-utils/strings';
 import {
   DEFAULT_ACCEPT,
   documentPathOperations,
@@ -83,7 +83,7 @@ export function generateCommand(): Command {
     .option(
       '--strict-additional-properties',
       'only allow additional properties when explicitly allowed in an ' +
-        'object\'s schema'
+        "object's schema"
     )
     .action(
       contextualAction(async function (uri, opts) {
@@ -123,7 +123,7 @@ export function generateCommand(): Command {
           version: packageInfo.version,
           operations,
           typeSource: types.source
-            .replace(/ ([2345])XX:\s+{/g, ' \'$1XX\': {')
+            .replace(/ ([2345])XX:\s+{/g, " '$1XX': {")
             .replace(/export /g, ''),
           serverAddresses,
           defaultAccept: opts.defaultAccept,
