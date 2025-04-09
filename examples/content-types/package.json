@@ -29,6 +29,6 @@
     "@types/koa": "^2.15.0",
     "@types/koa__router": "^12.0.4",
     "abaca-cli": "workspace:*",
-    "koa": "^2.15.3"
+    "koa": "^2.16.1"
   }
 }
