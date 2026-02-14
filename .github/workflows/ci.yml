@@ -48,9 +48,9 @@ jobs:
       - name: Set up Node for NPM registry
         uses: actions/setup-node@v6
         with:
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
       - name: Publish
         run: |
           pnpm -r exec pnpm version ${{ needs.test.outputs.new-version }}
-          pnpm -r -F '!abaca-example-*' exec pwd
-          pnpm -r -F '!abaca-example-*' exec npm publish
+          pnpm -r -F '!abaca-packages' -F '!abaca-example-*' exec npm publish

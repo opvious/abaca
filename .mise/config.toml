@@ -1,5 +1,5 @@
 [tools]
 node = "22"
 npm = "11" # For trusted publishing
-pnpm = "10"
+pnpm = "10.29.3"
 pre-commit = "latest"
