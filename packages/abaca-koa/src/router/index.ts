@@ -1,4 +1,4 @@
-import Router from '@koa/router';
+import Router, {RouterContext} from '@koa/router';
 import {absurd, assert, isStandardError, statusErrors} from '@mtth/stl-errors';
 import {noopTelemetry, Telemetry} from '@mtth/stl-telemetry';
 import {isAsyncIterable, mapAsyncIterable} from '@mtth/stl-utils/collections';
@@ -80,7 +80,7 @@ export function createOperationsRouter<
    * Fallback route handler used when no handler exists for a given operation.
    * By default no route will be added in this case.
    */
-  readonly fallback?: (ctx: Router.RouterContext<S>) => Promise<void>;
+  readonly fallback?: (ctx: RouterContext<S>) => Promise<void>;
 
   /** Default response data content-type. Defaults to `application/json`. */
   readonly defaultType?: M;
@@ -181,7 +181,7 @@ export function createOperationsRouter<
     router[def.method](
       oid,
       routerPath(def.path),
-      async (ctx: Router.RouterContext) => {
+      async (ctx: RouterContext) => {
         const accepted = new Set(ctx.accepts());
         if (!matcher.acceptable(accepted)) {
           throw errors.invalidRequest(requestErrors.unacceptable());
@@ -398,7 +398,7 @@ class Registry {
   }
 
   injectParameters(
-    ctx: Router.RouterContext,
+    ctx: RouterContext,
     oid: string,
     def: OperationDefinition
   ): void {
