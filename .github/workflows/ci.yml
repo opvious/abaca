@@ -15,17 +15,8 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '>=20'
-          cache: pnpm
-      - name: Install
-        run: pnpm i
+      - name: Set up
+        uses: ./.github/actions/setup
       - name: Lint
         run: pnpm run lint
       - name: Test
@@ -49,21 +40,12 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - name: Set up Node
+      - name: Set up
+        uses: ./.github/actions/setup
+      - name: Set up Node for NPM registry
         uses: actions/setup-node@v4
         with:
-          cache: pnpm
           registry-url: 'https://registry.npmjs.org'
-      - name: Install
-        run: pnpm i
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          cache: pnpm
       - name: Publish
         run: |
           pnpm -r exec pnpm version ${{ needs.test.outputs.new-version }}

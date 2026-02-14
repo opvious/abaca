@@ -13,17 +13,8 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '>=20'
-          cache: pnpm
-      - name: Install
-        run: pnpm i
+      - name: Set up
+        uses: ./.github/actions/setup
       - name: Lint
         run: pnpm run lint
       - name: Test
