@@ -1,13 +1,12 @@
 import Router from '@koa/router';
+import {assert} from '@mtth/stl-errors';
 import http from 'http';
 import Koa from 'koa';
-import koaBody_ from 'koa-body';
+import koaBody from 'koa-body';
 import fetch from 'node-fetch';
 
 import {startApp} from './helpers.js';
 import {createSdk, Schema, Sdk} from './tables-sdk.gen.js';
-
-const koaBody = koaBody_.default ?? koaBody_;
 
 describe('tables', () => {
   let sdk: Sdk<typeof fetch>;
@@ -146,10 +145,12 @@ function newRouter(): Router {
       let table: Schema<'Table'> | undefined;
       switch (ctx.type) {
         case 'application/json':
-          table = ctx.request.body;
+          assert(ctx.request.body, 'missing body');
+          table = ctx.request.body as any;
           break;
         case 'text/csv':
-          table = ctx.request.body.split('\n').map((r) => r.split(','));
+          assert(typeof ctx.request.body == 'string', 'invalid body');
+          table = {rows: ctx.request.body.split('\n').map((r) => r.split(','))};
           break;
       }
       if (!table) {

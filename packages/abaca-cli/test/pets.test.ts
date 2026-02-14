@@ -2,11 +2,9 @@ import Router from '@koa/router';
 import {absurd, assert, unexpected, unreachable} from '@mtth/stl-errors';
 import http from 'http';
 import Koa from 'koa';
-import koaBody_ from 'koa-body';
+import koaBody from 'koa-body';
 import fetch from 'node-fetch';
 import {Writable} from 'ts-essentials';
-
-const koaBody = koaBody_.default ?? koaBody_;
 
 import {startApp} from './helpers.js';
 import {
@@ -267,7 +265,7 @@ function newRouter(): Router {
         return;
       }
       const id = '' + (pets.size + 1);
-      pets.set(id, {...ctx.request.body, id});
+      pets.set(id, {...(ctx.request.body as any), id});
       ctx.status = 201;
       if (ctx.accepts('text/plain')) {
         ctx.body = id;
