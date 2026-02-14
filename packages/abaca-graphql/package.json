@@ -26,18 +26,18 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@mtth/stl-errors": "^0.7.0",
-    "@mtth/stl-graphql": "^0.7.0",
-    "@mtth/stl-telemetry": "^0.7.0",
-    "@mtth/stl-utils": "^0.7.0",
+    "@mtth/stl-errors": "^0.7.1",
+    "@mtth/stl-graphql": "^0.7.1",
+    "@mtth/stl-telemetry": "^0.7.1",
+    "@mtth/stl-utils": "^0.7.1",
     "abaca": "workspace:*",
-    "graphql": "^16.9.0"
+    "graphql": "^16.12.0"
   },
   "devDependencies": {
     "@opentelemetry/api": "~1.9.0",
     "abaca-cli": "workspace:*",
-    "graphql-yoga": "^5.10.2",
+    "graphql-yoga": "^5.18.0",
     "node-fetch": "^3.3.2",
-    "supertest": "^7.0.0"
+    "supertest": "^7.2.2"
   }
 }
