@@ -37,6 +37,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: needs.test.outputs.new-version != ''
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -50,5 +53,3 @@ jobs:
         run: |
           pnpm -r exec pnpm version ${{ needs.test.outputs.new-version }}
           pnpm -r -F '!abaca-example-*' exec pnpm publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
