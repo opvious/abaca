@@ -13,16 +13,21 @@
     "test": "pnpm -r run test run --coverage && rm -rf out/coverage && mkdir -p out/coverage && for p in examples/* packages/*; do if [ -d \"$p/out/coverage\" ]; then cp -r \"$p/out/coverage\" out/coverage/\"${p#*/}\"; fi; done"
   },
   "devDependencies": {
-    "@mtth/eslint-plugin": "^0.7.0",
-    "@mtth/prettier-typescript": "^0.7.0",
-    "@mtth/tsconfig": "^0.7.0",
-    "@types/node": "^20.17.6",
-    "@vitest/coverage-v8": "^2.1.5",
-    "eslint": "^9.15.0",
-    "prettier": "^3.3.3",
-    "ts-essentials": "^10.0.3",
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
+    "@mtth/eslint-plugin": "^0.7.1",
+    "@mtth/prettier-typescript": "^0.7.1",
+    "@mtth/tsconfig": "^0.7.1",
+    "@types/node": "^20.19.33",
+    "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^9.39.2",
+    "prettier": "^3.8.1",
+    "ts-essentials": "^10.1.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   },
-  "prettier": "@mtth/prettier-typescript"
+  "prettier": "@mtth/prettier-typescript",
+  "pnpm": {
+    "overrides": {
+      "openapi-typescript>undici": "^6.23.0"
+    }
+  }
 }

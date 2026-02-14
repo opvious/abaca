@@ -22,15 +22,15 @@
     "watch": "tsc -b -w src test"
   },
   "dependencies": {
-    "@mtth/stl-errors": "^0.7.0",
-    "@mtth/stl-utils": "^0.7.0",
+    "@mtth/stl-errors": "^0.7.1",
+    "@mtth/stl-utils": "^0.7.1",
     "abaca": "workspace:*",
     "abaca-koa": "workspace:*"
   },
   "devDependencies": {
     "@types/koa": "^2.15.0",
-    "@types/koa__router": "^12.0.4",
+    "@types/koa__router": "^12.0.5",
     "abaca-cli": "workspace:*",
-    "koa": "^2.15.3"
+    "koa": "^2.16.3"
   }
 }
