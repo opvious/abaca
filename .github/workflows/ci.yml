@@ -46,7 +46,7 @@ jobs:
       - name: Set up
         uses: ./.github/actions/setup
       - name: Set up Node for NPM registry
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           registry-url: 'https://registry.npmjs.org'
       - name: Publish
