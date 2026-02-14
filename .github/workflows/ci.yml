@@ -53,4 +53,4 @@ jobs:
       - name: Publish
         run: |
           pnpm -r exec pnpm version ${{ needs.test.outputs.new-version }}
-          pnpm -r -F '!abaca-packages' -F '!abaca-example-*' exec npm publish
+          pnpm -r -F '!abaca-packages' -F '!abaca-example-*' exec pnpm publish

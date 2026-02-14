@@ -1,7 +1,10 @@
 {
   "name": "abaca-koa",
   "version": "0.0.0",
-  "repository": "github:opvious/abaca",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opvious/abaca.git"
+  },
   "description": "Abaca Koa integrations",
   "keywords": [
     "abaca",

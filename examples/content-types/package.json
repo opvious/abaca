@@ -2,7 +2,10 @@
   "name": "abaca-example-content-types",
   "private": true,
   "version": "0.0.0",
-  "repository": "github:opvious/abaca",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opvious/abaca.git"
+  },
   "description": "Multi content-type example using Abaca",
   "author": "Opvious Engineering <oss@opvious.io>",
   "license": "Apache-2.0",
