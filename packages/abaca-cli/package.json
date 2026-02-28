@@ -59,7 +59,7 @@
     "@koa/router": "^15.3.0",
     "@types/koa": "^3.0.1",
     "inlinable": "^0.7.1",
-    "koa": "^3.1.1",
+    "koa": "^3.1.2",
     "koa-body": "^7.0.1",
     "ts-essentials": "^10.1.1"
   }
